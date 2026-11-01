@@ -5,10 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { sendAdminProviderApplicationEmail } from "@/lib/email/brevo";
 
 const PHONE_REGEX = /^\d{3}-\d{3}-\d{4}$/;
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{8,}$/;
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9\s]).{8,}$/;
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function rawValue(formData: FormData, key: string) {
+  return String(formData.get(key) ?? "");
 }
 
 function signupError(message: string): never {
@@ -23,8 +27,8 @@ export async function signup(formData: FormData) {
   const email = value(formData, "email").toLowerCase();
   const primaryPhone = value(formData, "primary_phone");
   const secondaryPhone = value(formData, "secondary_phone");
-  const password = value(formData, "password");
-  const confirmPassword = value(formData, "confirm_password");
+  const password = rawValue(formData, "password");
+  const confirmPassword = rawValue(formData, "confirm_password");
   const businessName = value(formData, "business_name");
   const businessAddress = value(formData, "business_address");
   const businessCity = value(formData, "business_city");
