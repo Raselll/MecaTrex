@@ -1,34 +1,427 @@
+"use client";
+
 import Image from "next/image";
+import Script from "next/script";
+import {
+  FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+type Vehicle = {
+  year: string;
+  make: string;
+  model: string;
+  color?: string;
+};
+
+const VEHICLE_STORAGE_KEY = "mecatrex-selected-vehicle";
+
+const CAR_IMAGES_API_KEY =
+  process.env.NEXT_PUBLIC_CAR_IMAGES_API_KEY ?? "";
+
+const years = Array.from(
+  { length: 38 },
+  (_, index) => String(2027 - index)
+);
+
+const makes = [
+  "Acura",
+  "Audi",
+  "BMW",
+  "Buick",
+  "Cadillac",
+  "Chevrolet",
+  "Chrysler",
+  "Dodge",
+  "Ford",
+  "Genesis",
+  "GMC",
+  "Honda",
+  "Hyundai",
+  "Infiniti",
+  "Jeep",
+  "Kia",
+  "Land Rover",
+  "Lexus",
+  "Lincoln",
+  "Mazda",
+  "Mercedes-Benz",
+  "MINI",
+  "Mitsubishi",
+  "Nissan",
+  "Porsche",
+  "Ram",
+  "Subaru",
+  "Tesla",
+  "Toyota",
+  "Volkswagen",
+  "Volvo",
+];
+
+const vehicleColors = [
+  "Black",
+  "White",
+  "Silver",
+  "Grey",
+  "Blue",
+  "Red",
+  "Green",
+  "Brown",
+  "Beige",
+  "Gold",
+  "Orange",
+  "Yellow",
+  "Purple",
+  "Other",
+];
+
+const colorSwatches: Record<string, string> = {
+  Black: "#111827",
+  White: "#FFFFFF",
+  Silver: "#C0C5CC",
+  Grey: "#667085",
+  Blue: "#4771A6",
+  Red: "#D92D20",
+  Green: "#2F855A",
+  Brown: "#7C4A32",
+  Beige: "#D9C6A5",
+  Gold: "#C89B3C",
+  Orange: "#E97827",
+  Yellow: "#EAB308",
+  Purple: "#7F56D9",
+  Other: "#D0D5DD",
+};
+
+const modelsByMake: Record<string, string[]> = {
+  Acura: [
+    "Integra",
+    "TLX",
+    "RDX",
+    "MDX",
+  ],
+
+  Audi: [
+    "A3",
+    "A4",
+    "A5",
+    "A6",
+    "A7",
+    "A8",
+    "Q3",
+    "Q5",
+    "Q7",
+    "Q8",
+  ],
+
+  BMW: [
+    "2 Series",
+    "3 Series",
+    "4 Series",
+    "5 Series",
+    "7 Series",
+    "X1",
+    "X2",
+    "X3",
+    "X4",
+    "X5",
+    "X6",
+    "X7",
+  ],
+
+  Buick: [
+    "Encore",
+    "Encore GX",
+    "Envision",
+    "Enclave",
+  ],
+
+  Cadillac: [
+    "CT4",
+    "CT5",
+    "XT4",
+    "XT5",
+    "XT6",
+    "Escalade",
+  ],
+
+  Chevrolet: [
+    "Malibu",
+    "Trax",
+    "Trailblazer",
+    "Equinox",
+    "Blazer",
+    "Traverse",
+    "Tahoe",
+    "Suburban",
+    "Silverado",
+  ],
+
+  Chrysler: [
+    "300",
+    "Pacifica",
+  ],
+
+  Dodge: [
+    "Charger",
+    "Challenger",
+    "Durango",
+    "Hornet",
+  ],
+
+  Ford: [
+    "Mustang",
+    "Escape",
+    "Bronco Sport",
+    "Bronco",
+    "Edge",
+    "Explorer",
+    "F-150",
+    "Maverick",
+  ],
+
+  Genesis: [
+    "G70",
+    "G80",
+    "G90",
+    "GV60",
+    "GV70",
+    "GV80",
+  ],
+
+  GMC: [
+    "Terrain",
+    "Acadia",
+    "Yukon",
+    "Canyon",
+    "Sierra",
+  ],
+
+  Honda: [
+    "Civic",
+    "Accord",
+    "HR-V",
+    "CR-V",
+    "Passport",
+    "Pilot",
+    "Ridgeline",
+    "Odyssey",
+  ],
+
+  Hyundai: [
+    "Elantra",
+    "Sonata",
+    "Venue",
+    "Kona",
+    "Tucson",
+    "Santa Fe",
+    "Palisade",
+    "Ioniq 5",
+  ],
+
+  Infiniti: [
+    "Q50",
+    "QX50",
+    "QX55",
+    "QX60",
+    "QX80",
+  ],
+
+  Jeep: [
+    "Compass",
+    "Cherokee",
+    "Grand Cherokee",
+    "Wrangler",
+    "Gladiator",
+    "Wagoneer",
+  ],
+
+  Kia: [
+    "Forte",
+    "K4",
+    "K5",
+    "Soul",
+    "Seltos",
+    "Sportage",
+    "Sorento",
+    "Telluride",
+    "EV6",
+  ],
+
+  "Land Rover": [
+    "Discovery Sport",
+    "Discovery",
+    "Defender",
+    "Range Rover Evoque",
+    "Range Rover Sport",
+    "Range Rover",
+  ],
+
+  Lexus: [
+    "IS",
+    "ES",
+    "UX",
+    "NX",
+    "RX",
+    "GX",
+    "TX",
+    "LX",
+  ],
+
+  Lincoln: [
+    "Corsair",
+    "Nautilus",
+    "Aviator",
+    "Navigator",
+  ],
+
+  Mazda: [
+    "Mazda3",
+    "CX-30",
+    "CX-5",
+    "CX-50",
+    "CX-70",
+    "CX-90",
+    "MX-5",
+  ],
+
+  "Mercedes-Benz": [
+    "A-Class",
+    "C-Class",
+    "E-Class",
+    "S-Class",
+    "GLA",
+    "GLB",
+    "GLC",
+    "GLE",
+    "GLS",
+  ],
+
+  MINI: [
+    "Cooper",
+    "Countryman",
+  ],
+
+  Mitsubishi: [
+    "Mirage",
+    "RVR",
+    "Outlander",
+    "Outlander PHEV",
+  ],
+
+  Nissan: [
+    "Sentra",
+    "Altima",
+    "Kicks",
+    "Rogue",
+    "Murano",
+    "Pathfinder",
+    "Frontier",
+  ],
+
+  Porsche: [
+    "718",
+    "911",
+    "Macan",
+    "Cayenne",
+    "Panamera",
+    "Taycan",
+  ],
+
+  Ram: [
+    "1500",
+    "2500",
+    "3500",
+  ],
+
+  Subaru: [
+    "Impreza",
+    "Legacy",
+    "Crosstrek",
+    "Forester",
+    "Outback",
+    "Ascent",
+    "WRX",
+  ],
+
+  Tesla: [
+    "Model 3",
+    "Model Y",
+    "Model S",
+    "Model X",
+    "Cybertruck",
+  ],
+
+  Toyota: [
+    "Corolla",
+    "Camry",
+    "Prius",
+    "C-HR",
+    "Corolla Cross",
+    "RAV4",
+    "Highlander",
+    "4Runner",
+    "Tacoma",
+    "Tundra",
+  ],
+
+  Volkswagen: [
+    "Jetta",
+    "Golf",
+    "Taos",
+    "Tiguan",
+    "Atlas",
+    "ID.4",
+  ],
+
+  Volvo: [
+    "S60",
+    "S90",
+    "XC40",
+    "XC60",
+    "XC90",
+    "EX30",
+    "EX90",
+  ],
+};
 
 const services = [
   {
     title: "Oil change",
-    description: "Oil and routine engine maintenance.",
+    description:
+      "Oil and routine engine maintenance.",
     icon: "🛢️",
   },
   {
     title: "Tire service",
-    description: "Installation, rotation, balancing and repair.",
+    description:
+      "Installation, rotation, balancing and repair.",
     icon: "🛞",
   },
   {
     title: "Brake service",
-    description: "Brake inspection, pads, rotors and repairs.",
+    description:
+      "Brake inspection, pads, rotors and repairs.",
     icon: "🛑",
   },
   {
     title: "Battery",
-    description: "Battery testing, diagnosis and replacement.",
+    description:
+      "Battery testing, diagnosis and replacement.",
     icon: "🔋",
   },
   {
     title: "Diagnostics",
-    description: "Check engine lights, noises and unknown problems.",
+    description:
+      "Check engine lights, noises and unknown problems.",
     icon: "🔧",
   },
   {
     title: "Inspection & maintenance",
-    description: "General inspection and preventive maintenance.",
+    description:
+      "General inspection and preventive maintenance.",
     icon: "🔍",
   },
 ];
@@ -58,7 +451,807 @@ const garages = [
 ];
 
 /* ========================================================= */
-/* SHARED MECATREX CAR */
+/* CARIMAGESAPI 3D VIEWER */
+/* ========================================================= */
+
+function Vehicle3DViewer({
+  year,
+  make,
+  model,
+  color,
+  loaderReady,
+  loaderError,
+}: {
+  year: string;
+  make: string;
+  model: string;
+  color: string;
+  loaderReady: boolean;
+  loaderError: boolean;
+}) {
+  const containerRef =
+    useRef<HTMLDivElement | null>(null);
+
+  const [
+    stableVehicle,
+    setStableVehicle,
+  ] =
+    useState<Vehicle | null>(null);
+
+  const canLoad =
+    year.trim().length === 4 &&
+    make.trim().length >= 2 &&
+    model.trim().length >= 1;
+
+  useEffect(() => {
+    if (!canLoad) {
+      setStableVehicle(null);
+      return;
+    }
+
+    const timer =
+      window.setTimeout(() => {
+        setStableVehicle({
+          year: year.trim(),
+          make: make.trim(),
+          model: model.trim(),
+          color:
+            color.trim() ||
+            undefined,
+        });
+      }, 500);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [
+    year,
+    make,
+    model,
+    color,
+    canLoad,
+  ]);
+
+  useEffect(() => {
+    if (
+      !stableVehicle ||
+      !loaderReady ||
+      loaderError ||
+      !CAR_IMAGES_API_KEY ||
+      !containerRef.current
+    ) {
+      return;
+    }
+
+    const container =
+      containerRef.current;
+
+    container.innerHTML = "";
+
+    const viewer =
+      document.createElement(
+        "model-viewer"
+      );
+
+    viewer.setAttribute(
+      "data-ci-type",
+      "car"
+    );
+
+    viewer.setAttribute(
+      "data-ci-make",
+      stableVehicle.make
+    );
+
+    viewer.setAttribute(
+      "data-ci-model",
+      stableVehicle.model
+    );
+
+    viewer.setAttribute(
+      "data-ci-year",
+      stableVehicle.year
+    );
+
+    viewer.setAttribute(
+      "data-ci-view",
+      "front34"
+    );
+
+    viewer.setAttribute(
+      "data-ci-speed",
+      "18"
+    );
+
+    viewer.setAttribute(
+      "data-ci-light",
+      "5"
+    );
+
+    viewer.setAttribute(
+      "data-ci-backdrop",
+      "#F6F8FB"
+    );
+
+    viewer.setAttribute(
+      "camera-controls",
+      ""
+    );
+
+    viewer.setAttribute(
+      "auto-rotate",
+      ""
+    );
+
+    viewer.setAttribute(
+      "interaction-prompt",
+      "none"
+    );
+
+    viewer.setAttribute(
+      "shadow-intensity",
+      "1"
+    );
+
+    viewer.setAttribute(
+      "aria-label",
+      `${stableVehicle.year} ${stableVehicle.make} ${stableVehicle.model} 3D model`
+    );
+
+    viewer.style.width = "100%";
+    viewer.style.height = "100%";
+    viewer.style.display = "block";
+    viewer.style.background =
+      "#F6F8FB";
+    viewer.style.borderRadius =
+      "24px";
+    viewer.style.overflow =
+      "hidden";
+
+    container.appendChild(viewer);
+
+    return () => {
+      container.innerHTML = "";
+    };
+  }, [
+    stableVehicle,
+    loaderReady,
+    loaderError,
+  ]);
+
+  if (!CAR_IMAGES_API_KEY) {
+    return (
+      <div className="flex min-h-[330px] flex-col items-center justify-center rounded-[26px] bg-[#F6F8FB] px-8 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FFF4ED] text-[25px]">
+          ⚠️
+        </div>
+
+        <p className="mt-5 text-[18px] font-bold text-[#101828]">
+          CarImagesAPI key missing
+        </p>
+
+        <p className="mt-2 max-w-[360px] text-[14px] leading-6 text-[#667085]">
+          Add
+          NEXT_PUBLIC_CAR_IMAGES_API_KEY
+          to .env.local and restart the
+          development server.
+        </p>
+      </div>
+    );
+  }
+
+  if (!canLoad) {
+    return (
+      <div className="flex min-h-[330px] flex-col items-center justify-center rounded-[26px] bg-[#F6F8FB] px-8 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-white text-[32px] shadow-sm">
+          🚙
+        </div>
+
+        <p className="mt-5 text-[19px] font-bold text-[#101828]">
+          Your vehicle will appear here
+        </p>
+
+        <p className="mt-2 max-w-[330px] text-[15px] leading-6 text-[#667085]">
+          Choose the year, make and model
+          to see your car in 3D.
+        </p>
+      </div>
+    );
+  }
+
+  if (loaderError) {
+    return (
+      <div className="flex min-h-[330px] flex-col items-center justify-center rounded-[26px] bg-[#F6F8FB] px-8 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FFF4ED] text-[25px]">
+          ⚠️
+        </div>
+
+        <p className="mt-5 text-[18px] font-bold text-[#101828]">
+          3D viewer unavailable
+        </p>
+
+        <p className="mt-2 max-w-[360px] text-[14px] leading-6 text-[#667085]">
+          MECATREX could not load the
+          CarImagesAPI viewer.
+        </p>
+      </div>
+    );
+  }
+
+  if (
+    !loaderReady ||
+    !stableVehicle
+  ) {
+    return (
+      <div className="flex min-h-[330px] flex-col items-center justify-center rounded-[26px] bg-[#F6F8FB]">
+        <div className="h-12 w-12 animate-spin rounded-full border-[4px] border-[#DCE4EE] border-t-[#4771A6]" />
+
+        <p className="mt-5 text-[17px] font-bold text-[#101828]">
+          Loading your vehicle…
+        </p>
+
+        <p className="mt-1 text-[14px] text-[#667085]">
+          {year} {make} {model}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="relative min-h-[330px] overflow-hidden rounded-[26px] bg-[#F6F8FB]">
+        <div className="pointer-events-none absolute left-5 top-5 z-20 rounded-full border border-[#E4E7EC] bg-white/90 px-3.5 py-2 text-[12px] font-bold text-[#475467] shadow-sm backdrop-blur-md">
+          360° 3D
+        </div>
+
+        <div
+          ref={containerRef}
+          className="absolute inset-0"
+        />
+
+        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-4 py-2 text-[12px] font-semibold text-[#667085] shadow-sm backdrop-blur-md">
+          Drag to rotate
+        </div>
+      </div>
+
+      <div className="mt-3 text-center">
+        <p className="text-[13px] font-semibold text-[#475467]">
+          {stableVehicle.year}{" "}
+          {stableVehicle.make}{" "}
+          {stableVehicle.model}
+        </p>
+
+        {stableVehicle.color && (
+          <div className="mt-1.5 flex items-center justify-center gap-2 text-[12px] text-[#98A2B3]">
+            <span
+              className="h-2.5 w-2.5 rounded-full border border-black/10"
+              style={{
+                background:
+                  colorSwatches[
+                    stableVehicle
+                      .color
+                  ] || "#D0D5DD",
+              }}
+            />
+
+            {
+              stableVehicle.color
+            }
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ========================================================= */
+/* VEHICLE MODAL */
+/* ========================================================= */
+
+function VehicleModal({
+  open,
+  vehicle,
+  onClose,
+  onSave,
+  onClear,
+  loaderReady,
+  loaderError,
+}: {
+  open: boolean;
+  vehicle: Vehicle | null;
+  onClose: () => void;
+  onSave: (
+    vehicle: Vehicle
+  ) => void;
+  onClear: () => void;
+  loaderReady: boolean;
+  loaderError: boolean;
+}) {
+  const [year, setYear] =
+    useState("");
+
+  const [make, setMake] =
+    useState("");
+
+  const [model, setModel] =
+    useState("");
+
+  const [color, setColor] =
+    useState("");
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setYear(
+      vehicle?.year ?? ""
+    );
+
+    setMake(
+      vehicle?.make ?? ""
+    );
+
+    setModel(
+      vehicle?.model ?? ""
+    );
+
+    setColor(
+      vehicle?.color ?? ""
+    );
+  }, [open, vehicle]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handleKeyDown(
+      event: KeyboardEvent
+    ) {
+      if (
+        event.key === "Escape"
+      ) {
+        onClose();
+      }
+    }
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    document.body.style.overflow =
+      "hidden";
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+
+      document.body.style.overflow =
+        "";
+    };
+  }, [open, onClose]);
+
+  const modelSuggestions =
+    useMemo(() => {
+      if (!make) {
+        return [];
+      }
+
+      return (
+        modelsByMake[make] ?? []
+      );
+    }, [make]);
+
+  if (!open) {
+    return null;
+  }
+
+  function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    const cleanedYear =
+      year.trim();
+
+    const cleanedMake =
+      make.trim();
+
+    const cleanedModel =
+      model.trim();
+
+    const cleanedColor =
+      color.trim();
+
+    if (
+      !cleanedYear ||
+      !cleanedMake ||
+      !cleanedModel
+    ) {
+      return;
+    }
+
+    onSave({
+      year: cleanedYear,
+      make: cleanedMake,
+      model: cleanedModel,
+      color:
+        cleanedColor ||
+        undefined,
+    });
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#101828]/60 px-5 py-8 backdrop-blur-sm"
+      onMouseDown={(
+        event
+      ) => {
+        if (
+          event.target ===
+          event.currentTarget
+        ) {
+          onClose();
+        }
+      }}
+    >
+      <div className="my-auto w-full max-w-[1040px] overflow-hidden rounded-[34px] bg-white shadow-[0_35px_120px_rgba(16,24,40,0.4)]">
+        {/* HEADER */}
+
+        <div className="flex items-start justify-between border-b border-[#EAECF0] px-8 py-6 sm:px-9">
+          <div>
+            <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">
+              Your vehicle
+            </p>
+
+            <h2 className="mt-2 text-[31px] font-bold tracking-[-0.04em] text-[#101828]">
+              {vehicle
+                ? "Edit your vehicle"
+                : "Add your vehicle"}
+            </h2>
+
+            <p className="mt-2 max-w-[560px] text-[16px] leading-6 text-[#667085]">
+              Add a few details so
+              MECATREX can personalize
+              your garage search.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="ml-5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#F2F4F7] text-[22px] text-[#475467] transition hover:bg-[#EAECF0] hover:text-[#101828]"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+        >
+          <div className="grid gap-8 px-8 py-8 sm:px-9 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
+            {/* FORM */}
+
+            <div>
+              <div className="grid gap-5">
+                {/* YEAR */}
+
+                <div>
+                  <label
+                    htmlFor="vehicle-year"
+                    className="mb-2 block text-[14px] font-bold text-[#344054]"
+                  >
+                    Year
+                  </label>
+
+                  <select
+                    id="vehicle-year"
+                    value={year}
+                    onChange={(
+                      event
+                    ) =>
+                      setYear(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    required
+                    className="h-[58px] w-full cursor-pointer rounded-[16px] border border-[#D0D5DD] bg-white px-5 text-[17px] font-semibold text-[#101828] outline-none transition focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
+                  >
+                    <option value="">
+                      Select year
+                    </option>
+
+                    {years.map(
+                      (item) => (
+                        <option
+                          key={
+                            item
+                          }
+                          value={
+                            item
+                          }
+                        >
+                          {item}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                {/* MAKE */}
+
+                <div>
+                  <label
+                    htmlFor="vehicle-make"
+                    className="mb-2 block text-[14px] font-bold text-[#344054]"
+                  >
+                    Make
+                  </label>
+
+                  <select
+                    id="vehicle-make"
+                    value={make}
+                    onChange={(
+                      event
+                    ) => {
+                      const nextMake =
+                        event
+                          .target
+                          .value;
+
+                      setMake(
+                        nextMake
+                      );
+
+                      /*
+                       * Reset model when
+                       * manufacturer changes.
+                       */
+                      setModel("");
+                    }}
+                    required
+                    className="h-[58px] w-full cursor-pointer rounded-[16px] border border-[#D0D5DD] bg-white px-5 text-[17px] font-semibold text-[#101828] outline-none transition focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
+                  >
+                    <option value="">
+                      Select make
+                    </option>
+
+                    {makes.map(
+                      (item) => (
+                        <option
+                          key={
+                            item
+                          }
+                          value={
+                            item
+                          }
+                        >
+                          {item}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                {/* MODEL */}
+
+                <div>
+                  <label
+                    htmlFor="vehicle-model"
+                    className="mb-2 block text-[14px] font-bold text-[#344054]"
+                  >
+                    Model
+                  </label>
+
+                  <select
+                    id="vehicle-model"
+                    value={model}
+                    onChange={(
+                      event
+                    ) =>
+                      setModel(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    disabled={
+                      !make
+                    }
+                    required
+                    className="h-[58px] w-full cursor-pointer rounded-[16px] border border-[#D0D5DD] bg-white px-5 text-[17px] font-semibold text-[#101828] outline-none transition focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10 disabled:cursor-not-allowed disabled:bg-[#F9FAFB] disabled:text-[#98A2B3]"
+                  >
+                    <option value="">
+                      {make
+                        ? "Select model"
+                        : "Select a make first"}
+                    </option>
+
+                    {modelSuggestions.map(
+                      (item) => (
+                        <option
+                          key={
+                            item
+                          }
+                          value={
+                            item
+                          }
+                        >
+                          {item}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                {/* COLOR */}
+
+                <div>
+                  <label
+                    htmlFor="vehicle-color"
+                    className="mb-2 block text-[14px] font-bold text-[#344054]"
+                  >
+                    Color{" "}
+                    <span className="font-medium text-[#98A2B3]">
+                      (optional)
+                    </span>
+                  </label>
+
+                  <select
+                    id="vehicle-color"
+                    value={color}
+                    onChange={(
+                      event
+                    ) =>
+                      setColor(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    className="h-[58px] w-full cursor-pointer rounded-[16px] border border-[#D0D5DD] bg-white px-5 text-[17px] font-semibold text-[#101828] outline-none transition focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
+                  >
+                    <option value="">
+                      Select color
+                    </option>
+
+                    {vehicleColors.map(
+                      (item) => (
+                        <option
+                          key={
+                            item
+                          }
+                          value={
+                            item
+                          }
+                        >
+                          {item}
+                        </option>
+                      )
+                    )}
+                  </select>
+
+                  <p className="mt-2 text-[12px] leading-5 text-[#98A2B3]">
+                    Used to help identify
+                    your vehicle. The 3D
+                    preview color may differ.
+                  </p>
+                </div>
+              </div>
+
+              {/* SELECTED VEHICLE */}
+
+              {year &&
+                make &&
+                model && (
+                  <div className="mt-6 flex items-center gap-4 rounded-[18px] bg-[#EDF3FA] px-5 py-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-white text-[23px] shadow-sm">
+                      🚙
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.11em] text-[#4771A6]">
+                        Selected
+                      </p>
+
+                      <p className="mt-0.5 truncate text-[17px] font-bold text-[#101828]">
+                        {year}{" "}
+                        {make}{" "}
+                        {model}
+                      </p>
+
+                      {color && (
+                        <div className="mt-1.5 flex items-center gap-2 text-[13px] font-medium text-[#667085]">
+                          <span
+                            className="h-3 w-3 rounded-full border border-black/10"
+                            style={{
+                              background:
+                                colorSwatches[
+                                  color
+                                ] ||
+                                "#D0D5DD",
+                            }}
+                          />
+
+                          {
+                            color
+                          }
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+            </div>
+
+            {/* 3D PREVIEW */}
+
+            <Vehicle3DViewer
+              year={year}
+              make={make}
+              model={model}
+              color={color}
+              loaderReady={
+                loaderReady
+              }
+              loaderError={
+                loaderError
+              }
+            />
+          </div>
+
+          {/* FOOTER */}
+
+          <div className="flex flex-col-reverse gap-4 border-t border-[#EAECF0] px-8 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-9">
+            <div>
+              {vehicle && (
+                <button
+                  type="button"
+                  onClick={
+                    onClear
+                  }
+                  className="rounded-xl px-4 py-3 text-[14px] font-semibold text-[#B42318] transition hover:bg-[#FEF3F2]"
+                >
+                  Clear saved vehicle
+                </button>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={
+                  onClose
+                }
+                className="rounded-[14px] border border-[#D0D5DD] bg-white px-6 py-3.5 text-[15px] font-bold text-[#344054] transition hover:bg-[#F9FAFB]"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                className="rounded-[14px] bg-[#4771A6] px-7 py-3.5 text-[15px] font-bold text-white transition hover:bg-[#3C6190]"
+              >
+                {vehicle
+                  ? "Save changes"
+                  : "Add vehicle"}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ========================================================= */
+/* SHARED CARTOON CAR */
 /* ========================================================= */
 
 function MecatrexCar({
@@ -92,11 +1285,33 @@ function MecatrexCar({
         fill="#CFE0F4"
       />
 
-      <circle cx="96" cy="181" r="18" fill="#172131" />
-      <circle cx="96" cy="181" r="8" fill="#DCE4EE" />
+      <circle
+        cx="96"
+        cy="181"
+        r="18"
+        fill="#172131"
+      />
 
-      <circle cx="204" cy="181" r="18" fill="#172131" />
-      <circle cx="204" cy="181" r="8" fill="#DCE4EE" />
+      <circle
+        cx="96"
+        cy="181"
+        r="8"
+        fill="#DCE4EE"
+      />
+
+      <circle
+        cx="204"
+        cy="181"
+        r="18"
+        fill="#172131"
+      />
+
+      <circle
+        cx="204"
+        cy="181"
+        r="8"
+        fill="#DCE4EE"
+      />
 
       <rect
         x="63"
@@ -146,7 +1361,6 @@ function BrokenCarScene() {
         fill="#D8E0EA"
       />
 
-      {/* CAR BODY */}
       <path
         d="M66 148L82 113C86 104 94 98 104 98H190C200 98 209 103 214 111L234 148"
         fill="#4771A6"
@@ -161,7 +1375,6 @@ function BrokenCarScene() {
         fill="#315C91"
       />
 
-      {/* WINDOWS */}
       <path
         d="M103 108H145V138H89L101 111C102 110 102 109 103 108Z"
         fill="#CFE0F4"
@@ -172,15 +1385,11 @@ function BrokenCarScene() {
         fill="#CFE0F4"
       />
 
-      {/* SIMPLE OPEN HOOD
-          Starts directly from the front edge of the car.
-      */}
       <path
         d="M224 140L251 111L257 117L230 146Z"
         fill="#4771A6"
       />
 
-      {/* WHEELS */}
       <circle
         cx="96"
         cy="181"
@@ -209,7 +1418,6 @@ function BrokenCarScene() {
         fill="#DCE4EE"
       />
 
-      {/* LIGHTS */}
       <rect
         x="63"
         y="150"
@@ -228,7 +1436,6 @@ function BrokenCarScene() {
         fill="#F4C95D"
       />
 
-      {/* BLACK SMOKE */}
       <g>
         <animateTransform
           attributeName="transform"
@@ -267,7 +1474,6 @@ function BrokenCarScene() {
         />
       </g>
 
-      {/* PERSON */}
       <g>
         <circle
           cx="296"
@@ -312,7 +1518,6 @@ function BrokenCarScene() {
           fill="#83A7D3"
         />
 
-        {/* LEFT ARM */}
         <path
           d="M281 120Q269 139 271 158"
           fill="none"
@@ -359,7 +1564,6 @@ function BrokenCarScene() {
           />
         </circle>
 
-        {/* RIGHT ARM */}
         <path
           d="M313 120Q323 139 321 158"
           fill="none"
@@ -427,7 +1631,6 @@ function BrokenCarScene() {
         />
       </g>
 
-      {/* STRESS LINES */}
       <g
         stroke="#E34D59"
         strokeWidth="4"
@@ -514,7 +1717,6 @@ function BookingScene() {
         fill="#172131"
       />
 
-      {/* PHONE */}
       <g>
         <animateTransform
           attributeName="transform"
@@ -551,7 +1753,6 @@ function BookingScene() {
           fill="#CBD5E1"
         />
 
-        {/* LOGO */}
         <g transform="translate(128 101)">
           <rect
             width="34"
@@ -645,7 +1846,6 @@ function BookingScene() {
         </rect>
       </g>
 
-      {/* HANDS */}
       <path
         d="M88 206Q113 182 128 178"
         fill="none"
@@ -745,7 +1945,6 @@ function KeysScene() {
         fill="#F6F8FB"
       />
 
-      {/* THOUGHT BUBBLE */}
       <ellipse
         cx="118"
         cy="69"
@@ -774,7 +1973,6 @@ function KeysScene() {
         strokeWidth="2"
       />
 
-      {/* SUN */}
       <circle
         cx="177"
         cy="39"
@@ -782,13 +1980,11 @@ function KeysScene() {
         fill="#F6C954"
       />
 
-      {/* HILLS */}
       <path
         d="M32 80C50 66 70 67 87 79C102 66 125 64 143 78C157 68 176 69 195 82V94H32Z"
         fill="#CFE4C5"
       />
 
-      {/* ROAD */}
       <path
         d="M29 91H203"
         stroke="#B9C9DA"
@@ -796,7 +1992,6 @@ function KeysScene() {
         strokeLinecap="round"
       />
 
-      {/* ROAD MOVEMENT */}
       <g>
         <animateTransform
           attributeName="transform"
@@ -847,7 +2042,6 @@ function KeysScene() {
         />
       </g>
 
-      {/* CAR INSIDE THOUGHT */}
       <g>
         <animateTransform
           attributeName="transform"
@@ -860,7 +2054,6 @@ function KeysScene() {
         <g transform="matrix(0.46 0 0 0.46 47 9)">
           <MecatrexCar />
 
-          {/* DRIVER */}
           <circle
             cx="181"
             cy="119"
@@ -897,7 +2090,6 @@ function KeysScene() {
         </g>
       </g>
 
-      {/* CUSTOMER */}
       <g>
         <circle
           cx="95"
@@ -953,7 +2145,6 @@ function KeysScene() {
         />
       </g>
 
-      {/* MECHANIC */}
       <g>
         <circle
           cx="276"
@@ -1023,7 +2214,6 @@ function KeysScene() {
         />
       </g>
 
-      {/* KEY */}
       <g>
         <animateTransform
           attributeName="transform"
@@ -1066,10 +2256,6 @@ function KeysScene() {
   );
 }
 
-/* ========================================================= */
-/* TIMELINE CONNECTOR */
-/* ========================================================= */
-
 function TimelineConnector() {
   return (
     <div
@@ -1088,438 +2274,732 @@ function TimelineConnector() {
 /* ========================================================= */
 
 export default function Home() {
+  const [
+    vehicleModalOpen,
+    setVehicleModalOpen,
+  ] = useState(false);
+
+  const [
+    vehicle,
+    setVehicle,
+  ] =
+    useState<Vehicle | null>(null);
+
+  const [
+    carImagesReady,
+    setCarImagesReady,
+  ] = useState(false);
+
+  const [
+    carImagesLoadError,
+    setCarImagesLoadError,
+  ] = useState(false);
+
+  useEffect(() => {
+    try {
+      const storedVehicle =
+        window.localStorage.getItem(
+          VEHICLE_STORAGE_KEY
+        );
+
+      if (!storedVehicle) {
+        return;
+      }
+
+      const parsedVehicle =
+        JSON.parse(
+          storedVehicle
+        ) as Vehicle;
+
+      if (
+        parsedVehicle.year &&
+        parsedVehicle.make &&
+        parsedVehicle.model
+      ) {
+        setVehicle(
+          parsedVehicle
+        );
+      }
+    } catch {
+      window.localStorage.removeItem(
+        VEHICLE_STORAGE_KEY
+      );
+    }
+  }, []);
+
+  function handleSaveVehicle(
+    nextVehicle: Vehicle
+  ) {
+    setVehicle(
+      nextVehicle
+    );
+
+    window.localStorage.setItem(
+      VEHICLE_STORAGE_KEY,
+      JSON.stringify(
+        nextVehicle
+      )
+    );
+
+    setVehicleModalOpen(
+      false
+    );
+  }
+
+  function handleClearVehicle() {
+    setVehicle(null);
+
+    window.localStorage.removeItem(
+      VEHICLE_STORAGE_KEY
+    );
+
+    setVehicleModalOpen(
+      false
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-white text-[#101828]">
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-[102px] max-w-[1400px] items-center justify-between px-8">
-          <a
-            href="#"
-            className="flex shrink-0 items-center"
-          >
-            <Image
-              src="/mecatrex-logo-web.png"
-              alt="MECATREX"
-              width={320}
-              height={90}
-              priority
-              className="h-[64px] w-auto object-contain"
-            />
-          </a>
+    <>
+      {/* CARIMAGESAPI */}
 
-          <nav className="hidden items-center gap-10 lg:flex">
-            <a
-              href="#find"
-              className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
-            >
-              Find a garage
-            </a>
+      {CAR_IMAGES_API_KEY && (
+        <Script
+          id="carimages-api-loader"
+          src="https://carimagesapi.com/assets/js/carimages.js"
+          data-api-key={
+            CAR_IMAGES_API_KEY
+          }
+          strategy="afterInteractive"
+          onReady={() => {
+            setCarImagesReady(
+              true
+            );
 
-            <a
-              href="#services"
-              className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
-            >
-              Services
-            </a>
+            setCarImagesLoadError(
+              false
+            );
+          }}
+          onError={() => {
+            setCarImagesReady(
+              false
+            );
 
-            <a
-              href="#garages"
-              className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
-            >
-              For garages
-            </a>
+            setCarImagesLoadError(
+              true
+            );
+          }}
+        />
+      )}
 
+      <VehicleModal
+        open={
+          vehicleModalOpen
+        }
+        vehicle={vehicle}
+        onClose={() =>
+          setVehicleModalOpen(
+            false
+          )
+        }
+        onSave={
+          handleSaveVehicle
+        }
+        onClear={
+          handleClearVehicle
+        }
+        loaderReady={
+          carImagesReady
+        }
+        loaderError={
+          carImagesLoadError
+        }
+      />
+
+      <main className="min-h-screen bg-white text-[#101828]">
+        {/* HEADER */}
+
+        <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-white/95 backdrop-blur-xl">
+          <div className="mx-auto flex h-[102px] max-w-[1400px] items-center justify-between px-8">
             <a
               href="#"
-              className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
+              className="flex shrink-0 items-center"
             >
-              Deals
+              <Image
+                src="/mecatrex-logo-web.png"
+                alt="MECATREX"
+                width={320}
+                height={90}
+                priority
+                className="h-[64px] w-auto object-contain"
+              />
             </a>
-          </nav>
 
-          <div className="flex items-center gap-4">
-            <button className="hidden rounded-xl px-6 py-3.5 text-[17px] font-semibold text-[#344054] transition hover:bg-[#F2F4F7] sm:block">
-              Log in
-            </button>
+            <nav className="hidden items-center gap-10 lg:flex">
+              <a
+                href="#find"
+                className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
+              >
+                Find a garage
+              </a>
 
-            <button className="rounded-xl bg-[#101828] px-7 py-3.5 text-[17px] font-semibold text-white transition hover:bg-[#4771A6]">
-              Sign up
-            </button>
-          </div>
-        </div>
-      </header>
+              <a
+                href="#services"
+                className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
+              >
+                Services
+              </a>
 
-      {/* HERO */}
-      <section
-        id="find"
-        className="px-5 pt-7 lg:px-8"
-      >
-        <div className="relative mx-auto max-w-[1450px] overflow-hidden rounded-[36px] bg-[#0D1B2A]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(71,113,166,0.52),transparent_48%)]" />
+              <a
+                href="#garages"
+                className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
+              >
+                For garages
+              </a>
 
-          <div className="absolute left-1/2 top-[-340px] h-[800px] w-[800px] -translate-x-1/2 rounded-full border border-white/[0.07]" />
+              <a
+                href="#"
+                className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
+              >
+                Deals
+              </a>
+            </nav>
 
-          <div className="absolute left-1/2 top-[-230px] h-[600px] w-[600px] -translate-x-1/2 rounded-full border border-white/[0.07]" />
+            <div className="flex items-center gap-4">
+              <button className="hidden rounded-xl px-6 py-3.5 text-[17px] font-semibold text-[#344054] transition hover:bg-[#F2F4F7] sm:block">
+                Log in
+              </button>
 
-          <div className="relative z-10 flex min-h-[720px] flex-col items-center justify-center px-8 py-20 text-center">
-            <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-5 py-3 text-[17px] font-semibold text-white backdrop-blur-md">
-              <span className="h-3 w-3 rounded-full bg-[#83A7D3]" />
-              Vehicle service made simple
+              <button className="rounded-xl bg-[#101828] px-7 py-3.5 text-[17px] font-semibold text-white transition hover:bg-[#4771A6]">
+                Sign up
+              </button>
             </div>
+          </div>
+        </header>
 
-            <h1 className="mx-auto max-w-[1100px] text-[58px] font-bold leading-[1.03] tracking-[-0.05em] text-white sm:text-[72px] lg:text-[84px]">
-              Your car needs service.
+        {/* HERO */}
 
-              <span className="mt-3 block text-[#83A7D3]">
-                Book the right garage in 1 minute.
-              </span>
-            </h1>
+        <section
+          id="find"
+          className="px-5 pt-7 lg:px-8"
+        >
+          <div className="relative mx-auto max-w-[1450px] overflow-hidden rounded-[36px] bg-[#0D1B2A]">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(71,113,166,0.52),transparent_48%)]" />
 
-            <p className="mx-auto mt-8 max-w-[820px] text-[21px] leading-9 text-white/70 sm:text-[23px]">
-              Tell us what your vehicle needs, compare nearby garages and book
-              your appointment — without making a single phone call.
-            </p>
+            <div className="absolute left-1/2 top-[-340px] h-[800px] w-[800px] -translate-x-1/2 rounded-full border border-white/[0.07]" />
 
-            {/* SEARCH */}
-            <div className="mt-14 w-full max-w-[1180px] rounded-[28px] bg-white p-3 shadow-[0_30px_100px_rgba(0,0,0,0.3)]">
-              <div className="grid gap-2 lg:grid-cols-[1fr_1.3fr_1fr_0.8fr]">
-                <button className="flex min-h-[110px] flex-col items-center justify-center rounded-[20px] px-6 py-5 text-center transition hover:bg-[#F8FAFC]">
-                  <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
-                    Vehicle
-                  </p>
+            <div className="absolute left-1/2 top-[-230px] h-[600px] w-[600px] -translate-x-1/2 rounded-full border border-white/[0.07]" />
 
-                  <p className="mt-2.5 text-[19px] font-semibold text-[#101828]">
-                    Add your vehicle
-                  </p>
+            <div className="relative z-10 flex min-h-[720px] flex-col items-center justify-center px-8 py-20 text-center">
+              <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-5 py-3 text-[17px] font-semibold text-white backdrop-blur-md">
+                <span className="h-3 w-3 rounded-full bg-[#83A7D3]" />
 
-                  <span className="mt-1 text-[20px] text-[#98A2B3]">
-                    ↓
-                  </span>
-                </button>
+                Vehicle service made simple
+              </div>
 
-                <button className="flex min-h-[110px] flex-col items-center justify-center rounded-[20px] px-6 py-5 text-center transition hover:bg-[#F8FAFC]">
-                  <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
-                    Repair or service
-                  </p>
+              <h1 className="mx-auto max-w-[1100px] text-[58px] font-bold leading-[1.03] tracking-[-0.05em] text-white sm:text-[72px] lg:text-[84px]">
+                Your car needs service.
 
-                  <p className="mt-2.5 text-[19px] font-semibold text-[#101828]">
-                    What does your vehicle need?
-                  </p>
+                <span className="mt-3 block text-[#83A7D3]">
+                  Book the right garage
+                  in 1 minute.
+                </span>
+              </h1>
 
-                  <span className="mt-1 text-[20px] text-[#98A2B3]">
-                    ↓
-                  </span>
-                </button>
+              <p className="mx-auto mt-8 max-w-[820px] text-[21px] leading-9 text-white/70 sm:text-[23px]">
+                Tell us what your
+                vehicle needs, compare
+                nearby garages and book
+                your appointment —
+                without making a single
+                phone call.
+              </p>
 
-                <button className="flex min-h-[110px] flex-col items-center justify-center rounded-[20px] px-6 py-5 text-center transition hover:bg-[#F8FAFC]">
-                  <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
-                    Location
-                  </p>
+              {/* SEARCH */}
 
-                  <p className="mt-2.5 text-[19px] font-semibold text-[#101828]">
-                    Montreal, QC
-                  </p>
+              <div className="mt-14 w-full max-w-[1180px] rounded-[28px] bg-white p-3 shadow-[0_30px_100px_rgba(0,0,0,0.3)]">
+                <div className="grid gap-2 lg:grid-cols-[1fr_1.3fr_1fr_0.8fr]">
+                  {/* VEHICLE */}
 
-                  <span className="mt-1 text-[20px] text-[#98A2B3]">
-                    ↓
-                  </span>
-                </button>
+                  <div className="group relative min-h-[110px] overflow-hidden rounded-[20px] transition hover:bg-[#F8FAFC]">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVehicleModalOpen(
+                          true
+                        )
+                      }
+                      className="flex min-h-[110px] w-full flex-col items-center justify-center px-6 py-4 text-center"
+                    >
+                      <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
+                        Vehicle
+                      </p>
 
-                <div className="flex p-1">
-                  <button className="w-full rounded-[20px] bg-[#4771A6] px-8 py-5 text-[19px] font-bold text-white transition hover:bg-[#3C6190]">
-                    Find garages
+                      <p className="mt-2.5 max-w-[260px] truncate text-[19px] font-semibold text-[#101828] transition group-hover:-translate-y-1">
+                        {vehicle
+                          ? `${vehicle.year} ${vehicle.make} ${vehicle.model}`
+                          : "Add your vehicle"}
+                      </p>
+
+                      {vehicle ? (
+                        <div className="relative mt-1.5 h-[21px] w-full">
+                          {/* NORMAL */}
+
+                          <div className="absolute inset-0 flex items-center justify-center gap-2 text-[13px] font-medium text-[#98A2B3] transition duration-200 group-hover:pointer-events-none group-hover:opacity-0">
+                            {vehicle.color ? (
+                              <>
+                                <span
+                                  className="h-2.5 w-2.5 rounded-full border border-black/10"
+                                  style={{
+                                    background:
+                                      colorSwatches[
+                                        vehicle
+                                          .color
+                                      ] ||
+                                      "#D0D5DD",
+                                  }}
+                                />
+
+                                {
+                                  vehicle.color
+                                }
+                              </>
+                            ) : (
+                              "Saved vehicle"
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="mt-1 text-[14px] font-semibold text-[#4771A6]">
+                          Choose vehicle
+                        </span>
+                      )}
+                    </button>
+
+                    {/* HOVER ACTIONS */}
+
+                    {vehicle && (
+                      <div className="pointer-events-none absolute bottom-[13px] left-0 right-0 z-10 flex items-center justify-center gap-3 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setVehicleModalOpen(
+                              true
+                            )
+                          }
+                          className="text-[13px] font-bold text-[#4771A6] transition hover:text-[#315C91]"
+                        >
+                          Change vehicle
+                        </button>
+
+                        <span className="text-[#D0D5DD]">
+                          •
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={
+                            handleClearVehicle
+                          }
+                          className="text-[13px] font-bold text-[#667085] transition hover:text-[#B42318]"
+                        >
+                          Clear saved vehicle
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* REPAIR */}
+
+                  <button className="flex min-h-[110px] flex-col items-center justify-center rounded-[20px] px-6 py-5 text-center transition hover:bg-[#F8FAFC]">
+                    <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
+                      Repair or service
+                    </p>
+
+                    <p className="mt-2.5 text-[19px] font-semibold text-[#101828]">
+                      What does your
+                      vehicle need?
+                    </p>
+
+                    <span className="mt-1 text-[20px] text-[#98A2B3]">
+                      ↓
+                    </span>
                   </button>
+
+                  {/* LOCATION */}
+
+                  <button className="flex min-h-[110px] flex-col items-center justify-center rounded-[20px] px-6 py-5 text-center transition hover:bg-[#F8FAFC]">
+                    <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
+                      Location
+                    </p>
+
+                    <p className="mt-2.5 text-[19px] font-semibold text-[#101828]">
+                      Montreal, QC
+                    </p>
+
+                    <span className="mt-1 text-[20px] text-[#98A2B3]">
+                      ↓
+                    </span>
+                  </button>
+
+                  {/* SEARCH */}
+
+                  <div className="flex p-1">
+                    <button className="w-full rounded-[20px] bg-[#4771A6] px-8 py-5 text-[19px] font-bold text-white transition hover:bg-[#3C6190]">
+                      Find garages
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="mt-9 flex flex-wrap justify-center gap-x-10 gap-y-5 text-[17px] font-medium text-white/70">
-              <span>✓ Compare prices</span>
-              <span>✓ Real availability</span>
-              <span>✓ Instant booking</span>
-              <span>✓ Towing when needed</span>
+              <div className="mt-9 flex flex-wrap justify-center gap-x-10 gap-y-5 text-[17px] font-medium text-white/70">
+                <span>
+                  ✓ Compare prices
+                </span>
+
+                <span>
+                  ✓ Real availability
+                </span>
+
+                <span>
+                  ✓ Instant booking
+                </span>
+
+                <span>
+                  ✓ Towing when needed
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* JOURNEY */}
-      <section className="mx-auto max-w-[1450px] px-8 py-24">
-        <div className="text-center">
-          <p className="text-[17px] font-bold text-[#4771A6]">
-            How MECATREX works
-          </p>
+        {/* JOURNEY */}
 
-          <h2 className="mx-auto mt-3 max-w-[930px] text-[46px] font-bold tracking-[-0.04em] sm:text-[56px]">
-            From car problem to booked garage in under 1 minute.
-          </h2>
+        <section className="mx-auto max-w-[1450px] px-8 py-24">
+          <div className="text-center">
+            <p className="text-[17px] font-bold text-[#4771A6]">
+              How MECATREX works
+            </p>
 
-          <p className="mx-auto mt-5 max-w-[760px] text-[20px] leading-8 text-[#667085]">
-            Three simple moments. One smooth experience.
-          </p>
-        </div>
+            <h2 className="mx-auto mt-3 max-w-[930px] text-[46px] font-bold tracking-[-0.04em] sm:text-[56px]">
+              From car problem to booked
+              garage in under 1 minute.
+            </h2>
 
-        <div className="journey-scroll mt-16">
-          <div className="journey-flow">
-            {/* SCENE 1 */}
-            <div className="timeline-card">
-              <div className="timeline-art">
-                <BrokenCarScene />
+            <p className="mx-auto mt-5 max-w-[760px] text-[20px] leading-8 text-[#667085]">
+              Three simple moments. One
+              smooth experience.
+            </p>
+          </div>
+
+          <div className="journey-scroll mt-16">
+            <div className="journey-flow">
+              <div className="timeline-card">
+                <div className="timeline-art">
+                  <BrokenCarScene />
+                </div>
+
+                <p className="mt-7 text-[15px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">
+                  The problem
+                </p>
+
+                <h3 className="mt-3 text-[28px] font-bold">
+                  Your car needs help
+                </h3>
+
+                <p className="mt-4 text-[18px] leading-8 text-[#667085]">
+                  Something goes wrong and
+                  you need the right garage
+                  without wasting time
+                  calling around.
+                </p>
               </div>
 
-              <p className="mt-7 text-[15px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">
-                The problem
-              </p>
+              <TimelineConnector />
 
-              <h3 className="mt-3 text-[28px] font-bold">
-                Your car needs help
-              </h3>
+              <div className="timeline-card timeline-card-primary">
+                <div className="timeline-art">
+                  <BookingScene />
+                </div>
 
-              <p className="mt-4 text-[18px] leading-8 text-[#667085]">
-                Something goes wrong and you need the right garage without
-                wasting time calling around.
-              </p>
-            </div>
+                <p className="mt-7 text-[15px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">
+                  Under 1 minute
+                </p>
 
-            <TimelineConnector />
+                <h3 className="mt-3 text-[28px] font-bold">
+                  Book on MECATREX
+                </h3>
 
-            {/* SCENE 2 */}
-            <div className="timeline-card timeline-card-primary">
-              <div className="timeline-art">
-                <BookingScene />
+                <p className="mt-4 text-[18px] leading-8 text-[#667085]">
+                  Add your vehicle, choose
+                  your service and reserve
+                  the garage that works
+                  best for you.
+                </p>
               </div>
 
-              <p className="mt-7 text-[15px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">
-                Under 1 minute
-              </p>
+              <TimelineConnector />
 
-              <h3 className="mt-3 text-[28px] font-bold">
-                Book on MECATREX
-              </h3>
+              <div className="timeline-card">
+                <div className="timeline-art">
+                  <KeysScene />
+                </div>
 
-              <p className="mt-4 text-[18px] leading-8 text-[#667085]">
-                Add your vehicle, choose your service and reserve the garage
-                that works best for you.
-              </p>
-            </div>
+                <p className="mt-7 text-[15px] font-bold uppercase tracking-[0.14em] text-[#31A66A]">
+                  Done
+                </p>
 
-            <TimelineConnector />
+                <h3 className="mt-3 text-[28px] font-bold">
+                  Back on the road
+                </h3>
 
-            {/* SCENE 3 */}
-            <div className="timeline-card">
-              <div className="timeline-art">
-                <KeysScene />
+                <p className="mt-4 text-[18px] leading-8 text-[#667085]">
+                  Your garage completes the
+                  service, hands your keys
+                  back and you’re ready to
+                  drive again.
+                </p>
               </div>
-
-              <p className="mt-7 text-[15px] font-bold uppercase tracking-[0.14em] text-[#31A66A]">
-                Done
-              </p>
-
-              <h3 className="mt-3 text-[28px] font-bold">
-                Back on the road
-              </h3>
-
-              <p className="mt-4 text-[18px] leading-8 text-[#667085]">
-                Your garage completes the service, hands your keys back and
-                you’re ready to drive again.
-              </p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* SERVICES */}
-      <section
-        id="services"
-        className="bg-[#F5F7FA]"
-      >
-        <div className="mx-auto max-w-[1350px] px-8 py-24">
-          <div className="mb-12 flex items-end justify-between gap-8">
-            <div>
+        {/* SERVICES */}
+
+        <section
+          id="services"
+          className="bg-[#F5F7FA]"
+        >
+          <div className="mx-auto max-w-[1350px] px-8 py-24">
+            <div className="mb-12 text-center">
               <p className="text-[17px] font-bold text-[#4771A6]">
                 Popular services
               </p>
 
-              <h2 className="mt-3 text-[46px] font-bold tracking-[-0.04em] sm:text-[56px]">
-                What does your vehicle need?
+              <h2 className="mx-auto mt-3 max-w-[950px] text-[46px] font-bold tracking-[-0.04em] sm:text-[56px]">
+                What does your vehicle
+                need?
               </h2>
             </div>
 
-            <button className="hidden text-[18px] font-semibold text-[#475467] transition hover:text-[#4771A6] md:block">
-              View all services →
-            </button>
-          </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {services.map(
+                (service) => (
+                  <button
+                    key={
+                      service.title
+                    }
+                    className="group rounded-[28px] border border-[#EAECF0] bg-white p-8 text-left transition duration-300 hover:-translate-y-2 hover:border-[#4771A6]/40 hover:shadow-[0_22px_60px_rgba(16,24,40,0.12)]"
+                  >
+                    <div className="flex h-[82px] w-[82px] items-center justify-center rounded-[24px] bg-[#EDF3FA] text-[42px]">
+                      {
+                        service.icon
+                      }
+                    </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => (
-              <button
-                key={service.title}
-                className="group rounded-[28px] border border-[#EAECF0] bg-white p-8 text-left transition duration-300 hover:-translate-y-2 hover:border-[#4771A6]/40 hover:shadow-[0_22px_60px_rgba(16,24,40,0.12)]"
-              >
-                <div className="flex h-[82px] w-[82px] items-center justify-center rounded-[24px] bg-[#EDF3FA] text-[42px]">
-                  {service.icon}
-                </div>
-
-                <h3 className="mt-10 text-[25px] font-bold">
-                  {service.title}
-                </h3>
-
-                <p className="mt-3 min-h-[64px] text-[18px] leading-7 text-[#667085]">
-                  {service.description}
-                </p>
-
-                <p className="mt-8 text-[17px] font-bold text-[#4771A6]">
-                  Find a garage →
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* GARAGES */}
-      <section className="mx-auto max-w-[1350px] px-8 py-24">
-        <div className="mb-12">
-          <p className="text-[17px] font-bold text-[#4771A6]">
-            Available near you
-          </p>
-
-          <h2 className="mt-3 text-[46px] font-bold tracking-[-0.04em] sm:text-[56px]">
-            Garages ready to help.
-          </h2>
-        </div>
-
-        <div className="grid gap-7 lg:grid-cols-3">
-          {garages.map((garage, index) => (
-            <article
-              key={garage.name}
-              className="overflow-hidden rounded-[30px] border border-[#EAECF0] bg-white transition duration-300 hover:-translate-y-2 hover:shadow-[0_25px_70px_rgba(16,24,40,0.13)]"
-            >
-              <div
-                className={`relative h-[240px] ${
-                  index === 0
-                    ? "bg-gradient-to-br from-[#14263A] to-[#4771A6]"
-                    : index === 1
-                    ? "bg-gradient-to-br from-[#223A52] to-[#7291B7]"
-                    : "bg-gradient-to-br from-[#101828] to-[#385F8D]"
-                }`}
-              >
-                <div className="absolute inset-0 flex items-center justify-center text-[72px] opacity-90">
-                  🔧
-                </div>
-
-                <div className="absolute bottom-5 left-5">
-                  <span className="rounded-full bg-white px-4 py-2 text-[15px] font-bold text-[#101828]">
-                    Open
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-8">
-                <div className="flex items-start justify-between gap-5">
-                  <div>
-                    <h3 className="text-[25px] font-bold">
-                      {garage.name}
+                    <h3 className="mt-10 text-[25px] font-bold">
+                      {
+                        service.title
+                      }
                     </h3>
 
-                    <p className="mt-2 text-[18px] text-[#667085]">
-                      ⭐ {garage.rating} · {garage.distance}
+                    <p className="mt-3 min-h-[64px] text-[18px] leading-7 text-[#667085]">
+                      {
+                        service.description
+                      }
                     </p>
-                  </div>
 
-                  <div className="rounded-xl bg-[#EDF3FA] px-5 py-2.5 text-[19px] font-bold text-[#4771A6]">
-                    {garage.price}
-                  </div>
-                </div>
-
-                <div className="mt-7 rounded-[18px] bg-[#F8FAFC] p-5">
-                  <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                    Next availability
-                  </p>
-
-                  <p className="mt-2 text-[19px] font-semibold">
-                    {garage.availability}
-                  </p>
-                </div>
-
-                <button className="mt-6 w-full rounded-xl bg-[#101828] py-4 text-[18px] font-bold text-white transition hover:bg-[#4771A6]">
-                  View garage
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* GARAGE BUSINESS */}
-      <section
-        id="garages"
-        className="mx-auto max-w-[1350px] px-8 pb-28"
-      >
-        <div className="overflow-hidden rounded-[36px] bg-[#101828] px-10 py-16 text-white lg:px-16 lg:py-20">
-          <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div>
-              <p className="text-[17px] font-bold text-[#83A7D3]">
-                MECATREX for garages
-              </p>
-
-              <h2 className="mt-4 text-[48px] font-bold leading-[1.05] tracking-[-0.04em] sm:text-[60px]">
-                More customers.
-                <br />
-                Less chaos.
-              </h2>
-
-              <p className="mt-7 max-w-[570px] text-[20px] leading-9 text-white/65">
-                Manage appointments, organize your shop calendar and promote
-                seasonal offers from one simple platform.
-              </p>
-
-              <button className="mt-9 rounded-xl bg-white px-7 py-4 text-[18px] font-bold text-[#101828] transition hover:bg-[#EDF3FA]">
-                Discover tools for garages
-              </button>
+                    <p className="mt-8 text-[17px] font-bold text-[#4771A6]">
+                      Find a garage →
+                    </p>
+                  </button>
+                )
+              )}
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div className="rounded-[28px] border border-white/10 bg-white/[0.06] p-8">
-                <div className="text-[44px]">
-                  📅
-                </div>
+            <div className="mt-10 text-center">
+              <button className="text-[18px] font-semibold text-[#475467] transition hover:text-[#4771A6]">
+                View all services →
+              </button>
+            </div>
+          </div>
+        </section>
 
-                <p className="mt-8 text-[15px] font-bold tracking-wider text-[#83A7D3]">
-                  CALENDAR
+        {/* GARAGES */}
+
+        <section className="mx-auto max-w-[1350px] px-8 py-24">
+          <div className="mb-12 text-center">
+            <p className="text-[17px] font-bold text-[#4771A6]">
+              Available near you
+            </p>
+
+            <h2 className="mx-auto mt-3 max-w-[950px] text-[46px] font-bold tracking-[-0.04em] sm:text-[56px]">
+              Garages ready to help.
+            </h2>
+          </div>
+
+          <div className="grid gap-7 lg:grid-cols-3">
+            {garages.map(
+              (
+                garage,
+                index
+              ) => (
+                <article
+                  key={
+                    garage.name
+                  }
+                  className="overflow-hidden rounded-[30px] border border-[#EAECF0] bg-white transition duration-300 hover:-translate-y-2 hover:shadow-[0_25px_70px_rgba(16,24,40,0.13)]"
+                >
+                  <div
+                    className={`relative h-[240px] ${
+                      index === 0
+                        ? "bg-gradient-to-br from-[#14263A] to-[#4771A6]"
+                        : index ===
+                            1
+                          ? "bg-gradient-to-br from-[#223A52] to-[#7291B7]"
+                          : "bg-gradient-to-br from-[#101828] to-[#385F8D]"
+                    }`}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center text-[72px] opacity-90">
+                      🔧
+                    </div>
+
+                    <div className="absolute bottom-5 left-5">
+                      <span className="rounded-full bg-white px-4 py-2 text-[15px] font-bold text-[#101828]">
+                        Open
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-8">
+                    <div className="flex items-start justify-between gap-5">
+                      <div>
+                        <h3 className="text-[25px] font-bold">
+                          {
+                            garage.name
+                          }
+                        </h3>
+
+                        <p className="mt-2 text-[18px] text-[#667085]">
+                          ⭐{" "}
+                          {
+                            garage.rating
+                          }{" "}
+                          ·{" "}
+                          {
+                            garage.distance
+                          }
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-[#EDF3FA] px-5 py-2.5 text-[19px] font-bold text-[#4771A6]">
+                        {
+                          garage.price
+                        }
+                      </div>
+                    </div>
+
+                    <div className="mt-7 rounded-[18px] bg-[#F8FAFC] p-5">
+                      <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                        Next availability
+                      </p>
+
+                      <p className="mt-2 text-[19px] font-semibold">
+                        {
+                          garage.availability
+                        }
+                      </p>
+                    </div>
+
+                    <button className="mt-6 w-full rounded-xl bg-[#101828] py-4 text-[18px] font-bold text-white transition hover:bg-[#4771A6]">
+                      View garage
+                    </button>
+                  </div>
+                </article>
+              )
+            )}
+          </div>
+        </section>
+
+        {/* GARAGE BUSINESS */}
+
+        <section
+          id="garages"
+          className="mx-auto max-w-[1350px] px-8 pb-28"
+        >
+          <div className="overflow-hidden rounded-[36px] bg-[#101828] px-10 py-16 text-white lg:px-16 lg:py-20">
+            <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+              <div>
+                <p className="text-[17px] font-bold text-[#83A7D3]">
+                  MECATREX for garages
                 </p>
 
-                <h3 className="mt-3 text-[27px] font-bold">
-                  One organized calendar.
-                </h3>
+                <h2 className="mt-4 text-[48px] font-bold leading-[1.05] tracking-[-0.04em] sm:text-[60px]">
+                  More customers.
+                  <br />
+                  Less chaos.
+                </h2>
 
-                <p className="mt-3 text-[18px] leading-8 text-white/60">
-                  Organize appointments and see garage capacity at a glance.
+                <p className="mt-7 max-w-[570px] text-[20px] leading-9 text-white/65">
+                  Manage appointments,
+                  organize your shop
+                  calendar and promote
+                  seasonal offers from one
+                  simple platform.
                 </p>
+
+                <button className="mt-9 rounded-xl bg-white px-7 py-4 text-[18px] font-bold text-[#101828] transition hover:bg-[#EDF3FA]">
+                  Discover tools for
+                  garages
+                </button>
               </div>
 
-              <div className="rounded-[28px] border border-white/10 bg-white/[0.06] p-8">
-                <div className="text-[44px]">
-                  📣
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="rounded-[28px] border border-white/10 bg-white/[0.06] p-8">
+                  <div className="text-[44px]">
+                    📅
+                  </div>
+
+                  <p className="mt-8 text-[15px] font-bold tracking-wider text-[#83A7D3]">
+                    CALENDAR
+                  </p>
+
+                  <h3 className="mt-3 text-[27px] font-bold">
+                    One organized
+                    calendar.
+                  </h3>
+
+                  <p className="mt-3 text-[18px] leading-8 text-white/60">
+                    Organize appointments
+                    and see garage capacity
+                    at a glance.
+                  </p>
                 </div>
 
-                <p className="mt-8 text-[15px] font-bold tracking-wider text-[#83A7D3]">
-                  PROMOTIONS
-                </p>
+                <div className="rounded-[28px] border border-white/10 bg-white/[0.06] p-8">
+                  <div className="text-[44px]">
+                    📣
+                  </div>
 
-                <h3 className="mt-3 text-[27px] font-bold">
-                  Promote your deals.
-                </h3>
+                  <p className="mt-8 text-[15px] font-bold tracking-wider text-[#83A7D3]">
+                    PROMOTIONS
+                  </p>
 
-                <p className="mt-3 text-[18px] leading-8 text-white/60">
-                  Share seasonal promotions directly with nearby vehicle
-                  owners.
-                </p>
+                  <h3 className="mt-3 text-[27px] font-bold">
+                    Promote your deals.
+                  </h3>
+
+                  <p className="mt-3 text-[18px] leading-8 text-white/60">
+                    Share seasonal
+                    promotions directly
+                    with nearby vehicle
+                    owners.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }
