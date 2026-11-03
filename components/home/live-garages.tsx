@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { normalizeBusinessWebsite } from "@/lib/service-listing";
 
 type Service = {
   id: string;
@@ -146,6 +147,7 @@ export default function LiveGarages() {
     <div className="grid gap-7 lg:grid-cols-3">
       {garages.map((garage) => {
         const services = (garage.provider_services ?? []).filter((service) => service.is_active);
+        const websiteUrl = normalizeBusinessWebsite(garage.website ?? "");
         const visibleServices = services.slice(0, 4);
         const imageUrl = garage.image_path
           ? supabase.storage.from("garage-images").getPublicUrl(garage.image_path).data.publicUrl
@@ -181,6 +183,16 @@ export default function LiveGarages() {
                 <p className="flex gap-2"><span>📍</span><span>{garage.address_line1}, {garage.city}, {garage.province} {garage.postal_code}</span></p>
                 {garage.public_phone && <p className="flex gap-2"><span>📞</span><span>{garage.public_phone}</span></p>}
                 {garage.public_email && <p className="flex gap-2"><span>✉️</span><span className="break-all">{garage.public_email}</span></p>}
+                {websiteUrl && (
+                  <a
+                    href={websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 font-bold text-[#4771A6] underline underline-offset-2 hover:text-[#315C91]"
+                  >
+                    <span aria-hidden="true">🌐</span> Visit garage website <span aria-hidden="true">↗</span>
+                  </a>
+                )}
               </div>
 
               <div className="mt-6 rounded-[20px] bg-[#F8FAFC] p-4">
