@@ -33,6 +33,7 @@ The migrations must be applied in filename order:
 2. `supabase/migrations/20261102_provider_listings_and_legal.sql`
 3. `supabase/migrations/20261103_backfill_existing_auth_users.sql`
 4. `supabase/migrations/20261104_sync_provider_publication.sql`
+5. `supabase/migrations/20261105_provider_service_required_fields.sql`
 
 For the current development project, the simplest method is Supabase Dashboard -> SQL Editor -> New query, paste each migration in order, then Run.
 
@@ -98,3 +99,12 @@ The current documents are product/legal drafts for development. Before public la
 The homepage now supports an ASAP choice or a future date/time calendar. That selection is currently a search preference stored locally in the browser.
 
 Garage-specific working hours, blocked time, appointment duration, booking confirmation, refusal rules, and conflict prevention belong to the next scheduling/booking phase and should be backed by database availability tables rather than hard-coded calendar slots.
+
+## 8. Provider catalogue polish
+
+- City and province are fixed to Montreal / Quebec during the initial launch; lat/long are retained internally for future distance-based search, not edited by providers.
+- Preferred cover photo: 1600 x 900 pixels (16:9 landscape), minimum 1200 x 675, under 5 MB. The public card uses cover cropping.
+- Service names can be chosen from the homepage categories or entered under "Other service".
+- Service name, pricing method, CAD price, and estimated duration are all mandatory when adding or updating. Legacy quote-only services are preserved but must be completed before being edited.
+- Migration 20261105 enforces the new data requirements on all new/updated rows without altering existing records.
+- Website URLs accept a full http(s) link or a bare domain (normalized to HTTPS), then display as outbound links on public garage cards.
