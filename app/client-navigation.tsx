@@ -15,6 +15,12 @@ export default function ClientNavigation() {
         return;
       }
 
+      // Never hijack buttons that belong to a real form. This keeps the
+      // homepage navigation workaround from blocking login/signup submits.
+      if (button.closest("form")) {
+        return;
+      }
+
       const label = button.textContent?.trim();
 
       if (label === "Sign up") {
