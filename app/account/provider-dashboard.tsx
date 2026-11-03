@@ -100,11 +100,12 @@ export default function ProviderDashboard({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [newServiceFormKey, setNewServiceFormKey] = useState(0);
   const [newService, setNewService] = useState({
     name: "",
     description: "",
     price: "",
-    pricingType: "fixed" as PricingType,
+    pricingType: "" as PricingType,
     duration: "",
   });
 
@@ -214,18 +215,12 @@ export default function ProviderDashboard({
     }
 
     const priceNumber = Number(newService.price);
-    const priceCents = newService.pricingType === "quote"
-      ? null
-      : Number.isFinite(priceNumber) && priceNumber >= 0
-        ? Math.round(priceNumber * 100)
-        : null;
-
-    if (newService.pricingType !== "quote" && priceCents == null) {
-      setError("Enter a valid price or choose Quote required.");
+    const durationNumber = Number(newService.duration);
+    const priceCents = newService.price.trim() && Number.isFinite(priceNumber) && priceNumber >= 0 ? Math.round(priceNumber * 100) : null;
+    if (!isCompleteService(name, newService.pricingType, priceCents, newService.duration.trim() ? durationNumber : null)) {
+      setError("Service name, pricing, price and a positive duration are all required.");
       return;
     }
-
-    const durationNumber = Number(newService.duration);
     const { data, error: insertError } = await supabase
       .from("provider_services")
       .insert({
@@ -234,7 +229,7 @@ export default function ProviderDashboard({
         description: newService.description.trim() || null,
         price_cents: priceCents,
         pricing_type: newService.pricingType,
-        duration_minutes: Number.isFinite(durationNumber) && durationNumber > 0 ? Math.round(durationNumber) : null,
+        duration_minutes: durationNumber,
         is_active: true,
       })
       .select("id, provider_id, name, description, price_cents, pricing_type, duration_minutes, is_active")
@@ -246,19 +241,24 @@ export default function ProviderDashboard({
     }
 
     setServices((current) => [...current, data as ProviderService]);
-    setNewService({ name: "", description: "", price: "", pricingType: "fixed", duration: "" });
+    setNewService({ name: "", description: "", price: "", pricingType: "" as PricingType, duration: "" });
+    setNewServiceFormKey((value) => value + 1);
     setMessage("Service added to your catalogue.");
   }
 
   async function saveService(service: ProviderService) {
     setError("");
     setMessage("");
+    if (!isCompleteService(service.name, service.pricing_type, service.price_cents, service.duration_minutes)) {
+      setError("Please complete name, pricing, price and duration before saving.");
+      return;
+    }
     const { error: updateError } = await supabase
       .from("provider_services")
       .update({
         name: service.name.trim(),
         description: service.description?.trim() || null,
-        price_cents: service.pricing_type === "quote" ? null : service.price_cents,
+        price_cents: service.price_cents,
         pricing_type: service.pricing_type,
         duration_minutes: service.duration_minutes,
         is_active: service.is_active,
@@ -402,18 +402,18 @@ export default function ProviderDashboard({
 
         <form onSubmit={addService} className="mt-6 rounded-[22px] bg-[#F8FAFC] p-5">
           <div className="grid gap-4 lg:grid-cols-2">
-            <ProviderField label="Service name" value={newService.name} onChange={(value) => setNewService((current) => ({ ...current, name: value }))} placeholder="Oil change" />
+            <ServiceNamePicker key={newServiceFormKey} label="Service name *" value={newService.name} onChange={(value) => setNewService((current) => ({ ...current, name: value }))} />
             <label>
-              <span className="mb-2 block text-[12px] font-bold text-[#344054]">Pricing</span>
-              <select value={newService.pricingType} onChange={(event) => setNewService((current) => ({ ...current, pricingType: event.target.value as PricingType }))} className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-3 text-[14px] font-semibold outline-none focus:border-[#4771A6]">
+              <span className="mb-2 block text-[12px] font-bold text-[#344054]">Pricing *</span>
+              <select required value={newService.pricingType} onChange={(event) => setNewService((current) => ({ ...current, pricingType: event.target.value as PricingType }))} className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-3 text-[14px] font-semibold outline-none focus:border-[#4771A6]">
+                <option value="" disabled>Select pricing</option>
                 <option value="fixed">Fixed price</option>
                 <option value="from">Starting from</option>
                 <option value="hourly">Hourly</option>
-                <option value="quote">Quote required</option>
               </select>
             </label>
-            <ProviderField label="Price (CAD)" type="number" step="0.01" value={newService.price} onChange={(value) => setNewService((current) => ({ ...current, price: value }))} placeholder="89.00" disabled={newService.pricingType === "quote"} />
-            <ProviderField label="Approx. duration (minutes)" type="number" value={newService.duration} onChange={(value) => setNewService((current) => ({ ...current, duration: value }))} placeholder="60" />
+            <ProviderField label="Price (CAD) *" type="number" step="0.01" min="0" required value={newService.price} onChange={(value) => setNewService((current) => ({ ...current, price: value }))} placeholder="89.00" />
+            <ProviderField label="Approx. duration (minutes) *" type="number" step="1" min="1" required value={newService.duration} onChange={(value) => setNewService((current) => ({ ...current, duration: value }))} placeholder="60" />
             <label className="lg:col-span-2">
               <span className="mb-2 block text-[12px] font-bold text-[#344054]">Description (optional)</span>
               <input value={newService.description} onChange={(event) => setNewService((current) => ({ ...current, description: event.target.value }))} placeholder="What's included in this service?" className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6]" />
@@ -451,6 +451,8 @@ function ProviderField({
   placeholder,
   className = "",
   disabled = false,
+  required = false,
+  min,
 }: {
   label: string;
   value: string;
@@ -460,6 +462,8 @@ function ProviderField({
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  required?: boolean;
+  min?: string;
 }) {
   return (
     <label className={className}>
@@ -471,6 +475,8 @@ function ProviderField({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         disabled={disabled}
+        required={required}
+        min={min}
         className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10 disabled:bg-[#F2F4F7]"
       />
     </label>
@@ -486,32 +492,33 @@ function ServiceEditor({ service, onChange, onSave, onDelete }: {
   return (
     <div className="rounded-[20px] border border-[#EAECF0] p-5">
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.7fr_auto] lg:items-end">
-        <ProviderField label="Service" value={service.name} onChange={(value) => onChange({ ...service, name: value })} />
+        <ServiceNamePicker label="Service *" value={service.name} onChange={(value) => onChange({ ...service, name: value })} />
         <label>
           <span className="mb-2 block text-[12px] font-bold text-[#344054]">Pricing</span>
-          <select value={service.pricing_type} onChange={(event) => onChange({ ...service, pricing_type: event.target.value as PricingType, price_cents: event.target.value === "quote" ? null : service.price_cents ?? 0 })} className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-3 text-[14px] font-semibold outline-none">
+          <select value={service.pricing_type} onChange={(event) => onChange({ ...service, pricing_type: event.target.value as PricingType })} className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-3 text-[14px] font-semibold outline-none">
             <option value="fixed">Fixed</option>
             <option value="from">From</option>
             <option value="hourly">Hourly</option>
-            <option value="quote">Quote</option>
+            {service.pricing_type === "quote" && <option value="quote" disabled>Legacy quote — choose pricing</option>}
           </select>
         </label>
         <ProviderField
-          label={service.pricing_type === "quote" ? "Price" : "Price (CAD)"}
+          label="Price (CAD) *"
           type="number"
           step="0.01"
+          min="0"
+          required
           value={toPriceInput(service.price_cents)}
-          disabled={service.pricing_type === "quote"}
           onChange={(value) => onChange({ ...service, price_cents: value === "" ? null : Math.round(Number(value) * 100) })}
         />
         <div className="flex gap-2">
-          <button type="button" onClick={onSave} className="h-[48px] rounded-[12px] bg-[#4771A6] px-4 text-[12px] font-bold text-white">Save</button>
+          <button type="button" disabled={!isCompleteService(service.name, service.pricing_type, service.price_cents, service.duration_minutes)} onClick={onSave} className="h-[48px] rounded-[12px] bg-[#4771A6] px-4 text-[12px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40">Save</button>
           <button type="button" onClick={onDelete} className="h-[48px] rounded-[12px] border border-[#FDA29B] px-3 text-[12px] font-bold text-[#B42318]">Delete</button>
         </div>
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_190px_auto] sm:items-end">
         <ProviderField label="Description" value={service.description ?? ""} onChange={(value) => onChange({ ...service, description: value })} />
-        <ProviderField label="Duration (minutes)" type="number" value={service.duration_minutes?.toString() ?? ""} onChange={(value) => onChange({ ...service, duration_minutes: value === "" ? null : Number(value) })} />
+        <ProviderField label="Duration (minutes) *" type="number" step="1" min="1" required value={service.duration_minutes?.toString() ?? ""} onChange={(value) => onChange({ ...service, duration_minutes: value === "" ? null : Number(value) })} />
         <label className="flex h-[48px] items-center gap-2 rounded-[12px] bg-[#F8FAFC] px-4 text-[12px] font-bold text-[#475467]">
           <input type="checkbox" checked={service.is_active} onChange={(event) => onChange({ ...service, is_active: event.target.checked })} className="h-4 w-4" />
           Active
