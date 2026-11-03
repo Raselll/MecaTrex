@@ -32,10 +32,13 @@ The migrations must be applied in filename order:
 1. `supabase/migrations/20261101_auth_provider_admin.sql`
 2. `supabase/migrations/20261102_provider_listings_and_legal.sql`
 3. `supabase/migrations/20261103_backfill_existing_auth_users.sql`
+4. `supabase/migrations/20261104_sync_provider_publication.sql`
 
 For the current development project, the simplest method is Supabase Dashboard -> SQL Editor -> New query, paste each migration in order, then Run.
 
 The backfill migration is intentional. It creates MECATREX `profiles` / provider records for Supabase Auth users that existed before the database triggers were installed.
+
+The publication-sync migration makes the provider flow automatic: an approved provider is published when an active service is added or activated, and the listing is hidden if its last active service is removed or deactivated. A provider can still manually unpublish a listing.
 
 ## 3. Create the MECATREX administrator
 
@@ -64,9 +67,11 @@ Do not put an admin role in browser metadata and do not expose a service-role/se
 3. The provider can prepare the business profile, image, coordinates, and service catalogue while pending.
 4. An administrator reviews the application at `/admin`.
 5. `Approve` runs the protected `admin_set_provider_status` database function.
-6. If at least one active service is already listed, approval publishes the listing automatically. Otherwise the approved provider can publish it from `/account` after adding a service.
-7. Only `approved + is_listing_active` providers are readable by the public homepage.
-8. `Garages ready to help` reads the real Supabase listing and service catalogue; the old demo garage cards are no longer used.
+6. If at least one active service is already listed, approval publishes the listing automatically.
+7. If an already-approved provider later adds or activates its first service, the listing publishes automatically.
+8. Removing/deactivating the last active service hides the listing. The provider can also manually unpublish at any time.
+9. Only `approved + is_listing_active` providers are readable by the public homepage.
+10. `Garages ready to help` reads the real Supabase listing and service catalogue; the old demo garage cards are no longer used.
 
 Providers can hide their own listing, edit their public business information, upload a garage image, and manage services/prices. They cannot change their approval status.
 
