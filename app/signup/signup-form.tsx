@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signup } from "./actions";
 
@@ -20,6 +21,8 @@ type AddressDetails = {
   province: string;
   postalCode: string;
   formattedAddress: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 const PHONE_REGEX = /^\d{3}-\d{3}-\d{4}$/;
@@ -56,6 +59,8 @@ export default function SignupForm({ error }: { error?: string }) {
   const [businessAddress, setBusinessAddress] = useState("");
   const [businessPostalCode, setBusinessPostalCode] = useState("");
   const [businessPlaceId, setBusinessPlaceId] = useState("");
+  const [businessLatitude, setBusinessLatitude] = useState<number | null>(null);
+  const [businessLongitude, setBusinessLongitude] = useState<number | null>(null);
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressMessage, setAddressMessage] = useState("");
@@ -160,6 +165,8 @@ export default function SignupForm({ error }: { error?: string }) {
       setBusinessAddress(data.streetAddress || suggestion.mainText);
       setBusinessPostalCode(data.postalCode || "");
       setBusinessPlaceId(data.placeId);
+      setBusinessLatitude(data.latitude ?? null);
+      setBusinessLongitude(data.longitude ?? null);
       setAddressSuggestions([]);
       setAddressMessage("Address verified in Montreal, Quebec.");
       setSessionToken(crypto.randomUUID());
@@ -180,6 +187,8 @@ export default function SignupForm({ error }: { error?: string }) {
       <input type="hidden" name="account_type" value={accountType} />
       <input type="hidden" name="provider_type" value={providerType} />
       <input type="hidden" name="business_place_id" value={businessPlaceId} />
+      <input type="hidden" name="business_latitude" value={businessLatitude ?? ""} />
+      <input type="hidden" name="business_longitude" value={businessLongitude ?? ""} />
 
       <div className="grid grid-cols-2 rounded-[18px] bg-[#F2F4F7] p-1.5">
         <button
@@ -274,6 +283,8 @@ export default function SignupForm({ error }: { error?: string }) {
                     onChange={(event) => {
                       setBusinessAddress(event.target.value);
                       setBusinessPlaceId("");
+                      setBusinessLatitude(null);
+                      setBusinessLongitude(null);
                       setAddressMessage("");
                     }}
                     onFocus={() => addressSuggestions.length > 0 && setAddressDropdownOpen(true)}
@@ -423,8 +434,17 @@ export default function SignupForm({ error }: { error?: string }) {
       </div>
 
       <label className="mt-7 flex cursor-pointer items-start gap-3 text-[13px] leading-5 text-[#667085]">
-        <input type="checkbox" required className="mt-1 h-4 w-4" />
-        <span>I agree to the MECATREX Terms of Service and Privacy Policy.</span>
+        <input name="legal_consent" value="accepted" type="checkbox" required className="mt-1 h-4 w-4" />
+        <span>
+          I agree to the MECATREX{" "}
+          <Link href="/terms" target="_blank" className="font-bold text-[#4771A6] underline underline-offset-2">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" target="_blank" className="font-bold text-[#4771A6] underline underline-offset-2">
+            Privacy Policy
+          </Link>.
+        </span>
       </label>
 
       <button
