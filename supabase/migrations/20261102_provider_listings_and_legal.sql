@@ -167,6 +167,7 @@ alter table public.provider_services enable row level security;
 
 -- Only approved + explicitly published provider rows are public.
 drop policy if exists "Approved providers are public" on public.service_providers;
+drop policy if exists "Published approved providers are public" on public.service_providers;
 create policy "Published approved providers are public" on public.service_providers
 for select to anon, authenticated
 using (
@@ -279,7 +280,8 @@ grant select on public.provider_services to anon, authenticated;
 grant insert, update, delete on public.provider_services to authenticated;
 
 -- Admin-only status workflow. This is the only supported path for approving,
--- requesting more information, or rejecting a provider.
+-- requesting more information, or rejecting a provider. Approval automatically
+-- publishes a provider that already prepared at least one active service.
 create or replace function public.admin_set_provider_status(
   p_provider_id uuid,
   p_status public.mecatrex_provider_status,
@@ -299,7 +301,12 @@ begin
   set
     status = p_status,
     is_listing_active = case
-      when p_status = 'approved'::public.mecatrex_provider_status then is_listing_active
+      when p_status = 'approved'::public.mecatrex_provider_status then exists (
+        select 1
+        from public.provider_services ps
+        where ps.provider_id = p_provider_id
+          and ps.is_active = true
+      )
       else false
     end,
     updated_at = now()
