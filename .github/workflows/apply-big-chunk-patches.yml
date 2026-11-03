@@ -1,0 +1,38 @@
+name: Apply MECATREX targeted patches
+
+on:
+  push:
+    branches:
+      - feature/auth-provider-admin
+    paths:
+      - scripts/apply-big-chunk-patches.mjs
+      - .github/workflows/apply-big-chunk-patches.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/auth-provider-admin
+          fetch-depth: 0
+
+      - name: Apply targeted source patches
+        run: node scripts/apply-big-chunk-patches.mjs
+
+      - name: Commit patched source when needed
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No source patch changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/page.tsx app/signup/signup-form.tsx
+          git commit -m "Wire scheduling, legal consent, and live garages into UI"
+          git push origin HEAD:feature/auth-provider-admin
