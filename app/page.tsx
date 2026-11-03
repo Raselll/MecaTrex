@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Script from "next/script";
+import LiveGarages from "@/components/home/live-garages";
+import WhenPicker from "@/components/home/when-picker";
 import {
   FormEvent,
   useEffect,
@@ -423,30 +425,6 @@ const services = [
     description:
       "General inspection and preventive maintenance.",
     icon: "🔍",
-  },
-];
-
-const garages = [
-  {
-    name: "Mécanique Central",
-    rating: "4.8",
-    distance: "2.4 km",
-    availability: "Today · 3:30 PM",
-    price: "$89",
-  },
-  {
-    name: "Garage Metro",
-    rating: "4.6",
-    distance: "4.1 km",
-    availability: "Tomorrow · 8:00 AM",
-    price: "$75",
-  },
-  {
-    name: "Performance MTL",
-    rating: "4.9",
-    distance: "6.8 km",
-    availability: "Today · 5:00 PM",
-    price: "$110",
   },
 ];
 
@@ -2517,7 +2495,7 @@ export default function Home() {
               {/* SEARCH */}
 
               <div className="mt-14 w-full max-w-[1180px] rounded-[28px] bg-white p-3 shadow-[0_30px_100px_rgba(0,0,0,0.3)]">
-                <div className="grid gap-2 lg:grid-cols-[1fr_1.3fr_1fr_0.8fr]">
+                <div className="grid gap-2 lg:grid-cols-[1fr_1.15fr_0.9fr_0.85fr_0.75fr]">
                   {/* VEHICLE */}
 
                   <div className="group relative min-h-[110px] overflow-hidden rounded-[20px] transition hover:bg-[#F8FAFC]">
@@ -2624,6 +2602,10 @@ export default function Home() {
                       ↓
                     </span>
                   </button>
+
+                  {/* WHEN */}
+
+                  <WhenPicker />
 
                   {/* LOCATION */}
 
@@ -2837,87 +2819,7 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="grid gap-7 lg:grid-cols-3">
-            {garages.map(
-              (
-                garage,
-                index
-              ) => (
-                <article
-                  key={
-                    garage.name
-                  }
-                  className="overflow-hidden rounded-[30px] border border-[#EAECF0] bg-white transition duration-300 hover:-translate-y-2 hover:shadow-[0_25px_70px_rgba(16,24,40,0.13)]"
-                >
-                  <div
-                    className={`relative h-[240px] ${
-                      index === 0
-                        ? "bg-gradient-to-br from-[#14263A] to-[#4771A6]"
-                        : index ===
-                            1
-                          ? "bg-gradient-to-br from-[#223A52] to-[#7291B7]"
-                          : "bg-gradient-to-br from-[#101828] to-[#385F8D]"
-                    }`}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center text-[72px] opacity-90">
-                      🔧
-                    </div>
-
-                    <div className="absolute bottom-5 left-5">
-                      <span className="rounded-full bg-white px-4 py-2 text-[15px] font-bold text-[#101828]">
-                        Open
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-8">
-                    <div className="flex items-start justify-between gap-5">
-                      <div>
-                        <h3 className="text-[25px] font-bold">
-                          {
-                            garage.name
-                          }
-                        </h3>
-
-                        <p className="mt-2 text-[18px] text-[#667085]">
-                          ⭐{" "}
-                          {
-                            garage.rating
-                          }{" "}
-                          ·{" "}
-                          {
-                            garage.distance
-                          }
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-[#EDF3FA] px-5 py-2.5 text-[19px] font-bold text-[#4771A6]">
-                        {
-                          garage.price
-                        }
-                      </div>
-                    </div>
-
-                    <div className="mt-7 rounded-[18px] bg-[#F8FAFC] p-5">
-                      <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                        Next availability
-                      </p>
-
-                      <p className="mt-2 text-[19px] font-semibold">
-                        {
-                          garage.availability
-                        }
-                      </p>
-                    </div>
-
-                    <button className="mt-6 w-full rounded-xl bg-[#101828] py-4 text-[18px] font-bold text-white transition hover:bg-[#4771A6]">
-                      View garage
-                    </button>
-                  </div>
-                </article>
-              )
-            )}
-          </div>
+          <LiveGarages />
         </section>
 
         {/* GARAGE BUSINESS */}
