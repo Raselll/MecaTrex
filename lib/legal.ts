@@ -1,0 +1,2 @@
+export const MECATREX_LEGAL_VERSION = "2026-11-02";
+export const MECATREX_LEGAL_LAST_UPDATED = "November 2, 2026";
