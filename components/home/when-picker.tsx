@@ -124,18 +124,24 @@ export default function WhenPicker() {
   }, []);
 
   return (
-    <div ref={rootRef} className="relative min-h-[110px] rounded-[20px] transition hover:bg-[#F8FAFC]">
+    <div ref={rootRef} className="relative min-h-[110px] rounded-[20px] border border-[#DCE8F5] bg-[#F8FAFC] transition hover:border-[#83A7D3] hover:bg-[#EDF3FA]">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex min-h-[110px] w-full flex-col items-center justify-center px-5 py-5 text-center"
+        className="group flex min-h-[110px] w-full flex-col items-center justify-center rounded-[20px] px-4 py-4 text-center outline-none focus-visible:ring-4 focus-visible:ring-[#4771A6]/20"
         aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-label="Choose ASAP or schedule a service date and time"
       >
         <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">When</p>
-        <p className="mt-2.5 max-w-[190px] truncate text-[19px] font-semibold text-[#101828]">
+        <p className="mt-2 max-w-[190px] truncate text-[19px] font-bold text-[#101828]">
           {formatSummary(mode, selectedDate, selectedTime)}
         </p>
-        <span className="mt-1 text-[20px] text-[#98A2B3]">↓</span>
+        <span className="mt-1 flex items-center gap-1.5 text-[13px] font-bold text-[#4771A6] group-hover:underline">
+          <span aria-hidden="true">📅</span>
+          {mode === "asap" ? "Choose date & time" : "Change date & time"}
+          <span aria-hidden="true" className="text-[16px]">⌄</span>
+        </span>
       </button>
 
       {open && (
