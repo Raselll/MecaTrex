@@ -19,6 +19,23 @@ function signupError(message: string): never {
   redirect(`/signup?error=${encodeURIComponent(message)}`);
 }
 
+function friendlySignupError(message: string) {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("for security purposes") &&
+    normalized.includes("only request this after")
+  ) {
+    return "Please wait about one minute before requesting another verification email, then submit again.";
+  }
+
+  if (normalized.includes("user already registered")) {
+    return "An account already exists with this email. Please log in instead.";
+  }
+
+  return message;
+}
+
 export async function signup(formData: FormData) {
   const accountType = value(formData, "account_type");
   const providerType = value(formData, "provider_type");
@@ -98,7 +115,7 @@ export async function signup(formData: FormData) {
     },
   });
 
-  if (error) signupError(error.message);
+  if (error) signupError(friendlySignupError(error.message));
 
   if (accountType === "provider") {
     try {
