@@ -1,0 +1,29 @@
+name: Validate MECATREX feature branch
+
+on:
+  push:
+    branches:
+      - feature/auth-provider-admin
+    paths:
+      - app/**
+      - components/**
+      - lib/**
+      - package.json
+      - package-lock.json
+      - next.config.ts
+      - .github/workflows/validate-feature.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
