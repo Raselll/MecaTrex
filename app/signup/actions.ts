@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sendAdminProviderApplicationEmail } from "@/lib/email/brevo";
+import { MECATREX_LEGAL_VERSION } from "@/lib/legal";
 
 const PHONE_REGEX = /^\d{3}-\d{3}-\d{4}$/;
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9\s]).{8,}$/;
@@ -36,6 +37,13 @@ function friendlySignupError(message: string) {
   return message;
 }
 
+function optionalCoordinate(formData: FormData, key: string) {
+  const raw = value(formData, key);
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export async function signup(formData: FormData) {
   const accountType = value(formData, "account_type");
   const providerType = value(formData, "provider_type");
@@ -46,12 +54,15 @@ export async function signup(formData: FormData) {
   const secondaryPhone = value(formData, "secondary_phone");
   const password = rawValue(formData, "password");
   const confirmPassword = rawValue(formData, "confirm_password");
+  const legalConsent = value(formData, "legal_consent");
   const businessName = value(formData, "business_name");
   const businessAddress = value(formData, "business_address");
   const businessCity = value(formData, "business_city");
   const businessProvince = value(formData, "business_province");
   const businessPostalCode = value(formData, "business_postal_code").toUpperCase();
   const businessPlaceId = value(formData, "business_place_id");
+  const businessLatitude = optionalCoordinate(formData, "business_latitude");
+  const businessLongitude = optionalCoordinate(formData, "business_longitude");
 
   if (accountType !== "client" && accountType !== "provider") {
     signupError("Please choose an account type.");
@@ -73,6 +84,10 @@ export async function signup(formData: FormData) {
   }
 
   if (password !== confirmPassword) signupError("The passwords do not match.");
+
+  if (legalConsent !== "accepted") {
+    signupError("You must agree to the MECATREX Terms of Service and Privacy Policy to create an account.");
+  }
 
   if (accountType === "provider") {
     if (providerType !== "garage" && providerType !== "towing") {
@@ -105,12 +120,17 @@ export async function signup(formData: FormData) {
         last_name: lastName,
         primary_phone: primaryPhone,
         secondary_phone: secondaryPhone,
+        terms_accepted: true,
+        privacy_accepted: true,
+        legal_version: MECATREX_LEGAL_VERSION,
         business_name: accountType === "provider" ? businessName : null,
         business_address: accountType === "provider" ? businessAddress : null,
         business_city: accountType === "provider" ? "Montreal" : null,
         business_province: accountType === "provider" ? "Quebec" : null,
         business_postal_code: accountType === "provider" ? businessPostalCode : null,
         business_place_id: accountType === "provider" ? businessPlaceId || null : null,
+        business_latitude: accountType === "provider" ? businessLatitude : null,
+        business_longitude: accountType === "provider" ? businessLongitude : null,
       },
     },
   });
