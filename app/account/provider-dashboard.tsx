@@ -120,6 +120,15 @@ export default function ProviderDashboard({
     setProvider((current) => ({ ...current, [key]: value }));
   }
 
+  async function refreshListingState() {
+    const { data } = await supabase
+      .from("service_providers")
+      .select("is_listing_active")
+      .eq("id", provider.id)
+      .single();
+    if (data) setProvider((current) => ({ ...current, is_listing_active: data.is_listing_active }));
+  }
+
   async function saveProfile(event: FormEvent) {
     event.preventDefault();
     setSavingProfile(true);
@@ -241,6 +250,7 @@ export default function ProviderDashboard({
     }
 
     setServices((current) => [...current, data as ProviderService]);
+    await refreshListingState();
     setNewService({ name: "", description: "", price: "", pricingType: "" as PricingType, duration: "" });
     setNewServiceFormKey((value) => value + 1);
     setMessage("Service added to your catalogue.");
@@ -266,7 +276,10 @@ export default function ProviderDashboard({
       .eq("id", service.id);
 
     if (updateError) setError(updateError.message);
-    else setMessage(`${service.name} saved.`);
+    else {
+      setMessage(service.name + " saved.");
+      await refreshListingState();
+    }
   }
 
   async function deleteService(service: ProviderService) {
@@ -277,6 +290,7 @@ export default function ProviderDashboard({
     else {
       setServices((current) => current.filter((item) => item.id !== service.id));
       setMessage("Service removed.");
+      await refreshListingState();
     }
   }
 
