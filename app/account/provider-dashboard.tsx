@@ -3,6 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ServiceNamePicker from "@/components/provider/service-name-picker";
+import { isCompleteService, normalizeBusinessWebsite } from "@/lib/service-listing";
 
 type ProviderStatus = "pending" | "approved" | "needs_information" | "rejected";
 type PricingType = "fixed" | "from" | "hourly" | "quote";
@@ -123,25 +125,33 @@ export default function ProviderDashboard({
     setMessage("");
     setError("");
 
+    const website = normalizeBusinessWebsite(provider.website ?? "");
+    if (provider.website?.trim() && !website) {
+      setError("Enter a valid website address, such as https://example.com.");
+      setSavingProfile(false);
+      return;
+    }
+
     const { error: updateError } = await supabase
       .from("service_providers")
       .update({
         business_name: provider.business_name.trim(),
         business_description: provider.business_description?.trim() || null,
         address_line1: provider.address_line1.trim(),
-        city: provider.city.trim(),
-        province: provider.province.trim(),
+        city: "Montreal",
+        province: "Quebec",
         postal_code: provider.postal_code.trim().toUpperCase(),
         public_email: provider.public_email?.trim().toLowerCase() || null,
         public_phone: provider.public_phone?.trim() || null,
-        website: provider.website?.trim() || null,
-        latitude: provider.latitude,
-        longitude: provider.longitude,
+        website,
       })
       .eq("id", provider.id);
 
     if (updateError) setError(updateError.message);
-    else setMessage("Business profile saved.");
+    else {
+      setProvider((current) => ({ ...current, website, city: "Montreal", province: "Quebec" }));
+      setMessage("Business profile saved.");
+    }
     setSavingProfile(false);
   }
 
@@ -342,7 +352,8 @@ export default function ProviderDashboard({
               className="sr-only"
             />
           </label>
-          <p className="mt-2 text-center text-[11px] text-[#98A2B3]">JPG, PNG or WebP · maximum 5 MB</p>
+          <p className="mt-3 text-center text-[12px] font-semibold text-[#475467]">Recommended: 1600 × 900 px (16:9 landscape)</p>
+          <p className="mt-1 text-center text-[11px] leading-5 text-[#98A2B3]">Minimum 1200 × 675 px · JPG, PNG or WebP · maximum 5 MB. Keep important details centred; edges may be cropped.</p>
         </section>
 
         <form onSubmit={saveProfile} className="rounded-[28px] border border-[#EAECF0] bg-white p-6 shadow-sm">
@@ -368,14 +379,12 @@ export default function ProviderDashboard({
             </label>
             <ProviderField label="Public phone" value={provider.public_phone ?? ""} onChange={(value) => field("public_phone", value)} />
             <ProviderField label="Public email" type="email" value={provider.public_email ?? ""} onChange={(value) => field("public_email", value)} />
-            <ProviderField label="Website (optional)" value={provider.website ?? ""} onChange={(value) => field("website", value)} className="sm:col-span-2" placeholder="https://..." />
+            <ProviderField label="Website (optional)" value={provider.website ?? ""} onChange={(value) => field("website", value)} className="sm:col-span-2" placeholder="https://garage.example.com" />
             <ProviderField label="Address" value={provider.address_line1} onChange={(value) => field("address_line1", value)} className="sm:col-span-2" />
-            <ProviderField label="City" value={provider.city} onChange={(value) => field("city", value)} />
-            <ProviderField label="Province" value={provider.province} onChange={(value) => field("province", value)} />
+            <ProviderField label="City" value="Montreal" onChange={() => {}} disabled />
+            <ProviderField label="Province" value="Quebec" onChange={() => {}} disabled />
             <ProviderField label="Postal code" value={provider.postal_code} onChange={(value) => field("postal_code", value.toUpperCase())} />
-            <div className="hidden sm:block" />
-            <ProviderField label="Latitude" type="number" step="any" value={provider.latitude?.toString() ?? ""} onChange={(value) => field("latitude", value === "" ? null : Number(value))} />
-            <ProviderField label="Longitude" type="number" step="any" value={provider.longitude?.toString() ?? ""} onChange={(value) => field("longitude", value === "" ? null : Number(value))} />
+            <p className="sm:col-span-2 text-[12px] text-[#667085]">MECATREX currently serves Montreal, Quebec. Location coordinates are handled automatically.</p>
           </div>
 
           <button disabled={savingProfile} className="mt-6 rounded-[14px] bg-[#4771A6] px-6 py-3.5 text-[14px] font-bold text-white hover:bg-[#3C6190] disabled:opacity-60">
