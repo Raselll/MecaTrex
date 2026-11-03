@@ -14,7 +14,11 @@ declare
   target_provider_id uuid;
   provider_is_approved boolean;
 begin
-  target_provider_id := coalesce(new.provider_id, old.provider_id);
+  if tg_op = 'DELETE' then
+    target_provider_id := old.provider_id;
+  else
+    target_provider_id := new.provider_id;
+  end if;
 
   select (status = 'approved'::public.mecatrex_provider_status)
   into provider_is_approved
@@ -26,7 +30,11 @@ begin
     set is_listing_active = false
     where id = target_provider_id
       and is_listing_active = true;
-    return coalesce(new, old);
+
+    if tg_op = 'DELETE' then
+      return old;
+    end if;
+    return new;
   end if;
 
   if tg_op = 'INSERT' and new.is_active then
@@ -60,7 +68,10 @@ begin
     where id = target_provider_id;
   end if;
 
-  return coalesce(new, old);
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
 end;
 $$;
 
