@@ -92,7 +92,7 @@ export default function PrivacyPage() {
           </div>
 
           <div className="mt-10 rounded-[18px] bg-[#EDF3FA] p-5 text-[14px] leading-6 text-[#475467]">
-            Privacy questions, access requests, correction requests, or complaints can be submitted through the MECATREX support/contact channel made available on the platform. Before public launch, MECATREX should publish the designated privacy officer's direct business contact information here.
+            Privacy questions, access requests, correction requests, or complaints can be submitted through the MECATREX support/contact channel made available on the platform. Before public launch, MECATREX should publish the designated privacy officer&apos;s direct business contact information here.
           </div>
         </article>
       </div>
