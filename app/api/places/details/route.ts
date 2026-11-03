@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     {
       headers: {
         "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": "id,formattedAddress,addressComponents",
+        "X-Goog-FieldMask": "id,formattedAddress,addressComponents,location",
       },
       cache: "no-store",
     }
@@ -69,6 +69,10 @@ export async function GET(request: NextRequest) {
     id?: string;
     formattedAddress?: string;
     addressComponents?: AddressComponent[];
+    location?: {
+      latitude?: number;
+      longitude?: number;
+    };
   };
 
   const components = data.addressComponents ?? [];
@@ -107,5 +111,7 @@ export async function GET(request: NextRequest) {
     province: "Quebec",
     postalCode: postalCode.toUpperCase(),
     formattedAddress: data.formattedAddress ?? streetAddress,
+    latitude: data.location?.latitude ?? null,
+    longitude: data.location?.longitude ?? null,
   });
 }
