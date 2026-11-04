@@ -108,3 +108,26 @@ Garage-specific working hours, blocked time, appointment duration, booking confi
 - Service name, pricing method, CAD price, and estimated duration are all mandatory when adding or updating. Legacy quote-only services are preserved but must be completed before being edited.
 - Migration 20261105 enforces the new data requirements on all new/updated rows without altering existing records.
 - Website URLs accept a full http(s) link or a bare domain (normalized to HTTPS), then display as outbound links on public garage cards.
+
+## 9. Forgot-password flow (Supabase Auth + Brevo SMTP)
+
+No additional email provider or SQL migration is needed for this feature.
+
+1. The user opens `/login` -> **Forgot password?** -> `/forgot-password`.
+2. MECATREX calls `supabase.auth.resetPasswordForEmail(email, { redirectTo: SITE_URL + "/auth/confirm?next=/reset-password" })`.
+3. Supabase Auth generates a secure email link and Brevo (already configured as Supabase Custom SMTP) delivers it.
+4. `/auth/confirm` exchanges the one-time code for a session, then redirects to `/reset-password`.
+5. The user enters a new password, checks the live requirements, and the server calls `supabase.auth.updateUser({ password })`.
+6. After a successful password update, the current session signs out and the user returns to `/login`.
+
+**Supabase configuration**: Authentication -> URL Configuration -> Redirect URLs must allow your local confirmation URL. For local development, use `http://localhost:3000/**` (or the specific `http://localhost:3000/auth/confirm?next=/reset-password`) alongside your existing verification callback URL. Set `NEXT_PUBLIC_SITE_URL=http://localhost:3000` locally. Add matching production URLs before deployment.
+
+For SSR/PKCE confirmation, request the reset email and open its link in the same browser profile so the code verifier is available. For alternative devices/email clients, use a token_hash-based recovery email template.
+
+## 10. UX / booking status
+
+The homepage timing picker opens in a viewport-safe modal, not inside the hero's clipped overflow container. Homepage Find garages and popular service cards navigate to `#garage-results`.
+
+Every approved garage has a prominent **Book a service** CTA. It currently opens a clearly marked pre-booking message and contact links. It **does not create a reservation**. Real scheduling and booking transactions will be implemented in a subsequent phase.
+
+Provider dashboards expose a **Save all updates** control to save the business profile and edits to existing services, in addition to existing per-row Save and Add service actions. This is not an atomic multi-table SQL transaction; failures are surfaced to the provider. The 24-hour application review copy is an operational target, not an automated SLA.

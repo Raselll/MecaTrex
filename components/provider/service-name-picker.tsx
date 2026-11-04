@@ -19,7 +19,7 @@ export default function ServiceNamePicker({
   return (
     <div>
       <label className="block">
-        <span className="mb-2 block text-[12px] font-bold text-[#344054]">{label}</span>
+        <span className="mb-2 block text-[14px] font-bold text-[#101828]">{label}</span>
         <select
           value={selected}
           required
@@ -32,7 +32,7 @@ export default function ServiceNamePicker({
               onChange(event.target.value);
             }
           }}
-          className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-3 text-[14px] font-semibold outline-none focus:border-[#4771A6]"
+          className="h-[48px] w-full rounded-[13px] border border-[#667085] bg-white px-3 text-[14px] font-semibold outline-none focus:border-[#4771A6]"
         >
           <option value="">Select a service</option>
           {COMMON_SERVICES.map((name) => <option key={name} value={name}>{name}</option>)}
@@ -40,7 +40,7 @@ export default function ServiceNamePicker({
         </select>
       </label>
       {custom && (
-        <label className="mt-2 block">
+        <label className="mt-3 block">
           <span className="sr-only">Custom service name</span>
           <input
             required
@@ -48,7 +48,7 @@ export default function ServiceNamePicker({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder="Enter your service"
-            className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6]"
+            className="h-[48px] w-full rounded-[13px] border border-[#667085] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6]"
           />
         </label>
       )}

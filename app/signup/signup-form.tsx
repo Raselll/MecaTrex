@@ -370,7 +370,7 @@ export default function SignupForm({ error }: { error?: string }) {
 
           <div className="mt-5 rounded-[16px] bg-[#EDF3FA] p-4">
             <p className="text-[14px] leading-6 text-[#475467]">
-              MECATREX is launching in Montreal first. Provider accounts are reviewed before they can appear publicly or accept bookings.
+              MECATREX is launching in Montreal first. We aim to review provider applications within 24 hours. Approved businesses can then appear publicly and accept bookings once that feature launches.
             </p>
           </div>
         </div>

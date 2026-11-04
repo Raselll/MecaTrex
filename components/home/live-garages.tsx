@@ -48,6 +48,7 @@ export default function LiveGarages() {
   const [garages, setGarages] = useState<Garage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [bookingGarageId, setBookingGarageId] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -222,19 +223,32 @@ export default function LiveGarages() {
                 )}
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                {garage.public_phone ? (
-                  <a href={`tel:${garage.public_phone.replace(/[^\d+]/g, "")}`} className="rounded-[13px] border border-[#D0D5DD] px-4 py-3 text-center text-[13px] font-bold text-[#344054] hover:bg-[#F9FAFB]">
-                    Call garage
-                  </a>
-                ) : <div />}
-                {garage.public_email ? (
-                  <a href={`mailto:${garage.public_email}`} className="rounded-[13px] bg-[#101828] px-4 py-3 text-center text-[13px] font-bold text-white hover:bg-[#4771A6]">
-                    Email garage
-                  </a>
-                ) : (
-                  <button type="button" className="rounded-[13px] bg-[#101828] px-4 py-3 text-[13px] font-bold text-white">View garage</button>
+              <div className="mt-5 space-y-3">
+                <button
+                  type="button"
+                  aria-expanded={bookingGarageId === garage.id}
+                  aria-controls={`booking-info-${garage.id}`}
+                  onClick={() => setBookingGarageId((current) => current === garage.id ? null : garage.id)}
+                  className="flex w-full items-center justify-center gap-2 rounded-[15px] bg-[#4771A6] px-6 py-4 text-[17px] font-bold text-white shadow-[0_8px_22px_rgba(71,113,166,0.2)] transition hover:bg-[#315C91] focus-visible:outline-[#315C91]"
+                >
+                  <span aria-hidden="true">📅</span> Book a service
+                </button>
+
+                {bookingGarageId === garage.id && (
+                  <div id={`booking-info-${garage.id}`} className="rounded-[16px] border border-[#C9D6E5] bg-[#EFF6FF] p-4 text-[#344054]">
+                    <p className="text-[14px] font-bold text-[#101828]">Booking calendar coming soon</p>
+                    <p className="mt-1 text-[13px] leading-5">Online appointments are not yet enabled. Contact {garage.business_name} to arrange your preferred service and time.</p>
+                  </div>
                 )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  {garage.public_phone ? (
+                    <a href={`tel:${garage.public_phone.replace(/[^\d+]/g, "")}`} className="rounded-[13px] border border-[#D0D5DD] px-3 py-3 text-center text-[13px] font-bold text-[#344054] hover:bg-[#F9FAFB]">Call garage</a>
+                  ) : <span className="rounded-[13px] bg-[#F2F4F7] px-3 py-3 text-center text-[13px] text-[#98A2B3]">No phone</span>}
+                  {garage.public_email ? (
+                    <a href={`mailto:${garage.public_email}?subject=${encodeURIComponent("MECATREX service inquiry")}`} className="rounded-[13px] border border-[#D0D5DD] px-3 py-3 text-center text-[13px] font-bold text-[#344054] hover:bg-[#F9FAFB]">Email garage</a>
+                  ) : <span className="rounded-[13px] bg-[#F2F4F7] px-3 py-3 text-center text-[13px] text-[#98A2B3]">No email</span>}
+                </div>
               </div>
             </div>
           </article>

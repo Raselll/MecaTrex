@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 type Mode = "asap" | "scheduled";
 
@@ -63,7 +64,6 @@ export default function WhenPicker() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
-  const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     try {
@@ -93,12 +93,18 @@ export default function WhenPicker() {
   }, [mode, selectedDate, selectedTime]);
 
   useEffect(() => {
-    function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, []);
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [open]);
 
   const calendarDays = useMemo(() => {
     const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
@@ -124,7 +130,7 @@ export default function WhenPicker() {
   }, []);
 
   return (
-    <div ref={rootRef} className="relative min-h-[110px] rounded-[20px] border border-[#DCE8F5] bg-[#F8FAFC] transition hover:border-[#83A7D3] hover:bg-[#EDF3FA]">
+    <div className="relative min-h-[110px] rounded-[20px] border border-[#DCE8F5] bg-[#F8FAFC] transition hover:border-[#83A7D3] hover:bg-[#EDF3FA]">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -144,9 +150,27 @@ export default function WhenPicker() {
         </span>
       </button>
 
-      {open && (
-        <div className="absolute left-1/2 top-[118px] z-40 w-[340px] -translate-x-1/2 rounded-[24px] border border-[#E4E7EC] bg-white p-4 text-left shadow-[0_24px_70px_rgba(16,24,40,0.2)] sm:w-[390px]">
-          <div className="grid grid-cols-2 gap-2 rounded-[16px] bg-[#F2F4F7] p-1.5">
+      {open && createPortal(
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-[#101828]/65 p-4 sm:p-8"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Choose when you need vehicle service"
+            className="max-h-[calc(100dvh-32px)] w-full max-w-[430px] overflow-y-auto rounded-[24px] border border-[#E4E7EC] bg-white p-5 text-left shadow-[0_24px_70px_rgba(16,24,40,0.25)] sm:p-6"
+          >
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">Service timing</p>
+                <h2 className="mt-1 text-[22px] font-bold text-[#101828]">When do you need help?</h2>
+              </div>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close calendar" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#F2F4F7] text-[22px] text-[#344054] hover:bg-[#E4E7EC]">×</button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 rounded-[16px] bg-[#F2F4F7] p-1.5">
             <button
               type="button"
               onClick={() => {
@@ -240,10 +264,12 @@ export default function WhenPicker() {
             </>
           )}
 
-          <p className="mt-3 text-center text-[11px] leading-4 text-[#98A2B3]">
-            Garage-specific availability will be connected in the booking phase.
-          </p>
-        </div>
+            <p className="mt-4 text-center text-[12px] leading-5 text-[#667085]">
+              Your choice sets a search preference. Garage-specific availability is coming soon.
+            </p>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

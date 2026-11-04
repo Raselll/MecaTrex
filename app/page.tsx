@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Script from "next/script";
+import Link from "next/link";
 import LiveGarages from "@/components/home/live-garages";
 import WhenPicker from "@/components/home/when-picker";
 import {
@@ -2414,7 +2415,7 @@ export default function Home() {
 
             <nav className="hidden items-center gap-10 lg:flex">
               <a
-                href="#find"
+                href="#garage-results"
                 className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
               >
                 Find a garage
@@ -2434,22 +2435,19 @@ export default function Home() {
                 For garages
               </a>
 
-              <a
-                href="#"
-                className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
-              >
-                Deals
-              </a>
+              <span className="cursor-default text-[18px] font-semibold text-[#98A2B3]" title="Deals are coming soon">
+                Deals · soon
+              </span>
             </nav>
 
             <div className="flex items-center gap-4">
-              <button className="hidden rounded-xl px-6 py-3.5 text-[17px] font-semibold text-[#344054] transition hover:bg-[#F2F4F7] sm:block">
+              <Link href="/login" className="hidden rounded-xl px-6 py-3.5 text-[17px] font-semibold text-[#344054] transition hover:bg-[#F2F4F7] sm:block">
                 Log in
-              </button>
+              </Link>
 
-              <button className="rounded-xl bg-[#101828] px-7 py-3.5 text-[17px] font-semibold text-white transition hover:bg-[#4771A6]">
+              <Link href="/signup" className="rounded-xl bg-[#101828] px-7 py-3.5 text-[17px] font-semibold text-white transition hover:bg-[#4771A6]">
                 Sign up
-              </button>
+              </Link>
             </div>
           </div>
         </header>
@@ -2588,7 +2586,7 @@ export default function Home() {
 
                   {/* REPAIR */}
 
-                  <button className="flex min-h-[110px] flex-col items-center justify-center rounded-[20px] px-6 py-5 text-center transition hover:bg-[#F8FAFC]">
+                  <a href="#garage-results" className="flex min-h-[110px] flex-col items-center justify-center rounded-[20px] px-6 py-5 text-center transition hover:bg-[#EDF3FA] focus-visible:outline-[#4771A6]">
                     <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
                       Repair or service
                     </p>
@@ -2601,7 +2599,7 @@ export default function Home() {
                     <span className="mt-1 text-[20px] text-[#98A2B3]">
                       ↓
                     </span>
-                  </button>
+                  </a>
 
                   {/* WHEN */}
 
@@ -2609,7 +2607,7 @@ export default function Home() {
 
                   {/* LOCATION */}
 
-                  <button className="flex min-h-[110px] flex-col items-center justify-center rounded-[20px] px-6 py-5 text-center transition hover:bg-[#F8FAFC]">
+                  <div className="flex min-h-[110px] cursor-default flex-col items-center justify-center rounded-[20px] px-6 py-5 text-center">
                     <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
                       Location
                     </p>
@@ -2618,17 +2616,15 @@ export default function Home() {
                       Montreal, QC
                     </p>
 
-                    <span className="mt-1 text-[20px] text-[#98A2B3]">
-                      ↓
-                    </span>
-                  </button>
+                    <span className="mt-1 text-[12px] font-medium text-[#98A2B3]">Launch city</span>
+                  </div>
 
                   {/* SEARCH */}
 
                   <div className="flex p-1">
-                    <button className="w-full rounded-[20px] bg-[#4771A6] px-8 py-5 text-[19px] font-bold text-white transition hover:bg-[#3C6190]">
+                    <a href="#garage-results" className="flex w-full items-center justify-center rounded-[20px] bg-[#4771A6] px-8 py-5 text-center text-[19px] font-bold text-white transition hover:bg-[#3C6190]">
                       Find garages
-                    </button>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -2766,11 +2762,7 @@ export default function Home() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {services.map(
                 (service) => (
-                  <button
-                    key={
-                      service.title
-                    }
-                    className="group rounded-[28px] border border-[#EAECF0] bg-white p-8 text-left transition duration-300 hover:-translate-y-2 hover:border-[#4771A6]/40 hover:shadow-[0_22px_60px_rgba(16,24,40,0.12)]"
+                  <a href="#garage-results" key={service.title} className="group rounded-[28px] border border-[#EAECF0] bg-white p-8 text-left transition duration-300 hover:-translate-y-2 hover:border-[#4771A6]/40 hover:shadow-[0_22px_60px_rgba(16,24,40,0.12)]"
                   >
                     <div className="flex h-[82px] w-[82px] items-center justify-center rounded-[24px] bg-[#EDF3FA] text-[42px]">
                       {
@@ -2793,22 +2785,22 @@ export default function Home() {
                     <p className="mt-8 text-[17px] font-bold text-[#4771A6]">
                       Find a garage →
                     </p>
-                  </button>
+                  </a>
                 )
               )}
             </div>
 
             <div className="mt-10 text-center">
-              <button className="text-[18px] font-semibold text-[#475467] transition hover:text-[#4771A6]">
-                View all services →
-              </button>
+              <a href="#garage-results" className="text-[18px] font-semibold text-[#475467] transition hover:text-[#4771A6]">
+                Browse available garages →
+              </a>
             </div>
           </div>
         </section>
 
         {/* GARAGES */}
 
-        <section className="mx-auto max-w-[1350px] px-8 py-24">
+        <section id="garage-results" className="mx-auto max-w-[1350px] scroll-mt-28 px-8 py-24">
           <div className="mb-12 text-center">
             <p className="text-[17px] font-bold text-[#4771A6]">
               Available near you
@@ -2849,10 +2841,9 @@ export default function Home() {
                   simple platform.
                 </p>
 
-                <button className="mt-9 rounded-xl bg-white px-7 py-4 text-[18px] font-bold text-[#101828] transition hover:bg-[#EDF3FA]">
-                  Discover tools for
-                  garages
-                </button>
+                <Link href="/signup" className="mt-9 inline-flex rounded-xl bg-white px-7 py-4 text-[18px] font-bold text-[#101828] transition hover:bg-[#EDF3FA]">
+                  Join MECATREX as a garage
+                </Link>
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">

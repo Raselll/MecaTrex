@@ -5,7 +5,7 @@ import { login } from "./actions";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; notice?: string }>;
 }) {
   const params = await searchParams;
 
@@ -30,6 +30,10 @@ export default async function LoginPage({
             Access your account, bookings, and provider dashboard.
           </p>
 
+          {params.notice && (
+            <div role="status" className="mt-6 rounded-[15px] bg-[#ECFDF3] px-4 py-3 text-[14px] font-semibold text-[#027A48]">{params.notice}</div>
+          )}
+
           {params.error && (
             <div className="mt-6 rounded-[15px] bg-[#FEF3F2] px-4 py-3 text-[14px] font-semibold text-[#B42318]">
               {params.error}
@@ -51,7 +55,7 @@ export default async function LoginPage({
             <label className="block">
               <div className="mb-2 flex items-center justify-between gap-4">
                 <span className="text-[13px] font-bold text-[#344054]">Password</span>
-                <span className="text-[12px] font-semibold text-[#98A2B3]">Forgot password coming next</span>
+                <Link href="/forgot-password" className="text-[13px] font-bold text-[#4771A6] underline underline-offset-2 hover:text-[#315C91]">Forgot password?</Link>
               </div>
               <input
                 name="password"
