@@ -44,7 +44,7 @@ function statusCopy(status: ProviderStatus) {
   return {
     pending: {
       title: "Application under review",
-      description: "Build your listing now. It can be published once MECATREX approves your provider account.",
+      description: "Build your listing now. We aim to review applications within 24 hours. You can publish once MECATREX approves your account.",
       className: "bg-[#FFF7E8] text-[#92400E]",
     },
     approved: {
