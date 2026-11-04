@@ -5,6 +5,7 @@ import Script from "next/script";
 import Link from "next/link";
 import LiveGarages from "@/components/home/live-garages";
 import WhenPicker from "@/components/home/when-picker";
+import { SERVICE_CATALOGUE } from "@/lib/service-listing";
 import {
   FormEvent,
   useEffect,
@@ -390,44 +391,12 @@ const modelsByMake: Record<string, string[]> = {
   ],
 };
 
-const services = [
-  {
-    title: "Oil change",
-    description:
-      "Oil and routine engine maintenance.",
-    icon: "🛢️",
-  },
-  {
-    title: "Tire service",
-    description:
-      "Installation, rotation, balancing and repair.",
-    icon: "🛞",
-  },
-  {
-    title: "Brake service",
-    description:
-      "Brake inspection, pads, rotors and repairs.",
-    icon: "🛑",
-  },
-  {
-    title: "Battery",
-    description:
-      "Battery testing, diagnosis and replacement.",
-    icon: "🔋",
-  },
-  {
-    title: "Diagnostics",
-    description:
-      "Check engine lights, noises and unknown problems.",
-    icon: "🔧",
-  },
-  {
-    title: "Inspection & maintenance",
-    description:
-      "General inspection and preventive maintenance.",
-    icon: "🔍",
-  },
-];
+// Keep homepage and provider catalogue in sync (including service emojis).
+const services = SERVICE_CATALOGUE.map((service) => ({
+  title: service.name,
+  description: service.description,
+  icon: service.icon,
+}));
 
 /* ========================================================= */
 /* CARIMAGESAPI 3D VIEWER */
