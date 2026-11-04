@@ -97,6 +97,7 @@ export default function ProviderDashboard({
   const [provider, setProvider] = useState(initialProvider);
   const [services, setServices] = useState(initialServices);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [savingAll, setSavingAll] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -129,19 +130,12 @@ export default function ProviderDashboard({
     if (data) setProvider((current) => ({ ...current, is_listing_active: data.is_listing_active }));
   }
 
-  async function saveProfile(event: FormEvent) {
-    event.preventDefault();
-    setSavingProfile(true);
-    setMessage("");
-    setError("");
-
+  async function persistProfile(): Promise<string | null> {
     const website = normalizeBusinessWebsite(provider.website ?? "");
-    if (provider.website?.trim() && !website) {
-      setError("Enter a valid website address, such as https://example.com.");
-      setSavingProfile(false);
-      return;
+    if (provider.website?.trim() && !website) return "Enter a valid website, such as https://example.com.";
+    if (!provider.business_name.trim() || !provider.address_line1.trim() || !provider.postal_code.trim()) {
+      return "Business name, address and postal code are required.";
     }
-
     const { error: updateError } = await supabase
       .from("service_providers")
       .update({
@@ -156,13 +150,67 @@ export default function ProviderDashboard({
         website,
       })
       .eq("id", provider.id);
+    if (updateError) return updateError.message;
+    setProvider((current) => ({ ...current, website, city: "Montreal", province: "Quebec" }));
+    return null;
+  }
 
-    if (updateError) setError(updateError.message);
-    else {
-      setProvider((current) => ({ ...current, website, city: "Montreal", province: "Quebec" }));
-      setMessage("Business profile saved.");
+  async function saveProfile(event: FormEvent) {
+    event.preventDefault();
+    setSavingProfile(true);
+    setMessage("");
+    setError("");
+    try {
+      const problem = await persistProfile();
+      if (problem) setError(problem);
+      else setMessage("Business profile saved.");
+    } catch {
+      setError("Could not save business profile. Please try again.");
+    } finally {
+      setSavingProfile(false);
     }
-    setSavingProfile(false);
+  }
+
+  async function saveAllUpdates() {
+    if (savingAll) return;
+    setSavingAll(true);
+    setMessage("");
+    setError("");
+    try {
+      if (services.some((service) => !isCompleteService(service.name, service.pricing_type, service.price_cents, service.duration_minutes))) {
+        setError("Complete name, pricing, price and duration for every service before saving.");
+        return;
+      }
+      const problem = await persistProfile();
+      if (problem) {
+        setError(problem);
+        return;
+      }
+      for (const service of services) {
+        const { error: updateError } = await supabase
+          .from("provider_services")
+          .update({
+            name: service.name.trim(),
+            description: service.description?.trim() || null,
+            price_cents: service.price_cents,
+            pricing_type: service.pricing_type,
+            duration_minutes: service.duration_minutes,
+            is_active: service.is_active,
+          })
+          .eq("id", service.id);
+        if (updateError) {
+          setError("Profile saved, but service " + service.name + " failed: " + updateError.message);
+          return;
+        }
+      }
+      await refreshListingState();
+      router.refresh();
+      setMessage("All business information and service updates saved successfully.");
+    } catch {
+      setError("We could not save all updates. Please retry.");
+    } finally {
+      setSavingAll(false);
+    }
   }
 
   async function uploadImage(file: File | undefined) {
@@ -317,6 +365,15 @@ export default function ProviderDashboard({
 
   return (
     <div className="mt-8 space-y-7">
+      <div className="sticky top-3 z-30 flex flex-col gap-3 rounded-[20px] border border-[#BAC7D7] bg-white/95 px-5 py-4 shadow-[0_12px_40px_rgba(16,24,40,0.12)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[15px] font-bold text-[#101828]">Business & service updates</p>
+          <p className="text-[12px] text-[#667085]">Save your business profile and all existing services in one click.</p>
+        </div>
+        <button type="button" onClick={saveAllUpdates} disabled={savingAll || savingProfile} className="rounded-[13px] bg-[#101828] px-6 py-3.5 text-[14px] font-bold text-white shadow-sm transition hover:bg-[#315C91] disabled:cursor-not-allowed disabled:opacity-50">
+          {savingAll ? "Saving updates..." : "✓ Save all updates"}
+        </button>
+      </div>
       <section className={`rounded-[22px] p-5 ${status.className}`}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -340,7 +397,7 @@ export default function ProviderDashboard({
       </section>
 
       {(message || error) && (
-        <div className={`rounded-[16px] px-4 py-3 text-[13px] font-semibold ${error ? "bg-[#FEF3F2] text-[#B42318]" : "bg-[#ECFDF3] text-[#027A48]"}`}>
+        <div role={error ? "alert" : "status"} className={`rounded-[16px] px-4 py-3 text-[14px] font-semibold ${error ? "bg-[#FEF3F2] text-[#B42318]" : "bg-[#ECFDF3] text-[#027A48]"}`}>
           {error || message}
         </div>
       )}
