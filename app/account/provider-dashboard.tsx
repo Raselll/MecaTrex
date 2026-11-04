@@ -403,7 +403,7 @@ export default function ProviderDashboard({
       )}
 
       <div className="grid gap-7 xl:grid-cols-[0.72fr_1.28fr]">
-        <section className="rounded-[28px] border border-[#EAECF0] bg-white p-6 shadow-sm">
+        <section className="rounded-[28px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
           <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">Garage image</p>
           <div className="mt-4 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#14263A] to-[#4771A6]">
             {imageUrl ? (
@@ -427,10 +427,10 @@ export default function ProviderDashboard({
           <p className="mt-1 text-center text-[11px] leading-5 text-[#98A2B3]">Minimum 1200 × 675 px · JPG, PNG or WebP · maximum 5 MB. Keep important details centred; edges may be cropped.</p>
         </section>
 
-        <form onSubmit={saveProfile} className="rounded-[28px] border border-[#EAECF0] bg-white p-6 shadow-sm">
+        <form onSubmit={saveProfile} className="rounded-[28px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">Public profile</p>
+              <p className="text-[14px] font-extrabold uppercase tracking-[0.1em] text-[#101828]">Public profile</p>
               <h2 className="mt-2 text-[26px] font-bold tracking-[-0.03em]">Business information</h2>
             </div>
             <span className="rounded-full bg-[#F2F4F7] px-3 py-2 text-[11px] font-bold uppercase text-[#667085]">{provider.provider_type}</span>
@@ -439,13 +439,13 @@ export default function ProviderDashboard({
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <ProviderField label="Business name" value={provider.business_name} onChange={(value) => field("business_name", value)} className="sm:col-span-2" />
             <label className="sm:col-span-2">
-              <span className="mb-2 block text-[12px] font-bold text-[#344054]">Description</span>
+              <span className="mb-2 block text-[14px] font-bold text-[#101828]">Description</span>
               <textarea
                 value={provider.business_description ?? ""}
                 onChange={(event) => field("business_description", event.target.value)}
                 rows={4}
                 placeholder="Tell customers what your garage specializes in."
-                className="w-full rounded-[14px] border border-[#D0D5DD] px-4 py-3 text-[14px] outline-none focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
+                className="w-full rounded-[14px] border border-[#98A2B3] px-4 py-3 text-[14px] outline-none focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
               />
             </label>
             <ProviderField label="Public phone" value={provider.public_phone ?? ""} onChange={(value) => field("public_phone", value)} />
@@ -464,9 +464,9 @@ export default function ProviderDashboard({
         </form>
       </div>
 
-      <section className="rounded-[28px] border border-[#EAECF0] bg-white p-6 shadow-sm">
+      <section className="rounded-[28px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
         <div>
-          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">Service catalogue</p>
+          <p className="text-[14px] font-extrabold uppercase tracking-[0.1em] text-[#101828]">Service catalogue</p>
           <h2 className="mt-2 text-[28px] font-bold tracking-[-0.03em]">List your services and prices</h2>
           <p className="mt-2 text-[14px] leading-6 text-[#667085]">These are the services clients will see on your MECATREX garage card.</p>
         </div>
@@ -475,8 +475,8 @@ export default function ProviderDashboard({
           <div className="grid gap-4 lg:grid-cols-2">
             <ServiceNamePicker key={newServiceFormKey} label="Service name *" value={newService.name} onChange={(value) => setNewService((current) => ({ ...current, name: value }))} />
             <label>
-              <span className="mb-2 block text-[12px] font-bold text-[#344054]">Pricing *</span>
-              <select required value={newService.pricingType} onChange={(event) => setNewService((current) => ({ ...current, pricingType: event.target.value as PricingType }))} className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-3 text-[14px] font-semibold outline-none focus:border-[#4771A6]">
+              <span className="mb-2 block text-[14px] font-bold text-[#101828]">Pricing *</span>
+              <select required value={newService.pricingType} onChange={(event) => setNewService((current) => ({ ...current, pricingType: event.target.value as PricingType }))} className="h-[48px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-3 text-[14px] font-semibold outline-none focus:border-[#4771A6]">
                 <option value="" disabled>Select pricing</option>
                 <option value="fixed">Fixed price</option>
                 <option value="from">Starting from</option>
@@ -486,8 +486,8 @@ export default function ProviderDashboard({
             <ProviderField label="Price (CAD) *" type="number" step="0.01" min="0" required value={newService.price} onChange={(value) => setNewService((current) => ({ ...current, price: value }))} placeholder="89.00" />
             <ProviderField label="Approx. duration (minutes) *" type="number" step="1" min="1" required value={newService.duration} onChange={(value) => setNewService((current) => ({ ...current, duration: value }))} placeholder="60" />
             <label className="lg:col-span-2">
-              <span className="mb-2 block text-[12px] font-bold text-[#344054]">Description (optional)</span>
-              <input value={newService.description} onChange={(event) => setNewService((current) => ({ ...current, description: event.target.value }))} placeholder="What's included in this service?" className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6]" />
+              <span className="mb-2 block text-[14px] font-bold text-[#101828]">Description (optional)</span>
+              <input value={newService.description} onChange={(event) => setNewService((current) => ({ ...current, description: event.target.value }))} placeholder="What's included in this service?" className="h-[48px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6]" />
             </label>
           </div>
           <button className="mt-4 rounded-[13px] bg-[#101828] px-5 py-3 text-[13px] font-bold text-white hover:bg-[#4771A6]">+ Add service</button>
@@ -495,7 +495,7 @@ export default function ProviderDashboard({
 
         <div className="mt-6 space-y-4">
           {services.length === 0 ? (
-            <div className="rounded-[18px] border border-dashed border-[#D0D5DD] px-5 py-8 text-center text-[14px] text-[#667085]">No services listed yet.</div>
+            <div className="rounded-[18px] border border-dashed border-[#98A2B3] px-5 py-8 text-center text-[14px] text-[#667085]">No services listed yet.</div>
           ) : (
             services.map((service) => (
               <ServiceEditor
@@ -538,7 +538,7 @@ function ProviderField({
 }) {
   return (
     <label className={className}>
-      <span className="mb-2 block text-[12px] font-bold text-[#344054]">{label}</span>
+      <span className="mb-2 block text-[14px] font-bold text-[#101828]">{label}</span>
       <input
         type={type}
         step={step}
@@ -548,7 +548,7 @@ function ProviderField({
         disabled={disabled}
         required={required}
         min={min}
-        className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10 disabled:bg-[#F2F4F7]"
+        className="h-[48px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10 disabled:bg-[#F2F4F7]"
       />
     </label>
   );
@@ -561,12 +561,12 @@ function ServiceEditor({ service, onChange, onSave, onDelete }: {
   onDelete: () => void;
 }) {
   return (
-    <div className="rounded-[20px] border border-[#EAECF0] p-5">
+    <div className="rounded-[20px] border border-[#BAC7D7] bg-white p-5">
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.7fr_auto] lg:items-end">
         <ServiceNamePicker label="Service *" value={service.name} onChange={(value) => onChange({ ...service, name: value })} />
         <label>
-          <span className="mb-2 block text-[12px] font-bold text-[#344054]">Pricing</span>
-          <select value={service.pricing_type} onChange={(event) => onChange({ ...service, pricing_type: event.target.value as PricingType })} className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-3 text-[14px] font-semibold outline-none">
+          <span className="mb-2 block text-[14px] font-bold text-[#101828]">Pricing</span>
+          <select value={service.pricing_type} onChange={(event) => onChange({ ...service, pricing_type: event.target.value as PricingType })} className="h-[48px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-3 text-[14px] font-semibold outline-none">
             <option value="fixed">Fixed</option>
             <option value="from">From</option>
             <option value="hourly">Hourly</option>
