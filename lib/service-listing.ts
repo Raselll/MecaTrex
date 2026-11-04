@@ -1,12 +1,14 @@
-export const COMMON_SERVICES = [
-  "Oil change",
-  "Tire service",
-  "Brake service",
-  "Battery",
-  "Diagnostics",
-  "Inspection & maintenance",
+export const SERVICE_CATALOGUE = [
+  { name: "Oil change", icon: "🛢️", description: "Oil and routine engine maintenance." },
+  { name: "Tire service", icon: "🛞", description: "Installation, rotation, balancing and repair." },
+  { name: "Brake service", icon: "🛑", description: "Brake inspection, pads, rotors and repairs." },
+  { name: "Battery", icon: "🔋", description: "Battery testing, diagnosis and replacement." },
+  { name: "Diagnostics", icon: "🔧", description: "Check engine lights, noises and unknown problems." },
+  { name: "Inspection & maintenance", icon: "🔍", description: "General inspection and preventive maintenance." },
 ] as const;
 
+// Shared between the homepage and the provider dashboard to avoid inconsistent labels/icons.
+export const COMMON_SERVICES = SERVICE_CATALOGUE.map((service) => service.name);
 export type PricingType = "fixed" | "from" | "hourly" | "quote";
 
 export function isCompleteService(
@@ -17,7 +19,7 @@ export function isCompleteService(
 ): boolean {
   return (
     name.trim().length > 0 &&
-    (pricing === "fixed" || pricing === "from" || pricing === "hourly") &&
+    pricing === "fixed" &&
     priceCents !== null &&
     Number.isSafeInteger(priceCents) &&
     priceCents >= 0 &&
