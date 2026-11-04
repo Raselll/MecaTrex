@@ -34,6 +34,7 @@ The migrations must be applied in filename order:
 3. `supabase/migrations/20261103_backfill_existing_auth_users.sql`
 4. `supabase/migrations/20261104_sync_provider_publication.sql`
 5. `supabase/migrations/20261105_provider_service_required_fields.sql`
+6. `supabase/migrations/20261106_fixed_price_services_only.sql`
 
 For the current development project, the simplest method is Supabase Dashboard -> SQL Editor -> New query, paste each migration in order, then Run.
 
@@ -131,3 +132,14 @@ The homepage timing picker opens in a viewport-safe modal, not inside the hero's
 Every approved garage has a prominent **Book a service** CTA. It currently opens a clearly marked pre-booking message and contact links. It **does not create a reservation**. Real scheduling and booking transactions will be implemented in a subsequent phase.
 
 Provider dashboards expose a **Save all updates** control to save the business profile and edits to existing services, in addition to existing per-row Save and Add service actions. This is not an atomic multi-table SQL transaction; failures are surfaced to the provider. The 24-hour application review copy is an operational target, not an automated SLA.
+
+## 11. Fixed-price launch model and rolling six-month search calendar
+
+- All **new** provider services use only `pricing_type = 'fixed'` (no hourly or starting-from price selection). The pricing control is read-only in the dashboard.
+- The new migration `20261106_fixed_price_services_only.sql` adds a **NOT VALID** PostgreSQL check. It blocks inserting/updating non-fixed service pricing, but keeps existing legacy rows without silently changing their meaning.
+- Providers must review any existing "From", "Hourly", or "Quote" price, then explicitly click "Confirm this as a fixed price" in the service editor and save. Legacy prices are hidden from public garage cards until confirmed. This prevents a "From $56" from being advertised as an exact $56.
+- The public garage cards display only providers with at least one **active service with a valid fixed price and positive duration**.
+- The service names/icons/descriptions shown in the homepage and provider selection all come from `lib/service-listing.ts`.
+- The When date picker allows today through the **same calendar day six months later** (inclusive, with end-of-month clamping). For example, November 3, 2026 through May 3, 2027. The limit updates automatically as the user's local date changes.
+- There are 48 half-hour choices per day, starting at **12:00 AM** and ending at **11:30 PM**. Past times on the current day are disabled.
+- These are **requested** times, not promised garage opening hours or live availability. The booking calendar will enforce provider availability in the later scheduling phase.

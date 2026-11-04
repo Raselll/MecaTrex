@@ -106,7 +106,7 @@ export default function ProviderDashboard({
     name: "",
     description: "",
     price: "",
-    pricingType: "" as PricingType,
+    pricingType: "fixed" as PricingType,
     duration: "",
   });
 
@@ -114,7 +114,7 @@ export default function ProviderDashboard({
   const imageUrl = provider.image_path
     ? supabase.storage.from("garage-images").getPublicUrl(provider.image_path).data.publicUrl
     : "";
-  const activeServices = services.filter((service) => service.is_active);
+  const activeServices = services.filter((service) => service.is_active && service.pricing_type === "fixed" && isCompleteService(service.name, service.pricing_type, service.price_cents, service.duration_minutes));
   const canPublish = provider.status === "approved" && activeServices.length > 0;
 
   function field<K extends keyof ProviderRecord>(key: K, value: ProviderRecord[K]) {
@@ -178,7 +178,7 @@ export default function ProviderDashboard({
     setError("");
     try {
       if (services.some((service) => !isCompleteService(service.name, service.pricing_type, service.price_cents, service.duration_minutes))) {
-        setError("Complete name, pricing, price and duration for every service before saving.");
+        setError("Every service needs a confirmed fixed price, service name and duration. Review and convert any older From/Hourly prices first.");
         return;
       }
       const problem = await persistProfile();
@@ -275,7 +275,7 @@ export default function ProviderDashboard({
     const durationNumber = Number(newService.duration);
     const priceCents = newService.price.trim() && Number.isFinite(priceNumber) && priceNumber >= 0 ? Math.round(priceNumber * 100) : null;
     if (!isCompleteService(name, newService.pricingType, priceCents, newService.duration.trim() ? durationNumber : null)) {
-      setError("Service name, pricing, price and a positive duration are all required.");
+      setError("Service name, fixed price and a positive duration are all required.");
       return;
     }
     const { data, error: insertError } = await supabase
@@ -299,7 +299,7 @@ export default function ProviderDashboard({
 
     setServices((current) => [...current, data as ProviderService]);
     await refreshListingState();
-    setNewService({ name: "", description: "", price: "", pricingType: "" as PricingType, duration: "" });
+    setNewService({ name: "", description: "", price: "", pricingType: "fixed" as PricingType, duration: "" });
     setNewServiceFormKey((value) => value + 1);
     setMessage("Service added to your catalogue.");
   }
@@ -308,7 +308,7 @@ export default function ProviderDashboard({
     setError("");
     setMessage("");
     if (!isCompleteService(service.name, service.pricing_type, service.price_cents, service.duration_minutes)) {
-      setError("Please complete name, pricing, price and duration before saving.");
+      setError("Please confirm the fixed price, service name and duration before saving.");
       return;
     }
     const { error: updateError } = await supabase
@@ -468,20 +468,15 @@ export default function ProviderDashboard({
         <div>
           <p className="text-[14px] font-extrabold uppercase tracking-[0.1em] text-[#101828]">Service catalogue</p>
           <h2 className="mt-2 text-[28px] font-bold tracking-[-0.03em]">List your services and prices</h2>
-          <p className="mt-2 text-[14px] leading-6 text-[#667085]">These are the services clients will see on your MECATREX garage card.</p>
+          <p className="mt-2 text-[14px] leading-6 text-[#667085]">Choose an exact fixed price for each service. Customers always see the final CAD price — no starting-from or hourly rates.</p>
         </div>
 
         <form onSubmit={addService} className="mt-6 rounded-[22px] bg-[#F8FAFC] p-5">
           <div className="grid gap-4 lg:grid-cols-2">
             <ServiceNamePicker key={newServiceFormKey} label="Service name *" value={newService.name} onChange={(value) => setNewService((current) => ({ ...current, name: value }))} />
-            <label>
-              <span className="mb-2 block text-[14px] font-bold text-[#101828]">Pricing *</span>
-              <select required value={newService.pricingType} onChange={(event) => setNewService((current) => ({ ...current, pricingType: event.target.value as PricingType }))} className="h-[48px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-3 text-[14px] font-semibold outline-none focus:border-[#4771A6]">
-                <option value="" disabled>Select pricing</option>
-                <option value="fixed">Fixed price</option>
-                <option value="from">Starting from</option>
-                <option value="hourly">Hourly</option>
-              </select>
+            <label className="block">
+              <span className="mb-2 block text-[14px] font-bold text-[#101828]">Pricing</span>
+              <input type="text" value="🔒 Fixed price" readOnly aria-label="Pricing is always fixed" className="h-[48px] w-full cursor-not-allowed rounded-[13px] border border-[#98A2B3] bg-[#EDF3FA] px-3 text-[14px] font-bold text-[#101828]" />
             </label>
             <ProviderField label="Price (CAD) *" type="number" step="0.01" min="0" required value={newService.price} onChange={(value) => setNewService((current) => ({ ...current, price: value }))} placeholder="89.00" />
             <ProviderField label="Approx. duration (minutes) *" type="number" step="1" min="1" required value={newService.duration} onChange={(value) => setNewService((current) => ({ ...current, duration: value }))} placeholder="60" />
@@ -564,15 +559,12 @@ function ServiceEditor({ service, onChange, onSave, onDelete }: {
     <div className="rounded-[20px] border border-[#BAC7D7] bg-white p-5">
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.7fr_auto] lg:items-end">
         <ServiceNamePicker label="Service *" value={service.name} onChange={(value) => onChange({ ...service, name: value })} />
-        <label>
-          <span className="mb-2 block text-[14px] font-bold text-[#101828]">Pricing</span>
-          <select value={service.pricing_type} onChange={(event) => onChange({ ...service, pricing_type: event.target.value as PricingType })} className="h-[48px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-3 text-[14px] font-semibold outline-none">
-            <option value="fixed">Fixed</option>
-            <option value="from">From</option>
-            <option value="hourly">Hourly</option>
-            {service.pricing_type === "quote" && <option value="quote" disabled>Legacy quote — choose pricing</option>}
-          </select>
-        </label>
+        <div>
+          <label className="block">
+            <span className="mb-2 block text-[14px] font-bold text-[#101828]">Pricing</span>
+            <input readOnly type="text" value="🔒 Fixed price" aria-label="Pricing is fixed" className="h-[48px] w-full cursor-not-allowed rounded-[13px] border border-[#98A2B3] bg-[#EDF3FA] px-3 text-[14px] font-bold text-[#101828]" />
+          </label>
+        </div>
         <ProviderField
           label="Price (CAD) *"
           type="number"
@@ -595,7 +587,25 @@ function ServiceEditor({ service, onChange, onSave, onDelete }: {
           Active
         </label>
       </div>
-      <p className="mt-3 text-[12px] font-semibold text-[#4771A6]">Public display: {formatPrice(service)}</p>
+      {service.pricing_type !== "fixed" ? (
+        <div className="mt-4 rounded-[14px] border border-[#FEC84B] bg-[#FFFAEB] p-4 text-[#92400E]">
+          <p className="text-[13px] font-bold">⚠️ Old pricing: {formatPrice(service)} — needs confirmation</p>
+          <p className="mt-1 text-[12px] leading-5">Check the amount above. MECATREX now requires the exact final price for each service. This old pricing will not appear on the public garage card until confirmed.</p>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm("Confirm the CAD amount shown is your EXACT fixed price for this service? You can edit the amount before saving.")) {
+                onChange({ ...service, pricing_type: "fixed" });
+              }
+            }}
+            className="mt-3 rounded-[11px] bg-[#101828] px-4 py-2.5 text-[12px] font-bold text-white hover:bg-[#315C91]"
+          >
+            Confirm this as a fixed price
+          </button>
+        </div>
+      ) : (
+        <p className="mt-3 text-[12px] font-semibold text-[#4771A6]">Public display: {formatPrice(service)}</p>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { normalizeBusinessWebsite } from "@/lib/service-listing";
+import { normalizeBusinessWebsite, SERVICE_CATALOGUE } from "@/lib/service-listing";
 
 type Service = {
   id: string;
@@ -95,7 +95,13 @@ export default function LiveGarages() {
         setError("Garage listings are temporarily unavailable.");
         setGarages([]);
       } else {
-        setGarages((data ?? []) as Garage[]);
+        setGarages(
+          ((data ?? []) as Garage[]).filter((garage) =>
+            (garage.provider_services ?? []).some(
+              (service) => service.is_active && service.pricing_type === "fixed" && service.price_cents !== null && service.duration_minutes !== null && service.duration_minutes > 0
+            )
+          )
+        );
       }
       setLoading(false);
     }
@@ -138,7 +144,7 @@ export default function LiveGarages() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#EDF3FA] text-[30px]">🔧</div>
         <h3 className="mt-5 text-[24px] font-bold text-[#101828]">Approved garages will appear here.</h3>
         <p className="mx-auto mt-3 max-w-[620px] text-[16px] leading-7 text-[#667085]">
-          A garage becomes visible after MECATREX approves the provider and the provider publishes at least one service from its dashboard.
+          Garages appear after approval and once at least one service has a confirmed fixed price.
         </p>
       </div>
     );
@@ -147,7 +153,9 @@ export default function LiveGarages() {
   return (
     <div className="grid gap-7 lg:grid-cols-3">
       {garages.map((garage) => {
-        const services = (garage.provider_services ?? []).filter((service) => service.is_active);
+        const services = (garage.provider_services ?? []).filter(
+          (service) => service.is_active && service.pricing_type === "fixed" && service.price_cents !== null && service.duration_minutes !== null && service.duration_minutes > 0
+        );
         const websiteUrl = normalizeBusinessWebsite(garage.website ?? "");
         const visibleServices = services.slice(0, 4);
         const imageUrl = garage.image_path
@@ -206,7 +214,10 @@ export default function LiveGarages() {
                     {visibleServices.map((service) => (
                       <div key={service.id} className="flex items-start justify-between gap-4 rounded-[12px] bg-white px-3.5 py-3">
                         <div className="min-w-0">
-                          <p className="truncate text-[13px] font-bold text-[#101828]">{service.name}</p>
+                          <p className="flex items-center gap-2 truncate text-[13px] font-bold text-[#101828]">
+                              <span aria-hidden="true">{SERVICE_CATALOGUE.find((item) => item.name === service.name)?.icon ?? "🔧"}</span>
+                              <span className="truncate">{service.name}</span>
+                            </p>
                           {service.duration_minutes && (
                             <p className="mt-0.5 text-[11px] text-[#98A2B3]">Approx. {service.duration_minutes} min</p>
                           )}
