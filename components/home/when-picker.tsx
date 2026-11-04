@@ -98,7 +98,7 @@ export default function WhenPicker() {
         const max = addCalendarMonthsClamped(start, 6);
         const restoredDate = parseIsoDate(parsed.date);
         const validDate = toIsoDate(restoredDate) === parsed.date && restoredDate >= start && restoredDate <= max;
-        const validTime = !parsed.time || /^([01]\\d|2[0-3]):(00|30)$/.test(parsed.time);
+        const validTime = !parsed.time || /^([01]\d|2[0-3]):(00|30)$/.test(parsed.time);
         if (validDate && validTime) {
           setMode("scheduled");
           setSelectedDate(parsed.date);
