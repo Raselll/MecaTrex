@@ -31,6 +31,14 @@ function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+// Six calendar months (inclusive), preserving the day when possible.
+// Example: November 3 → May 3. Dates such as August 31 clamp to February 28/29.
+function addCalendarMonthsClamped(date: Date, months: number) {
+  const firstOfTargetMonth = new Date(date.getFullYear(), date.getMonth() + months, 1);
+  const daysInTargetMonth = new Date(firstOfTargetMonth.getFullYear(), firstOfTargetMonth.getMonth() + 1, 0).getDate();
+  return new Date(firstOfTargetMonth.getFullYear(), firstOfTargetMonth.getMonth(), Math.min(date.getDate(), daysInTargetMonth));
+}
+
 function formatSummary(mode: Mode, date: string, time: string) {
   if (mode === "asap") return "ASAP";
   if (!date) return "Choose date & time";
@@ -54,29 +62,48 @@ function formatSummary(mode: Mode, date: string, time: string) {
 }
 
 export default function WhenPicker() {
-  const today = useMemo(() => {
-    const value = new Date();
-    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  const [clock, setClock] = useState(() => new Date());
+  const today = useMemo(() => new Date(clock.getFullYear(), clock.getMonth(), clock.getDate()), [clock]);
+  const maxDate = useMemo(() => addCalendarMonthsClamped(today, 6), [today]);
+  const minDateIso = toIsoDate(today);
+  const maxDateIso = toIsoDate(maxDate);
+
+  // Refresh current date/time for long-open tabs, including across midnight.
+  useEffect(() => {
+    const refresh = () => setClock(new Date());
+    const interval = window.setInterval(refresh, 30_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
   }, []);
 
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("asap");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [month, setMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+  const [month, setMonth] = useState(() => new Date(clock.getFullYear(), clock.getMonth(), 1));
 
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (!stored) return;
       const parsed = JSON.parse(stored) as SavedWhen;
-      if (parsed.mode === "scheduled") {
-        setMode("scheduled");
-        setSelectedDate(parsed.date ?? "");
-        setSelectedTime(parsed.time ?? "");
-        if (parsed.date) {
-          const date = parseIsoDate(parsed.date);
-          setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+      if (parsed.mode === "scheduled" && parsed.date) {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const max = addCalendarMonthsClamped(start, 6);
+        const restoredDate = parseIsoDate(parsed.date);
+        const validDate = toIsoDate(restoredDate) === parsed.date && restoredDate >= start && restoredDate <= max;
+        const validTime = !parsed.time || /^([01]\\d|2[0-3]):(00|30)$/.test(parsed.time);
+        if (validDate && validTime) {
+          setMode("scheduled");
+          setSelectedDate(parsed.date);
+          setSelectedTime(parsed.time ?? "");
+          setMonth(new Date(restoredDate.getFullYear(), restoredDate.getMonth(), 1));
         }
       }
     } catch {
@@ -120,20 +147,32 @@ export default function WhenPicker() {
 
   const timeOptions = useMemo(() => {
     const result: string[] = [];
-    for (let hour = 6; hour <= 22; hour += 1) {
+    for (let hour = 0; hour < 24; hour += 1) {
       for (const minute of [0, 30]) {
-        if (hour === 22 && minute === 30) continue;
         result.push(`${pad(hour)}:${pad(minute)}`);
       }
     }
     return result;
   }, []);
 
+  const selectedDateWithinRange = selectedDate >= minDateIso && selectedDate <= maxDateIso;
+  const selectedTimeMinutes = selectedTime ? Number(selectedTime.slice(0, 2)) * 60 + Number(selectedTime.slice(3, 5)) : -1;
+  const currentTimeMinutes = clock.getHours() * 60 + clock.getMinutes();
+  const selectedTimeIsFuture = selectedDate !== minDateIso || selectedTimeMinutes > currentTimeMinutes;
+  const canUseTime = selectedDateWithinRange && Boolean(selectedTime) && selectedTimeIsFuture;
+
   return (
     <div className="relative min-h-[110px] rounded-[20px] border border-[#DCE8F5] bg-[#F8FAFC] transition hover:border-[#83A7D3] hover:bg-[#EDF3FA]">
       <button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (!open && selectedDate && !selectedDateWithinRange) {
+            setSelectedDate("");
+            setSelectedTime("");
+            setMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+          }
+          setOpen((value) => !value);
+        }}
         className="group flex min-h-[110px] w-full flex-col items-center justify-center rounded-[20px] px-4 py-4 text-center outline-none focus-visible:ring-4 focus-visible:ring-[#4771A6]/20"
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -196,7 +235,7 @@ export default function WhenPicker() {
                 <button
                   type="button"
                   onClick={() => setMonth((value) => new Date(value.getFullYear(), value.getMonth() - 1, 1))}
-                  disabled={month.getFullYear() === today.getFullYear() && month.getMonth() === today.getMonth()}
+                  disabled={month.getFullYear() === today.getFullYear() && month.getMonth() <= today.getMonth()}
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-[#EAECF0] text-[#475467] disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="Previous month"
                 >
@@ -208,7 +247,8 @@ export default function WhenPicker() {
                 <button
                   type="button"
                   onClick={() => setMonth((value) => new Date(value.getFullYear(), value.getMonth() + 1, 1))}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#EAECF0] text-[#475467]"
+                  disabled={month.getFullYear() === maxDate.getFullYear() && month.getMonth() >= maxDate.getMonth()}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#EAECF0] text-[#475467] disabled:cursor-not-allowed disabled:opacity-30"
                   aria-label="Next month"
                 >
                   ›
@@ -220,7 +260,7 @@ export default function WhenPicker() {
                   <div key={day} className="py-1 text-[11px] font-bold uppercase text-[#98A2B3]">{day}</div>
                 ))}
                 {calendarDays.map((day) => {
-                  const disabled = day < today || day.getMonth() !== month.getMonth();
+                  const disabled = day < today || day > maxDate || day.getMonth() !== month.getMonth();
                   const iso = toIsoDate(day);
                   const selected = selectedDate === iso;
                   return (
@@ -248,14 +288,15 @@ export default function WhenPicker() {
                   {timeOptions.map((time) => {
                     const [hour, minute] = time.split(":").map(Number);
                     const label = new Intl.DateTimeFormat("en-CA", { hour: "numeric", minute: "2-digit" }).format(new Date(2000, 0, 1, hour, minute));
-                    return <option key={time} value={time}>{label}</option>;
+                    const alreadyPassed = selectedDate === minDateIso && hour * 60 + minute <= currentTimeMinutes;
+                    return <option key={time} value={time} disabled={alreadyPassed}>{label}</option>;
                   })}
                 </select>
               </label>
 
               <button
                 type="button"
-                disabled={!selectedDate || !selectedTime}
+                disabled={!canUseTime}
                 onClick={() => setOpen(false)}
                 className="mt-4 w-full rounded-[13px] bg-[#101828] px-4 py-3.5 text-[14px] font-bold text-white transition hover:bg-[#4771A6] disabled:cursor-not-allowed disabled:bg-[#D0D5DD]"
               >
@@ -265,7 +306,7 @@ export default function WhenPicker() {
           )}
 
             <p className="mt-4 text-center text-[12px] leading-5 text-[#667085]">
-              Your choice sets a search preference. Garage-specific availability is coming soon.
+              Bookable dates: today through {new Intl.DateTimeFormat("en-CA", { month: "long", day: "numeric", year: "numeric" }).format(maxDate)}. Times run from 12:00 AM to 11:30 PM; garage-specific availability will be added later.
             </p>
           </div>
         </div>,
