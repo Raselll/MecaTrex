@@ -71,7 +71,7 @@ export async function setProviderStatus(formData: FormData) {
   const supabase = await adminContext();
   const recipient = await recipientForProvider(supabase, providerId);
   if (!recipient) redirect(adminUrl("error", "Provider or owner email not found."));
-  if (recipient.currentStatus === status) {
+  if (recipient.currentStatus === status && !message) {
     redirect(adminUrl("warning", `This application is already ${status.replaceAll("_", " ")}. Use Resend notification if needed.`));
   }
 
