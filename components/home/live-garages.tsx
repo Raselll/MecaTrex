@@ -190,8 +190,26 @@ export default function LiveGarages() {
 
               <div className="mt-5 space-y-2 text-[13px] leading-5 text-[#475467]">
                 <p className="flex gap-2"><span>📍</span><span>{garage.address_line1}, {garage.city}, {garage.province} {garage.postal_code}</span></p>
-                {garage.public_phone && <p className="flex gap-2"><span>📞</span><span>{garage.public_phone}</span></p>}
-                {garage.public_email && <p className="flex gap-2"><span>✉️</span><span className="break-all">{garage.public_email}</span></p>}
+                {garage.public_phone && (
+                  <p className="flex items-start gap-2">
+                    <span aria-hidden="true">📞</span>
+                    <a href={`tel:${garage.public_phone.replace(/[^\\d+]/g, "")}`}
+                       aria-label={`Call ${garage.business_name} at ${garage.public_phone}`}
+                       className="font-bold text-[#315C91] underline underline-offset-2 transition hover:text-[#101828]">
+                      {garage.public_phone}
+                    </a>
+                  </p>
+                )}
+                {garage.public_email && (
+                  <p className="flex items-start gap-2">
+                    <span aria-hidden="true">✉️</span>
+                    <a href={`mailto:${garage.public_email}?subject=${encodeURIComponent("MECATREX service inquiry")}`}
+                       aria-label={`Email ${garage.business_name}`}
+                       className="break-all font-bold text-[#315C91] underline underline-offset-2 transition hover:text-[#101828]">
+                      {garage.public_email}
+                    </a>
+                  </p>
+                )}
                 {websiteUrl && (
                   <a
                     href={websiteUrl}
