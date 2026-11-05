@@ -193,7 +193,7 @@ export default function LiveGarages() {
                 {garage.public_phone && (
                   <p className="flex items-start gap-2">
                     <span aria-hidden="true">📞</span>
-                    <a href={`tel:${garage.public_phone.replace(/[^\\d+]/g, "")}`}
+                    <a href={`tel:${garage.public_phone.replace(/[^\d+]/g, "")}`}
                        aria-label={`Call ${garage.business_name} at ${garage.public_phone}`}
                        className="font-bold text-[#315C91] underline underline-offset-2 transition hover:text-[#101828]">
                       {garage.public_phone}
