@@ -89,12 +89,12 @@ export default async function AccountPage() {
         <div className="rounded-[30px] border border-[#EAECF0] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-9">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">Provider dashboard</p>
-              <h1 className="mt-2 text-[36px] font-bold tracking-[-0.04em] text-[#101828] sm:text-[44px]">
-                Welcome, {displayName}.
+              <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">MECATREX business dashboard</p>
+              <h1 className="mt-2 text-[32px] font-bold tracking-[-0.04em] text-[#101828] sm:text-[40px]">
+                Welcome back, {profile.first_name}.
               </h1>
               <p className="mt-2 text-[15px] leading-6 text-[#667085]">
-                Manage what customers see on MECATREX. Scheduling and live availability will be connected in the next phase.
+                Manage your garage in three simple steps: check approval, update your business and list your services.
               </p>
             </div>
             <div className="rounded-[15px] bg-[#F2F4F7] px-4 py-3 text-[12px] font-bold text-[#475467]">
@@ -138,13 +138,22 @@ export default async function AccountPage() {
             <p className="mt-2 text-[14px] leading-6 text-white/70">
               Review garage and towing applications, request additional information, approve providers, or reject applications.
             </p>
-            <Link href="/admin" className="mt-5 inline-flex rounded-[13px] bg-white px-5 py-3 text-[13px] font-bold text-[#101828] hover:bg-[#EDF3FA]">
-              Open admin dashboard →
-            </Link>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link href="/admin?view=review#applications" className="inline-flex rounded-[13px] bg-white px-5 py-3 text-[14px] font-bold text-[#101828] hover:bg-[#EDF3FA]">
+                Review applications →
+              </Link>
+              <Link href="/admin?view=accounts#accounts" className="inline-flex rounded-[13px] border border-white/40 px-5 py-3 text-[14px] font-bold text-white hover:bg-white/10">
+                View all accounts →
+              </Link>
+            </div>
           </div>
         ) : (
-          <div className="mt-7 rounded-[18px] bg-[#EDF3FA] p-5 text-[14px] leading-6 text-[#475467]">
-            Your client dashboard will become the home for upcoming bookings, vehicles, messages, and service history as those features are connected.
+          <div className="mt-7 rounded-[22px] border border-[#D5DFEA] bg-[#EDF3FA] p-6">
+            <h2 className="text-[22px] font-bold text-[#101828]">Ready to find a garage?</h2>
+            <p className="mt-2 text-[14px] leading-6 text-[#475467]">Browse approved businesses, compare their fixed service prices and contact your preferred garage. Online booking is coming next.</p>
+            <Link href="/#garage-results" className="mt-5 inline-flex rounded-[13px] bg-[#4771A6] px-6 py-3.5 text-[14px] font-bold text-white hover:bg-[#315C91]">
+              Find garages →
+            </Link>
           </div>
         )}
       </div>
@@ -156,7 +165,7 @@ function AccountShell({ children, wide = false }: { children: React.ReactNode; w
   return (
     <main className="min-h-screen bg-[#F5F7FA] px-5 py-10">
       <div className={`mx-auto ${wide ? "max-w-[1280px]" : "max-w-[820px]"}`}>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <Link href="/" className="inline-flex items-center">
             <Image
               src="/mecatrex-logo-web.png"
@@ -168,14 +177,17 @@ function AccountShell({ children, wide = false }: { children: React.ReactNode; w
             />
           </Link>
 
-          <form action={signOut}>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="rounded-[14px] border border-[#D0D5DD] bg-white px-4 py-3 text-[14px] font-bold text-[#344054] hover:bg-[#F9FAFB]">Browse garages</Link>
+            <form action={signOut}>
             <button
               type="submit"
               className="rounded-[14px] border border-[#D0D5DD] bg-white px-4 py-3 text-[14px] font-bold text-[#344054] transition hover:bg-[#F9FAFB]"
             >
               Log out
             </button>
-          </form>
+            </form>
+          </div>
         </div>
         <div className="mt-8">{children}</div>
       </div>
