@@ -137,13 +137,16 @@ export async function signup(formData: FormData) {
 
   if (error) signupError(friendlySignupError(error.message));
 
-  if (accountType === "provider") {
+  // Supabase may return an obfuscated user for an email that is already registered.
+  // Notify administrators only for a newly created, genuine provider identity.
+  if (accountType === "provider" && data.user && data.user.identities?.length !== 0) {
     try {
       await sendAdminProviderApplicationEmail({
         firstName,
         lastName,
         email,
         primaryPhone,
+        secondaryPhone,
         providerType: providerType as "garage" | "towing",
         businessName,
         businessAddress,
@@ -152,7 +155,7 @@ export async function signup(formData: FormData) {
         postalCode: businessPostalCode,
       });
     } catch (emailError) {
-      console.error("Admin notification email failed:", emailError);
+      console.error("MECATREX new provider alert was not delivered:", emailError);
     }
   }
 

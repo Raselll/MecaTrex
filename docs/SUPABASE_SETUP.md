@@ -143,3 +143,48 @@ Provider dashboards expose a **Save all updates** control to save the business p
 - The When date picker allows today through the **same calendar day six months later** (inclusive, with end-of-month clamping). For example, November 3, 2026 through May 3, 2027. The limit updates automatically as the user's local date changes.
 - There are 48 half-hour choices per day, starting at **12:00 AM** and ending at **11:30 PM**. Past times on the current day are disabled.
 - These are **requested** times, not promised garage opening hours or live availability. The booking calendar will enforce provider availability in the later scheduling phase.
+
+## 12. Provider application and decision notifications (Brevo Transactional API)
+
+**Important:** Supabase Custom SMTP / the Brevo **SMTP key** only delivers Supabase Auth emails (signup confirmation and password reset). It does **not** automatically deliver MECATREX business notifications. MECATREX calls the Brevo **transactional API** on the server for these emails.
+
+1. Open [Brevo — SMTP & API](https://app.brevo.com/settings/keys/api). Create a Brevo **API key** (not the SMTP password). Keep it secret.
+2. In `.env.local` (local development), add:
+   ```env
+   BREVO_API_KEY=your_brevo_api_key
+   BREVO_SENDER_EMAIL=the_verified_sender_email_in_brevo
+   MECATREX_ADMIN_EMAIL=the_address_that_receives_new_applications
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   ```
+3. Restart `npm run dev` after modifying environment variables. For production, configure these three server-only variables in the hosting environment too.
+4. **New provider signup:** once Supabase Auth successfully registers a new provider account, MECATREX sends an admin email with business name, Garage/Towing type, owner details, primary/secondary phone, postal address, and a direct link to `/admin?view=review`. The provider still has to click the Supabase confirmation email.
+5. **Admin review:** changing the provider's status to Approved, Needs information, or Rejected sends the owner a Brevo email with the outcome, personal note and link back to `/account`. A reason is required for rejection or a request for information.
+6. **Visibility:** if the Brevo API settings are missing, the admin dashboard shows a warning. If the provider-status database update succeeded but sending failed, the admin sees an explicit warning, and can click **Resend decision email** on the provider card after fixing Brevo.
+7. A successful Brevo API call means **Brevo accepted the email request**, not that inbox delivery has been confirmed. Use **Brevo → Transactional → Logs** to inspect sent/delivered/bounced events. In local development, verify with a genuine test provider email address.
+
+Never commit `.env.local`, never add `BREVO_API_KEY` to any `NEXT_PUBLIC_...` variable, and never paste the key into chat.
+
+## 13. User account types and database verification
+
+**Supabase Dashboard → Authentication → Users → Provider type** describes the authentication identity (such as Email or Google), **not** whether a MECATREX user is a client or garage.
+
+MECATREX already stores the authoritative role securely in `public.profiles.account_type` (`client`, `provider`, `admin`). Providers have a corresponding row in `public.service_providers` with `provider_type` (`garage` / `towing`) and an approval `status` (`pending`, `approved`, `needs_information`, `rejected`).
+
+To inspect the database, open **Supabase → SQL Editor**:
+
+```sql
+select
+  p.email,
+  p.first_name,
+  p.last_name,
+  p.account_type,
+  sp.provider_type,
+  sp.business_name,
+  sp.status as application_status,
+  sp.is_listing_active
+from public.profiles as p
+left join public.service_providers as sp on sp.owner_id = p.id
+order by p.created_at desc;
+```
+
+The same distinction is available to admins in **MECATREX `/admin?view=accounts`**. This view uses the existing RLS-protected tables and does not expose personal account details publicly. No SQL migration is required for these dashboard and email changes.

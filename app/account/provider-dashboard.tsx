@@ -115,6 +115,12 @@ export default function ProviderDashboard({
     ? supabase.storage.from("garage-images").getPublicUrl(provider.image_path).data.publicUrl
     : "";
   const activeServices = services.filter((service) => service.is_active && service.pricing_type === "fixed" && isCompleteService(service.name, service.pricing_type, service.price_cents, service.duration_minutes));
+  const checklist = [
+    { title: "Business details", complete: Boolean(provider.business_name && provider.address_line1 && provider.postal_code && provider.public_phone && provider.public_email), href: "#business-profile" },
+    { title: "Garage photo", complete: Boolean(provider.image_path), href: "#business-profile" },
+    { title: "Services & fixed prices", complete: activeServices.length > 0, href: "#services" },
+    { title: "MECATREX approval", complete: provider.status === "approved", href: "#application-status" },
+  ];
   const canPublish = provider.status === "approved" && activeServices.length > 0;
 
   function field<K extends keyof ProviderRecord>(key: K, value: ProviderRecord[K]) {
@@ -364,7 +370,38 @@ export default function ProviderDashboard({
   }
 
   return (
-    <div className="mt-8 space-y-7">
+    <div className="mt-6 space-y-6">
+      <nav aria-label="Business dashboard shortcuts" className="grid gap-3 sm:grid-cols-3">
+        <a href="#application-status" className="rounded-[17px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:border-[#4771A6] hover:bg-[#EDF3FA]">
+          <span className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">01 · Account status</span>
+          <span className="mt-2 block text-[18px] font-extrabold text-[#101828]">{provider.status === "approved" ? "✓ Approved" : provider.status === "pending" ? "⏳ Under review" : provider.status === "rejected" ? "Not approved" : "More info required"}</span>
+          <span className="mt-1 block text-[12px] font-semibold text-[#4771A6]">View status →</span>
+        </a>
+        <a href="#business-profile" className="rounded-[17px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:border-[#4771A6] hover:bg-[#EDF3FA]">
+          <span className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">02 · Your business</span>
+          <span className="mt-2 block text-[18px] font-extrabold text-[#101828]">📸 Photo & details</span>
+          <span className="mt-1 block text-[12px] font-semibold text-[#4771A6]">Edit profile →</span>
+        </a>
+        <a href="#services" className="rounded-[17px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:border-[#4771A6] hover:bg-[#EDF3FA]">
+          <span className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">03 · Service catalogue</span>
+          <span className="mt-2 block text-[18px] font-extrabold text-[#101828]">🔧 {activeServices.length} active {activeServices.length === 1 ? "service" : "services"}</span>
+          <span className="mt-1 block text-[12px] font-semibold text-[#4771A6]">Edit services & prices →</span>
+        </a>
+      </nav>
+
+      <div className="rounded-[19px] border border-[#D5DFEA] bg-white p-5">
+        <h2 className="text-[17px] font-extrabold text-[#101828]">Your listing checklist</h2>
+        <p className="mt-1 text-[13px] text-[#667085]">Complete these four steps to get your business ready for customers.</p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {checklist.map((item) => (
+            <a key={item.title} href={item.href} className="flex items-center gap-3 rounded-[13px] bg-[#F8FAFC] px-4 py-3 hover:bg-[#EDF3FA]">
+              <span aria-hidden="true" className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[14px] font-bold ${item.complete ? "bg-[#D1FADF] text-[#027A48]" : "bg-[#EDF3FA] text-[#4771A6]"}`}>{item.complete ? "✓" : "○"}</span>
+              <span className="text-[13px] font-bold text-[#344054]">{item.title}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
       <div className="sticky top-3 z-30 flex flex-col gap-3 rounded-[20px] border border-[#BAC7D7] bg-white/95 px-5 py-4 shadow-[0_12px_40px_rgba(16,24,40,0.12)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[15px] font-bold text-[#101828]">Business & service updates</p>
@@ -374,7 +411,7 @@ export default function ProviderDashboard({
           {savingAll ? "Saving updates..." : "✓ Save all updates"}
         </button>
       </div>
-      <section className={`rounded-[22px] p-5 ${status.className}`}>
+      <section id="application-status" className={`scroll-mt-28 rounded-[22px] p-5 ${status.className}`}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[15px] font-bold">{status.title}</p>
@@ -390,8 +427,10 @@ export default function ProviderDashboard({
           </button>
         </div>
         {adminMessage && (
-          <div className="mt-4 rounded-[14px] bg-white/70 px-4 py-3 text-[13px] leading-5 text-[#344054]">
-            <strong>MECATREX note:</strong> {adminMessage}
+          <div className="mt-4 rounded-[14px] border border-[#BAC7D7] bg-white/85 px-4 py-4 text-[14px] leading-6 text-[#344054]">
+            <strong className="block text-[#101828]">Message from MECATREX</strong>
+            {adminMessage}
+            {provider.status === "needs_information" && <p className="mt-2 text-[12px] font-semibold text-[#4771A6]">Please reply to the notification email from MECATREX with the requested information.</p>}
           </div>
         )}
       </section>
@@ -402,7 +441,7 @@ export default function ProviderDashboard({
         </div>
       )}
 
-      <div className="grid gap-7 xl:grid-cols-[0.72fr_1.28fr]">
+      <div id="business-profile" className="grid scroll-mt-28 gap-7 xl:grid-cols-[0.72fr_1.28fr]">
         <section className="rounded-[28px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
           <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">Garage image</p>
           <div className="mt-4 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#14263A] to-[#4771A6]">
@@ -464,7 +503,7 @@ export default function ProviderDashboard({
         </form>
       </div>
 
-      <section className="rounded-[28px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
+      <section id="services" className="scroll-mt-28 rounded-[28px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
         <div>
           <p className="text-[14px] font-extrabold uppercase tracking-[0.1em] text-[#101828]">Service catalogue</p>
           <h2 className="mt-2 text-[28px] font-bold tracking-[-0.03em]">List your services and prices</h2>
