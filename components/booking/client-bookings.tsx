@@ -50,6 +50,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [pendingId, setPendingId] = useState("");
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const refresh = useCallback(async () => {
     const [{ data: rows, error: bookingError }, { data: reviewRows }] = await Promise.all([
@@ -65,11 +66,11 @@ export default function ClientBookings({ userId }: { userId: string }) {
 
   useEffect(() => {
     void refresh();
-    const timer = window.setInterval(() => void refresh(), 20_000);
+    const timer = window.setInterval(() => { setNowMs(Date.now()); void refresh(); }, 20_000);
     return () => window.clearInterval(timer);
   }, [refresh]);
 
-  const now = Date.now();
+  const now = nowMs;
   const upcoming = bookings.filter((b) => b.status === "confirmed" && new Date(b.ends_at).getTime() > now);
   const history = bookings.filter((b) => b.status !== "confirmed" || new Date(b.ends_at).getTime() <= now);
   const visible = tab === "upcoming" ? [...upcoming].sort((a,b) => a.starts_at.localeCompare(b.starts_at)) : history;
@@ -78,7 +79,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
     if (!window.confirm("Cancel this confirmed appointment? The garage will be notified and the time will become available.")) return;
     setPendingId(booking.id);
     setNotice("");
-    const result = await cancelGarageBooking(booking.id, "client");
+    const result = await cancelGarageBooking(booking.id);
     setPendingId("");
     if (!result.ok) setError(result.message);
     else { setNotice(result.message); await refresh(); }
