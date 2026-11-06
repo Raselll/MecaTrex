@@ -49,7 +49,7 @@ body {
 }
 
 /* ========================================================= */
-/* TIMELINE DOTS */
+/* TIMELINE DOTS - FIXED BLUE SHADES + TRAVELING WHITE HALO */
 /* ========================================================= */
 
 .timeline-connector {
@@ -66,27 +66,83 @@ body {
 
 .timeline-connector span {
   display: block;
+  position: relative;
 
   width: 9px;
   height: 9px;
 
   flex-shrink: 0;
-
   border-radius: 50%;
 
+  /* The actual dot never changes color, size, or opacity. */
   background: #4771a6;
 }
 
+/* Fixed progression: light blue -> medium blue -> dark blue.
+   Background alpha recreates the original opacity on white,
+   without making the animated halo itself transparent. */
 .timeline-connector span:nth-child(1) {
-  opacity: 0.5;
+  background: rgba(71, 113, 166, 0.5);
 }
 
 .timeline-connector span:nth-child(2) {
-  opacity: 0.75;
+  background: rgba(71, 113, 166, 0.75);
 }
 
 .timeline-connector span:nth-child(3) {
-  opacity: 1;
+  background: #4771a6;
+}
+
+/* The light is OUTSIDE the dots. Their blue fill never animates. */
+.timeline-connector span::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  pointer-events: none;
+
+  /* White flash edged by a soft ice-blue glow, visible on white. */
+  border: 2px solid rgba(255, 255, 255, 0.98);
+  box-shadow:
+    0 0 0 2px rgba(157, 196, 240, 0.6),
+    0 0 11px 5px rgba(169, 205, 247, 0.68),
+    0 0 20px 9px rgba(205, 229, 255, 0.36);
+
+  opacity: 0;
+  transform: scale(0.72);
+  animation: mecatrex-dot-white-flash 1.5s ease-in-out infinite;
+}
+
+/* Same order and timing in both sets of three dots. */
+.timeline-connector span:nth-child(1)::after {
+  animation-delay: 0s;
+}
+
+.timeline-connector span:nth-child(2)::after {
+  animation-delay: 0.5s;
+}
+
+.timeline-connector span:nth-child(3)::after {
+  animation-delay: 1s;
+}
+
+@keyframes mecatrex-dot-white-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+
+  7%,
+  22% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  33%,
+  100% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
 }
 
 /* ========================================================= */
@@ -245,5 +301,161 @@ model-viewer {
   .timeline-connector span {
     width: 8px;
     height: 8px;
+  }
+}
+
+/* ========================================================= */
+/* DYNAMIC BLUE ORBITS â€” MECATREX HOME HERO */
+/* ========================================================= */
+
+/* The existing homepage markup already has a #find section. We can add
+   the animated layers in CSS without touching the 66 KB app/page.tsx. */
+#find > div {
+  isolation: isolate;
+}
+
+#find > div::before,
+#find > div::after {
+  content: "";
+  position: absolute;
+  top: 43%;
+  left: 50%;
+  width: min(1020px, 95vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  translate: -50% -50%;
+  background: conic-gradient(
+    from 18deg,
+    transparent 0deg 15deg,
+    rgba(139, 194, 255, 0.92) 15deg 35deg,
+    transparent 35deg 55deg,
+    rgba(74, 142, 218, 0.9) 55deg 81deg,
+    transparent 81deg 107deg,
+    rgba(161, 207, 255, 0.94) 107deg 127deg,
+    transparent 127deg 163deg,
+    rgba(87, 150, 224, 0.9) 163deg 184deg,
+    transparent 184deg 219deg,
+    rgba(146, 198, 255, 0.94) 219deg 245deg,
+    transparent 245deg 278deg,
+    rgba(77, 149, 232, 0.9) 278deg 300deg,
+    transparent 300deg 330deg,
+    rgba(161, 207, 255, 0.88) 330deg 349deg,
+    transparent 349deg 360deg
+  );
+  -webkit-mask-image: radial-gradient(
+    circle closest-side,
+    transparent 0 51%,
+    #000 52% 55%,
+    transparent 56% 68%,
+    #000 69% 72%,
+    transparent 73% 85%,
+    #000 86% 89%,
+    transparent 90%
+  );
+  mask-image: radial-gradient(
+    circle closest-side,
+    transparent 0 51%,
+    #000 52% 55%,
+    transparent 56% 68%,
+    #000 69% 72%,
+    transparent 73% 85%,
+    #000 86% 89%,
+    transparent 90%
+  );
+  will-change: transform;
+}
+
+#find > div::before {
+  opacity: 0.43;
+  animation: mecatrex-orbit-clockwise 28s linear infinite;
+}
+
+#find > div::after {
+  width: min(810px, 78vw);
+  opacity: 0.32;
+  filter: hue-rotate(10deg);
+  animation: mecatrex-orbit-counterclockwise 22s linear infinite;
+}
+
+/* Reuse the existing blue Find garages button: no JSX change required. */
+#find a[href="#garage-results"] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+#find a[href="#garage-results"]::before {
+  content: "";
+  position: absolute;
+  inset: -60%;
+  border-radius: 50%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.30;
+  background: conic-gradient(
+    from 10deg,
+    transparent 0deg 22deg,
+    rgba(255, 255, 255, 0.6) 22deg 42deg,
+    transparent 42deg 82deg,
+    rgba(255, 255, 255, 0.5) 82deg 105deg,
+    transparent 105deg 158deg,
+    rgba(255, 255, 255, 0.65) 158deg 180deg,
+    transparent 180deg 220deg,
+    rgba(255, 255, 255, 0.45) 220deg 247deg,
+    transparent 247deg 300deg,
+    rgba(255, 255, 255, 0.6) 300deg 324deg,
+    transparent 324deg 360deg
+  );
+  -webkit-mask-image: radial-gradient(
+    circle closest-side,
+    transparent 0 45%,
+    #000 46% 53%,
+    transparent 54% 70%,
+    #000 71% 78%,
+    transparent 79%
+  );
+  mask-image: radial-gradient(
+    circle closest-side,
+    transparent 0 45%,
+    #000 46% 53%,
+    transparent 54% 70%,
+    #000 71% 78%,
+    transparent 79%
+  );
+  animation: mecatrex-orbit-clockwise 12s linear infinite;
+}
+
+@keyframes mecatrex-orbit-clockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes mecatrex-orbit-counterclockwise {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@media (max-width: 767px) {
+  #find > div::before {
+    width: 180vw;
+    top: 30%;
+    opacity: 0.27;
+  }
+
+  #find > div::after {
+    width: 150vw;
+    top: 30%;
+    opacity: 0.20;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #find > div::before,
+  #find > div::after,
+  #find a[href="#garage-results"]::before {
+    animation: none;
+    will-change: auto;
   }
 }
