@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sendAdminProviderApplicationEmail } from "@/lib/email/brevo";
 import { MECATREX_LEGAL_VERSION } from "@/lib/legal";
+import { validateBusinessHours, type BusinessHoursDraft } from "@/lib/business-hours";
 
 const PHONE_REGEX = /^\d{3}-\d{3}-\d{4}$/;
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9\s]).{8,}$/;
@@ -66,29 +67,20 @@ export async function signup(formData: FormData) {
   const businessLatitude = optionalCoordinate(formData, "business_latitude");
   const businessLongitude = optionalCoordinate(formData, "business_longitude");
   const hoursJson = value(formData, "business_hours");
-  let businessHours: { weekday: number; is_open: boolean; open_time: string; close_time: string }[] = [];
+  let businessHours: BusinessHoursDraft[] = [];
   if (accountType === "provider") {
+    let parsedHours: unknown;
     try {
-      const parsed: unknown = hoursJson ? JSON.parse(hoursJson) : [];
-      if (!Array.isArray(parsed) || parsed.length !== 7) throw new Error("Expected 7 days");
-      businessHours = parsed.map((item) => {
-        if (!item || typeof item !== "object") throw new Error("Invalid day");
-        const day = item as Record<string, unknown>;
-        const weekday = Number(day.weekday);
-        const isOpen = day.is_open;
-        const opening = String(day.open_time ?? "");
-        const closing = String(day.close_time ?? "");
-        if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6 ||
-            typeof isOpen !== "boolean" ||
-            !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(opening) ||
-            !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(closing) ||
-            (isOpen && opening === closing)) throw new Error("Invalid business hours");
-        return { weekday, is_open: isOpen, open_time: opening, close_time: closing };
-      });
-      if (new Set(businessHours.map((day) => day.weekday)).size !== 7) throw new Error("Duplicate day");
+      parsedHours = JSON.parse(hoursJson);
     } catch {
-      signupError("Please review your business hours. Select valid opening and closing times for each day.");
+      signupError("Please check your opening hours and try again.");
     }
+
+    const validHours = validateBusinessHours(parsedHours);
+    if (!validHours) {
+      signupError("Please review your business hours. Choose a valid opening and closing time for every open day.");
+    }
+    businessHours = validHours;
   }
 
   if (accountType !== "client" && accountType !== "provider") {
