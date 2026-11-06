@@ -159,6 +159,7 @@ type BookingEmailEvent = {
   providerEmail: string;
   providerName: string;
   serviceName: string;
+  vehicleDescription: string;
   startsAt: string;
   endsAt: string;
 };
@@ -190,6 +191,7 @@ export async function sendBookingEmailNotifications(data: BookingEmailEvent) {
       <p>${escapeHtml(message)}</p>
       <div style="padding:18px;background:#f5f7fa;border-radius:14px">
         <strong>Service:</strong> ${escapeHtml(data.serviceName)}<br/>
+        ${data.vehicleDescription ? `<strong>Vehicle:</strong> ${escapeHtml(data.vehicleDescription)}<br/>` : ""}
         <strong>Garage:</strong> ${escapeHtml(data.providerName)}<br/>
         <strong>Time (Montreal):</strong> ${escapeHtml(start)} – ${escapeHtml(end)}
       </div>
