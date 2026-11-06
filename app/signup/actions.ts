@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sendAdminProviderApplicationEmail } from "@/lib/email/brevo";
 import { MECATREX_LEGAL_VERSION } from "@/lib/legal";
+import { validateBusinessHours, type BusinessHoursDraft } from "@/lib/business-hours";
 
 const PHONE_REGEX = /^\d{3}-\d{3}-\d{4}$/;
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[^A-Za-z0-9\s]).{8,}$/;
@@ -16,8 +17,10 @@ function rawValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "");
 }
 
-function signupError(message: string): never {
-  redirect(`/signup?error=${encodeURIComponent(message)}`);
+export type SignupActionState = { error: string | null };
+
+function signupError(message: string): SignupActionState {
+  return { error: message };
 }
 
 function friendlySignupError(message: string) {
@@ -44,7 +47,7 @@ function optionalCoordinate(formData: FormData, key: string) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export async function signup(formData: FormData) {
+export async function signup(_previousState: SignupActionState, formData: FormData): Promise<SignupActionState> {
   const intendedNext = value(formData, "next");
   const safeNext = intendedNext.startsWith("/book/") && !intendedNext.includes("\\") && !intendedNext.startsWith("//") ? intendedNext : "/account";
   const accountType = value(formData, "account_type");
@@ -66,71 +69,62 @@ export async function signup(formData: FormData) {
   const businessLatitude = optionalCoordinate(formData, "business_latitude");
   const businessLongitude = optionalCoordinate(formData, "business_longitude");
   const hoursJson = value(formData, "business_hours");
-  let businessHours: { weekday: number; is_open: boolean; open_time: string; close_time: string }[] = [];
+  let businessHours: BusinessHoursDraft[] = [];
   if (accountType === "provider") {
+    let parsedHours: unknown;
     try {
-      const parsed: unknown = hoursJson ? JSON.parse(hoursJson) : [];
-      if (!Array.isArray(parsed) || parsed.length !== 7) throw new Error("Expected 7 days");
-      businessHours = parsed.map((item) => {
-        if (!item || typeof item !== "object") throw new Error("Invalid day");
-        const day = item as Record<string, unknown>;
-        const weekday = Number(day.weekday);
-        const isOpen = day.is_open;
-        const opening = String(day.open_time ?? "");
-        const closing = String(day.close_time ?? "");
-        if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6 ||
-            typeof isOpen !== "boolean" ||
-            !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(opening) ||
-            !/^([01]\\d|2[0-3]):[0-5]\\d$/.test(closing) ||
-            (isOpen && opening === closing)) throw new Error("Invalid business hours");
-        return { weekday, is_open: isOpen, open_time: opening, close_time: closing };
-      });
-      if (new Set(businessHours.map((day) => day.weekday)).size !== 7) throw new Error("Duplicate day");
+      parsedHours = JSON.parse(hoursJson);
     } catch {
-      signupError("Please review your business hours. Select valid opening and closing times for each day.");
+      return signupError("Please check your opening hours and try again.");
     }
+
+    const validHours = validateBusinessHours(parsedHours);
+    if (!validHours) {
+      return signupError("Please review your business hours. Choose a valid opening and closing time for every open day.");
+    }
+    businessHours = validHours;
   }
 
   if (accountType !== "client" && accountType !== "provider") {
-    signupError("Please choose an account type.");
+    return signupError("Please choose an account type.");
   }
 
-  if (!firstName || !lastName) signupError("First name and last name are required.");
-  if (!email) signupError("Email address is required.");
+  if (!firstName || !lastName) return signupError("First name and last name are required.");
+  if (!email) return signupError("Email address is required.");
 
   if (!PHONE_REGEX.test(primaryPhone)) {
-    signupError("Primary phone must use the format 514-555-1234.");
+    return signupError("Primary phone must use the format 514-555-1234.");
   }
 
   if (secondaryPhone && !PHONE_REGEX.test(secondaryPhone)) {
-    signupError("Secondary phone must use the format 514-555-1234.");
+    return signupError("Secondary phone must use the format 514-555-1234.");
   }
 
   if (!PASSWORD_REGEX.test(password)) {
-    signupError("Password must contain at least 8 characters, 1 uppercase letter, and 1 special character.");
+    return signupError("Password must contain at least 8 characters, 1 uppercase letter, and 1 special character.");
   }
 
-  if (password !== confirmPassword) signupError("The passwords do not match.");
+  if (password !== confirmPassword) return signupError("The passwords do not match.");
 
   if (legalConsent !== "accepted") {
-    signupError("You must agree to the MECATREX Terms of Service and Privacy Policy to create an account.");
+    return signupError("You must agree to the MECATREX Terms of Service and Privacy Policy to create an account.");
   }
 
   if (accountType === "provider") {
     if (providerType !== "garage" && providerType !== "towing") {
-      signupError("Choose Garage or Towing service.");
+      return signupError("Choose Garage or Towing service.");
     }
 
     if (!businessName || !businessAddress || !businessPostalCode) {
-      signupError("Complete the business information before submitting.");
+      return signupError("Complete the business information before submitting.");
     }
 
     if (businessCity !== "Montreal" || businessProvince !== "Quebec") {
-      signupError("MECATREX provider registration is currently limited to Montreal, Quebec.");
+      return signupError("MECATREX provider registration is currently limited to Montreal, Quebec.");
     }
 
     if (process.env.GOOGLE_MAPS_API_KEY && !businessPlaceId) {
-      signupError("Please choose your business address from the Google address suggestions.");
+      return signupError("Please choose your business address from the Google address suggestions.");
     }
   }
 
@@ -163,7 +157,7 @@ export async function signup(formData: FormData) {
     },
   });
 
-  if (error) signupError(friendlySignupError(error.message));
+  if (error) return signupError(friendlySignupError(error.message));
 
   // Supabase may return an obfuscated user for an email that is already registered.
   // Notify administrators only for a newly created, genuine provider identity.
