@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createGarageBooking } from "@/app/book/actions";
-import { formatHour, formatPriceCents, montrealDate, plusCalendarMonths, WEEKDAYS, type BusinessHour } from "@/lib/booking";
+import { formatHour, formatPriceCents, montrealDate, plusCalendarMonths, type BusinessHour } from "@/lib/booking";
 
 type Service = {
   id: string;
