@@ -35,6 +35,7 @@ The migrations must be applied in filename order:
 4. `supabase/migrations/20261104_sync_provider_publication.sql`
 5. `supabase/migrations/20261105_provider_service_required_fields.sql`
 6. `supabase/migrations/20261106_fixed_price_services_only.sql`
+7. `supabase/migrations/20261107_booking_calendar_reviews.sql`
 
 For the current development project, the simplest method is Supabase Dashboard -> SQL Editor -> New query, paste each migration in order, then Run.
 
@@ -188,3 +189,65 @@ order by p.created_at desc;
 ```
 
 The same distinction is available to admins in **MECATREX `/admin?view=accounts`**. This view uses the existing RLS-protected tables and does not expose personal account details publicly. No SQL migration is required for these dashboard and email changes.
+
+## 14. Garage booking and synchronized calendar (20261107)
+
+Run **20261107_booking_calendar_reviews.sql** in MECATREX Supabase SQL Editor **after migration 20261106**. The booking pages and provider account query require it. This migration is not automatically applied by `git pull`.
+
+### Booking design and security
+
+- **Only approved, published GARAGES** are bookable for now. Towing remains profile-only until its own dispatch workflow is designed.
+- **Regular hours:** All 7 weekdays start **closed** on purpose. The owner must set and save their real hours under `/account#garage-calendar`. Times are always in **America/Toronto**. An overnight opening such as 22:00–03:00 is supported.
+- **Date/time picker:** From today through exactly six calendar months ahead; available starts every 30 minutes, 00:00–23:30 if the garage is open. A service with duration 75 minutes reserves a real **75-minute interval** (e.g. 09:00–10:15).
+- **Availability RPC:** `garage_available_slots(provider_id,service_id,day)` excludes closed hours, confirmed bookings, walk-ins and manually blocked intervals. Only slot times, not customers' identities, are exposed to public visitors.
+- **Atomic booking:** `book_garage_service` rechecks availability under a provider-row lock and inserts both booking and in-app notifications. A GiST exclusion constraint also prevents overlapping confirmed bookings at DB level. The booking snapshots the fixed price, duration, garage and customer contact details.
+- **No payment:** MECATREX currently shows the fixed service price and **Pay at garage**. Stripe/transaction fees will be a separate project stage.
+- **Guest discovery:** Unauthenticated visitors can search garages, see prices and available slots. They sign in or sign up as **client** before final confirmation. The chosen garage/service is preserved in the return link.
+- **Owner calendar:** Owners can edit weekly hours, add/remove one-day blocked intervals or manual walk-ins (labels are private). Creating an unavailable interval that overlaps a confirmed booking is rejected server-side; saving shorter hours that conflict with future confirmed appointments is also rejected.
+- **Synchronization:** Both portals read the same PostgreSQL data. Dashboard bookings and notifications refresh about every 20 seconds and can be refreshed on demand. Database operations commit immediately. This is **near-real-time polling**, not a promise of instant push notifications.
+- **Cancellation:** A client may cancel any future booking without penalty (no payment yet). A garage may cancel a future appointment at most **3 times total**. Each provider cancellation increases `service_providers.provider_cancellation_count`. After the third the database sets `booking_suspended=true` and `is_listing_active=false`, blocking further online bookings and hiding that garage until admin review. The provider can still access their account and must honor any remaining bookings. Future reinstatement/appeal workflow is not included.
+- **Reviews:** One review per confirmed booking, submitted by the authenticated client **after the scheduled service end**. This does not yet verify physical attendance or whether service was completed. Approved public garages display ratings and comments; cancelled bookings cannot be reviewed.
+- **Notifications:** Each booking/cancellation inserts an in-app notification for BOTH client and garage. Server actions also attempt confirmation/cancellation emails to both participants through Brevo API. In-app records are still created if Brevo is unconfigured or email delivery fails.
+- **Personalization:** `profiles.accent_color` stores a small blue/teal/violet/slate palette per user. Only subtle decorative accents change. The main text contrast stays stable. Editing the color requires an authenticated owner and column-level update grant.
+
+### What to test after installing the migration
+
+1. Log in as an approved garage; navigate to `/account#garage-calendar`. All days begin **closed**. Set Monday to Friday 09:00–17:00 (or your chosen hours), then **Save business hours**.
+2. Open the homepage in an incognito window, search **Oil change**, choose a garage and click **Book this garage**. Verify the correct fixed price and service duration.
+3. Choose a day and confirm a client booking. Verify it appears in the client `My bookings` list and in the garage's calendar and both notifications. Check the email or Brevo Transactional Logs.
+4. Try the same slot from another client account. It must NOT be possible to double-book overlapping time, even when the service takes 75 minutes. Two simultaneous confirm attempts must yield at most one success.
+5. Add a 10:00–13:00 **Unavailable** block for an empty future day. Verify those start times disappear in the client view. Try adding a block on an already booked interval; the DB must reject it.
+6. Book a walk-in in the garage portal and verify its time is unavailable online.
+7. Change weekly business hours to exclude a future confirmed booking. The save must fail with a conflict warning rather than cancelling the client silently.
+8. Cancel a future booking as provider; the provider dashboard must show **2 of 3 cancellations left**. After 3 total provider cancellations, the garage is suspended and becomes unbookable.
+9. Cancel a future booking as client; the time becomes bookable again and the garage sees a cancellation notification.
+10. After an appointment's scheduled end, leave a 1–5 star review in client account; it must appear in the garage's public booking profile. A review before service end or after cancellation must fail.
+
+**Do not load real customer payments or real garage operations until these end-to-end tests pass.** Email acceptance via Brevo API does not guarantee inbox delivery. For reliable production delivery add retryable background notification jobs and sender-domain authentication.
+
+### Verification SQL (Supabase SQL Editor)
+
+```sql
+select p.email, p.account_type, p.accent_color,
+       sp.business_name, sp.provider_type, sp.booking_suspended,
+       sp.provider_cancellation_count
+from public.profiles p
+left join public.service_providers sp on sp.owner_id = p.id
+order by p.created_at desc;
+
+select b.id, b.garage_name, b.client_name, b.service_name, b.duration_minutes,
+       b.starts_at at time zone 'America/Toronto' as start_montreal,
+       b.ends_at at time zone 'America/Toronto' as end_montreal,
+       b.status, b.price_cents
+from public.garage_bookings b
+order by b.created_at desc limit 20;
+```
+
+### Operational limitations to address later
+
+- No Stripe payments, deposits, cancellation fees, refund logic or dispute handling.
+- No towing bookings or dispatch.
+- No verified completed-service/vehicle identity check yet.
+- No SMS or mobile push (only in-app and best-effort transactional email).
+- No automated admin appeals/reinstatement after 3 garage cancellations.
+- The client selects a service listed at a fixed price; vehicle compatibility is not yet enforced.
