@@ -45,6 +45,8 @@ function optionalCoordinate(formData: FormData, key: string) {
 }
 
 export async function signup(formData: FormData) {
+  const intendedNext = value(formData, "next");
+  const safeNext = intendedNext.startsWith("/book/") && !intendedNext.includes("\\") && !intendedNext.startsWith("//") ? intendedNext : "/account";
   const accountType = value(formData, "account_type");
   const providerType = value(formData, "provider_type");
   const firstName = value(formData, "first_name");
@@ -112,7 +114,7 @@ export async function signup(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/confirm?next=/account`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/confirm?next=${encodeURIComponent(safeNext)}`,
       data: {
         account_type: accountType,
         provider_type: accountType === "provider" ? providerType : null,
@@ -159,6 +161,6 @@ export async function signup(formData: FormData) {
     }
   }
 
-  if (data.session) redirect("/account");
+  if (data.session) redirect(safeNext);
   redirect("/signup/check-email");
 }
