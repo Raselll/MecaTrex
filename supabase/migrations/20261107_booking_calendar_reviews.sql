@@ -66,6 +66,9 @@ create table if not exists public.garage_bookings (
   provider_id uuid not null references public.service_providers(id) on delete restrict,
   service_id uuid not null references public.provider_services(id) on delete restrict,
   client_id uuid not null references public.profiles(id) on delete restrict,
+  client_name text not null,
+  client_email text not null,
+  client_phone text not null,
   service_name text not null,
   duration_minutes integer not null check (duration_minutes > 0),
   price_cents integer not null check (price_cents >= 0),
@@ -294,6 +297,8 @@ declare
   v_slot record;
   v_booking_id uuid;
   v_name text;
+  v_email text;
+  v_phone text;
 begin
   if v_user is null or not exists(
     select 1 from public.profiles where id=v_user and account_type='client'::public.mecatrex_account_type
@@ -320,12 +325,15 @@ begin
   where slot_time=p_time limit 1;
   if not found then raise exception 'This time is no longer available. Please choose another.'; end if;
 
-  select trim(first_name || ' ' || last_name) into v_name from public.profiles where id=v_user;
+  select trim(first_name || ' ' || last_name),email,primary_phone
+  into v_name,v_email,v_phone from public.profiles where id=v_user;
   insert into public.garage_bookings(
-    provider_id,service_id,client_id,service_name,duration_minutes,price_cents,
+    provider_id,service_id,client_id,client_name,client_email,client_phone,
+    service_name,duration_minutes,price_cents,
     garage_name,garage_address,garage_phone,garage_email,starts_at,ends_at,note
   ) values (
-    p_provider_id,p_service_id,v_user,v_service.name,v_service.duration_minutes,v_service.price_cents,
+    p_provider_id,p_service_id,v_user,v_name,v_email,v_phone,
+    v_service.name,v_service.duration_minutes,v_service.price_cents,
     v_provider.business_name,
     concat_ws(', ',v_provider.address_line1,v_provider.city,v_provider.province,v_provider.postal_code),
     v_provider.public_phone,v_provider.public_email,v_slot.starts_at,v_slot.ends_at,
