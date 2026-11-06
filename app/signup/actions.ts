@@ -94,7 +94,6 @@ export async function signup(
   const businessNEQ = value(formData, "business_neq").replace(/\s/g, "");
   const businessPhone = value(formData, "business_phone");
   const businessWebsite = value(formData, "business_website");
-  const applicationDescription = value(formData, "application_description");
   const website = normalizeBusinessWebsite(businessWebsite);
   const applicationServices = accountType === "provider" &&
     (providerType === "garage" || providerType === "towing")
@@ -205,9 +204,6 @@ export async function signup(
     if (businessWebsite && !website) {
       return signupError("Enter a valid business website URL.");
     }
-    if (applicationDescription.length < 30 || applicationDescription.length > 1500) {
-      return signupError("Describe your business and services in 30 to 1500 characters.");
-    }
     if (!applicationServices) {
       return signupError("Select at least one service. Use Other for one custom service.");
     }
@@ -248,7 +244,6 @@ export async function signup(
         business_neq: accountType === "provider" ? businessNEQ : null,
         business_phone: accountType === "provider" ? businessPhone : null,
         business_website: accountType === "provider" ? website : null,
-        application_description: accountType === "provider" ? applicationDescription : null,
         application_services: accountType === "provider" ? applicationServices : null,
 
         business_hours:
@@ -302,7 +297,6 @@ export async function signup(
         businessNEQ,
         businessPhone,
         businessWebsite: website ?? "",
-        applicationDescription,
         applicationServices: applicationServices ?? [],
         businessAddress,
         city: "Montreal",

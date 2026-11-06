@@ -30,7 +30,6 @@ type ProviderRow = {
 type ApplicationRow = {
   provider_id: string;
   business_neq: string | null;
-  application_description: string | null;
   application_services: string[];
 };
 
@@ -94,7 +93,7 @@ export default async function AdminPage({
       .from("profiles")
       .select("id, first_name, last_name, email, primary_phone, account_type, created_at")
       .order("created_at", { ascending: false }),
-    supabase.from("provider_applications").select("provider_id, business_neq, application_description, application_services"),
+    supabase.from("provider_applications").select("provider_id, business_neq, application_services"),
   ]);
   const providers = (providerRows ?? []) as ProviderRow[];
   const accounts = (profileRows ?? []) as ProfileRow[];
@@ -232,7 +231,6 @@ export default async function AdminPage({
                            <p><strong>Website:</strong> {provider.website ? <a target="_blank" rel="noopener noreferrer" href={provider.website} className="break-all font-bold text-[#315C91] underline">{provider.website}</a> : "Not provided"}</p>
                          </div>
                          <p className="mt-3 text-[13px]"><strong>Planned services:</strong> {application?.application_services?.length ? application.application_services.join(" · ") : "Not provided"}</p>
-                         <p className="mt-3 whitespace-pre-wrap text-[13px] leading-6"><strong>Applicant description:</strong> {application?.application_description || "Not provided"}</p>
                          <a target="_blank" rel="noopener noreferrer" href="https://www.quebec.ca/entreprises-et-travailleurs-autonomes/obtenir-renseignements-entreprise/recherche-registre-entreprises/acceder-registre-entreprises" className="mt-3 inline-block text-[13px] font-bold text-[#315C91] underline">Verify NEQ in Quebec enterprise registry ↗</a>
                          <form action={resendAdminApplicationEmail} className="mt-4">
                            <input type="hidden" name="provider_id" value={provider.id} />

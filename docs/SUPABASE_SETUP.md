@@ -37,6 +37,7 @@ The migrations must be applied in filename order:
 6. `supabase/migrations/20261106_fixed_price_services_only.sql`
 7. `supabase/migrations/20261107_booking_calendar_reviews.sql`
 8. `supabase/migrations/20261108_provider_verification_and_removal.sql`
+9. `supabase/migrations/20261109_remove_provider_description_requirement.sql`
 
 For the current development project, the simplest method is Supabase Dashboard -> SQL Editor -> New query, paste each migration in order, then Run.
 
@@ -68,10 +69,10 @@ Do not put an admin role in browser metadata and do not expose a service-role/se
 
 1. A garage/towing company signs up as `provider`.
 2. Supabase creates the provider with `pending` status.
-3. The provider submits a business NEQ, a separate business phone, an optional website, planned services and a written description. These are captured by a secure trigger in a separate provider_applications record.
+3. The provider submits a business NEQ, a separate business phone, an optional website, planned services and service selections. These are captured by a secure trigger in a separate provider_applications record.
 4. Pending providers can sign in only to view application status; creating/editing services and prices is locked in the UI and RLS.
 5. The administrator reviews the complete application at `/admin` and checks the NEQ manually in the Quebec enterprise registry.
-6. `Approve` runs the protected `admin_set_provider_status` database function. The database rejects missing NEQ, description, service categories, or business phone.
+6. `Approve` runs the protected `admin_set_provider_status` database function. The database rejects missing NEQ, service categories, or business phone.
 7. After approval, a provider can configure the business profile, service catalogue and exact fixed prices. No listing is automatically public without an active service.
 8. Adding an active complete fixed-price service allows approved providers to publish their listing.
 9. Removing or deactivating the last active service hides the listing. The provider can also manually unpublish at any time.
@@ -262,3 +263,8 @@ Run `supabase/migrations/20261108_provider_verification_and_removal.sql` **in Su
 Admin email requires `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `MECATREX_ADMIN_EMAIL` server-only in `.env.local` (restart dev server after editing). The administrator can resend the detailed application email from the admin card if Brevo delivery fails. Supabase Auth confirmations use separate SMTP settings. Check Brevo transactional logs for actual delivery events. A provider application is saved even if email delivery fails. Existing provider applications without complete verification data remain unapproved until reviewed; do not invent NEQ values.
 
 An admin removal is a soft removal: the account and bookings/reviews remain available in secure history, its listing becomes invisible, and the provider cannot publish or edit services. Review any outstanding future appointments and contact affected customers.
+
+
+## 16. Provider application form simplification (20261109)
+
+After the 20261108 migration, apply `supabase/migrations/20261109_remove_provider_description_requirement.sql`. A free-text application description is no longer required at signup or approval. The selected service categories remain required; an optional custom service can be supplied through **Other**. NEQ and business phone remain mandatory. The existing `application_description` column stays nullable for historical applications. Git pull does not execute this migration in the hosted Supabase project.

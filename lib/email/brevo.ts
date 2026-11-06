@@ -9,7 +9,6 @@ type ProviderApplicationEmail = {
   businessNEQ: string;
   businessPhone: string;
   businessWebsite: string;
-  applicationDescription: string;
   applicationServices: string[];
   businessAddress: string;
   city: string;
@@ -114,7 +113,6 @@ export async function sendAdminProviderApplicationEmail(application: ProviderApp
           <strong>Business phone:</strong> ${escapeHtml(application.businessPhone)}<br/>
           <strong>Website:</strong> ${escapeHtml(application.businessWebsite || 'Not provided')}</p>
           <p><strong>Planned services:</strong><br/>${application.applicationServices.map((service) => escapeHtml(service)).join('<br/>')}</p>
-          <p><strong>Application description:</strong><br/>${escapeHtml(application.applicationDescription)}</p>
           <p>Verify the NEQ and matching business details in the <a href="https://www.quebec.ca/entreprises-et-travailleurs-autonomes/obtenir-renseignements-entreprise/recherche-registre-entreprises/acceder-registre-entreprises">Quebec enterprise registry</a>.</p>
         </div>
         <p>Sign in to MECATREX to <strong>approve, reject, or request more information</strong>. This email is a notification, not proof of registration validity.</p>

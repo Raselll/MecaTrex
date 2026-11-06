@@ -114,7 +114,7 @@ export async function resendAdminApplicationEmail(formData: FormData) {
       .select("id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, public_phone, website")
       .eq("id", providerId).single(),
     supabase.from("provider_applications")
-      .select("business_neq, application_description, application_services")
+      .select("business_neq, application_services")
       .eq("provider_id", providerId).maybeSingle(),
   ]);
   if (!provider) redirect(adminUrl("error", "Provider not found."));
@@ -134,7 +134,6 @@ export async function resendAdminApplicationEmail(formData: FormData) {
       businessNEQ: application.business_neq || "Not provided",
       businessPhone: provider.public_phone || "",
       businessWebsite: provider.website || "",
-      applicationDescription: application.application_description || "Not provided",
       applicationServices: application.application_services || [],
       businessAddress: provider.address_line1,
       city: provider.city,
