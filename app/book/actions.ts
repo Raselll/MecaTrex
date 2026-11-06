@@ -5,6 +5,16 @@ import { createClient } from "@/lib/supabase/server";
 import { sendBookingEmailNotifications } from "@/lib/email/brevo";
 
 type BookingResult = { ok: true; bookingId: string; message?: string } | { ok: false; error: string };
+type BookingMailRecipients = {
+  client_email: string;
+  client_name: string;
+  provider_email: string;
+  provider_name: string;
+  service_name: string;
+  starts_at: string;
+  ends_at: string;
+};
+
 
 function formValue(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
@@ -19,19 +29,20 @@ async function notifyParticipants(bookingId: string, event: "confirmed" | "provi
     console.error("Could not load booking email recipients:", error?.message);
     return;
   }
-  if (!data.client_email || !data.provider_email) {
+  const recipients = data as BookingMailRecipients;
+  if (!recipients.client_email || !recipients.provider_email) {
     console.warn("Booking saved; one email address is missing. Both in-app notifications are stored.");
     return;
   }
   await sendBookingEmailNotifications({
     event,
-    clientEmail: data.client_email,
-    clientName: data.client_name,
-    providerEmail: data.provider_email,
-    providerName: data.provider_name,
-    serviceName: data.service_name,
-    startsAt: data.starts_at,
-    endsAt: data.ends_at,
+    clientEmail: recipients.client_email,
+    clientName: recipients.client_name,
+    providerEmail: recipients.provider_email,
+    providerName: recipients.provider_name,
+    serviceName: recipients.service_name,
+    startsAt: recipients.starts_at,
+    endsAt: recipients.ends_at,
   });
 }
 
