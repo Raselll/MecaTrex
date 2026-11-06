@@ -11,6 +11,7 @@ type BookingMailRecipients = {
   provider_email: string;
   provider_name: string;
   service_name: string;
+  vehicle_description: string;
   starts_at: string;
   ends_at: string;
 };
@@ -41,6 +42,7 @@ async function notifyParticipants(bookingId: string, event: "confirmed" | "provi
     providerEmail: recipients.provider_email,
     providerName: recipients.provider_name,
     serviceName: recipients.service_name,
+    vehicleDescription: recipients.vehicle_description,
     startsAt: recipients.starts_at,
     endsAt: recipients.ends_at,
   });
