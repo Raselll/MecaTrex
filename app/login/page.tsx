@@ -5,7 +5,7 @@ import { login } from "./actions";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; notice?: string }>;
+  searchParams: Promise<{ error?: string; notice?: string; next?: string }>;
 }) {
   const params = await searchParams;
 
@@ -41,6 +41,7 @@ export default async function LoginPage({
           )}
 
           <form action={login} className="mt-8 space-y-5">
+            <input type="hidden" name="next" value={params.next ?? ""} />
             <label className="block">
               <span className="mb-2 block text-[13px] font-bold text-[#344054]">Email</span>
               <input
@@ -76,7 +77,7 @@ export default async function LoginPage({
 
           <p className="mt-7 text-center text-[14px] text-[#667085]">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="font-bold text-[#4771A6]">
+            <Link href={params.next ? `/signup?next=${encodeURIComponent(params.next)}` : "/signup"} className="font-bold text-[#4771A6]">
               Sign up
             </Link>
           </p>

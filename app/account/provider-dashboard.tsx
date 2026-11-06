@@ -27,6 +27,8 @@ export type ProviderRecord = {
   latitude: number | null;
   longitude: number | null;
   is_listing_active: boolean;
+  provider_cancellation_count: number;
+  booking_suspended: boolean;
 };
 
 export type ProviderService = {
@@ -121,7 +123,7 @@ export default function ProviderDashboard({
     { title: "Services & fixed prices", complete: activeServices.length > 0, href: "#services" },
     { title: "MECATREX approval", complete: provider.status === "approved", href: "#application-status" },
   ];
-  const canPublish = provider.status === "approved" && activeServices.length > 0;
+  const canPublish = provider.status === "approved" && !provider.booking_suspended && activeServices.length > 0;
 
   function field<K extends keyof ProviderRecord>(key: K, value: ProviderRecord[K]) {
     setProvider((current) => ({ ...current, [key]: value }));
@@ -350,7 +352,7 @@ export default function ProviderDashboard({
 
   async function toggleListing() {
     if (!canPublish && !provider.is_listing_active) {
-      setError(provider.status !== "approved" ? "MECATREX must approve the provider before it can be published." : "Add at least one active service before publishing your listing.");
+      setError(provider.booking_suspended ? "Bookings are suspended after three provider cancellations. Contact MECATREX administration." : provider.status !== "approved" ? "MECATREX must approve the provider before it can be published." : "Add at least one active service before publishing your listing.");
       return;
     }
 
@@ -371,7 +373,12 @@ export default function ProviderDashboard({
 
   return (
     <div className="mt-6 space-y-6">
-      <nav aria-label="Business dashboard shortcuts" className="grid gap-3 sm:grid-cols-3">
+      <nav aria-label="Business dashboard shortcuts" className="grid gap-3 sm:grid-cols-4">
+        <a href="#garage-calendar" className="rounded-[17px] border border-[#BAC7D7] bg-[#EDF3FA] p-5 transition hover:border-[#4771A6] hover:bg-[#DFEAF7]">
+          <span className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">Calendar</span>
+          <span className="mt-2 block text-[18px] font-extrabold text-[#101828]">📅 Appointments</span>
+          <span className="mt-1 block text-[12px] font-semibold text-[#4771A6]">View availability →</span>
+        </a>
         <a href="#application-status" className="rounded-[17px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:border-[#4771A6] hover:bg-[#EDF3FA]">
           <span className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">01 · Account status</span>
           <span className="mt-2 block text-[18px] font-extrabold text-[#101828]">{provider.status === "approved" ? "✓ Approved" : provider.status === "pending" ? "⏳ Under review" : provider.status === "rejected" ? "Not approved" : "More info required"}</span>

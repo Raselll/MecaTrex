@@ -7,6 +7,11 @@ import ProviderDashboard, {
   type ProviderService,
 } from "./provider-dashboard";
 import { signOut } from "./actions";
+import AccentPicker from "@/components/account/accent-picker";
+import ClientBookings from "@/components/booking/client-bookings";
+import ProviderCalendar from "@/components/booking/provider-calendar";
+import BookingNotifications from "@/components/booking/booking-notifications";
+import { ACCENT_COLORS, type AccentColor } from "@/lib/booking";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +23,7 @@ type Profile = {
   email: string;
   primary_phone: string;
   secondary_phone: string | null;
+  accent_color: AccentColor;
 };
 
 export default async function AccountPage() {
@@ -30,7 +36,7 @@ export default async function AccountPage() {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, account_type, first_name, last_name, email, primary_phone, secondary_phone")
+    .select("id, account_type, first_name, last_name, email, primary_phone, secondary_phone, accent_color")
     .eq("id", user.id)
     .single<Profile>();
 
@@ -53,7 +59,7 @@ export default async function AccountPage() {
     const { data: provider, error: providerError } = await supabase
       .from("service_providers")
       .select(
-        "id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, image_path, latitude, longitude, is_listing_active"
+        "id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, image_path, latitude, longitude, is_listing_active, provider_cancellation_count, booking_suspended"
       )
       .eq("owner_id", user.id)
       .single<ProviderRecord>();
@@ -86,7 +92,7 @@ export default async function AccountPage() {
 
     return (
       <AccountShell wide>
-        <div className="rounded-[30px] border border-[#EAECF0] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-9">
+        <div className="rounded-[30px] border border-[#EAECF0] border-t-[5px] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-9" style={{ borderTopColor: (ACCENT_COLORS[profile.accent_color] ?? ACCENT_COLORS.blue).hex }}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">MECATREX business dashboard</p>
@@ -102,6 +108,13 @@ export default async function AccountPage() {
             </div>
           </div>
 
+          <AccentPicker userId={user.id} initialAccent={profile.accent_color ?? "blue"} />
+          <div className="mt-6 space-y-6">
+            <BookingNotifications userId={user.id} />
+            <ProviderCalendar providerId={provider.id} providerType={provider.provider_type}
+              initialCancelled={provider.provider_cancellation_count ?? 0}
+              initiallySuspended={Boolean(provider.booking_suspended)} />
+          </div>
           <ProviderDashboard
             userId={user.id}
             initialProvider={provider}
@@ -115,7 +128,7 @@ export default async function AccountPage() {
 
   return (
     <AccountShell>
-      <div className="rounded-[30px] border border-[#EAECF0] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-10">
+      <div className="rounded-[30px] border border-[#EAECF0] border-t-[5px] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-10" style={{ borderTopColor: (ACCENT_COLORS[profile.accent_color] ?? ACCENT_COLORS.blue).hex }}>
         <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">MECATREX account</p>
         <h1 className="mt-3 text-[36px] font-bold tracking-[-0.04em] text-[#101828] sm:text-[44px]">
           Welcome, {displayName}.
@@ -123,6 +136,8 @@ export default async function AccountPage() {
         <p className="mt-3 text-[16px] leading-7 text-[#667085]">
           Your email is confirmed and your MECATREX session is active.
         </p>
+
+        <AccentPicker userId={user.id} initialAccent={profile.accent_color ?? "blue"} />
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <SummaryCard label="Email" value={profile.email} />
@@ -148,6 +163,11 @@ export default async function AccountPage() {
             </div>
           </div>
         ) : (
+          <>
+          <div className="mt-7 space-y-6">
+            <BookingNotifications userId={user.id} />
+            <ClientBookings userId={user.id} />
+          </div>
           <div className="mt-7 rounded-[22px] border border-[#D5DFEA] bg-[#EDF3FA] p-6">
             <h2 className="text-[22px] font-bold text-[#101828]">Ready to find a garage?</h2>
             <p className="mt-2 text-[14px] leading-6 text-[#475467]">Browse approved businesses, compare their fixed service prices and contact your preferred garage. Online booking is coming next.</p>
@@ -155,6 +175,7 @@ export default async function AccountPage() {
               Find garages →
             </Link>
           </div>
+          </>
         )}
       </div>
     </AccountShell>

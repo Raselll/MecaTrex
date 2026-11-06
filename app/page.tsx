@@ -2731,7 +2731,7 @@ export default function Home() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {services.map(
                 (service) => (
-                  <a href="#garage-results" key={service.title} className="group rounded-[28px] border border-[#EAECF0] bg-white p-8 text-left transition duration-300 hover:-translate-y-2 hover:border-[#4771A6]/40 hover:shadow-[0_22px_60px_rgba(16,24,40,0.12)]"
+                  <a href={`/?service=${encodeURIComponent(service.title)}#garage-results`} key={service.title} className="group rounded-[28px] border border-[#EAECF0] bg-white p-8 text-left transition duration-300 hover:-translate-y-2 hover:border-[#4771A6]/40 hover:shadow-[0_22px_60px_rgba(16,24,40,0.12)]"
                   >
                     <div className="flex h-[82px] w-[82px] items-center justify-center rounded-[24px] bg-[#EDF3FA] text-[42px]">
                       {

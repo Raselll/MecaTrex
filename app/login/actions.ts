@@ -26,5 +26,8 @@ export async function login(formData: FormData) {
     loginError(error.message);
   }
 
-  redirect("/account");
+  const next = value(formData, "next");
+  // Accept only an in-app path, never an external URL or a protocol-relative URL.
+  const safeNext = next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : "/account";
+  redirect(safeNext);
 }
