@@ -528,14 +528,14 @@ grant execute on function public.submit_garage_review(uuid,integer,text) to auth
 -- to arbitrary users. The returned emails are never directly shown in the UI.
 create or replace function public.booking_email_recipients(p_booking_id uuid)
 returns table(client_email text,client_name text,provider_email text,provider_name text,
-  service_name text,starts_at timestamptz,ends_at timestamptz,status text)
+  service_name text,vehicle_description text,starts_at timestamptz,ends_at timestamptz,status text)
 language plpgsql stable security definer set search_path = '' as $$
 begin
   if auth.uid() is null then return; end if;
   return query
   select cp.email,cp.first_name,
     coalesce(nullif(pp.email,''),sp.public_email),sp.business_name,
-    b.service_name,b.starts_at,b.ends_at,b.status
+    b.service_name,b.vehicle_description,b.starts_at,b.ends_at,b.status
   from public.garage_bookings b
   join public.profiles cp on cp.id=b.client_id
   join public.service_providers sp on sp.id=b.provider_id
