@@ -111,16 +111,9 @@ export default async function AccountPage() {
           <AccentPicker userId={user.id} initialAccent={profile.accent_color ?? "blue"} />
           <div className="mt-6 space-y-6">
             <BookingNotifications userId={user.id} />
-            {provider.provider_type === "garage" ? (
-              <ProviderCalendar providerId={provider.id}
-                initialCancelled={provider.provider_cancellation_count ?? 0}
-                initiallySuspended={Boolean(provider.booking_suspended)} />
-            ) : (
-              <div className="rounded-[20px] border border-[#BAC7D7] bg-[#F8FAFC] p-6">
-                <p className="text-[21px] font-extrabold">🚚 Towing calendar coming next</p>
-                <p className="mt-2 text-[14px] text-[#667085]">Your towing business can manage its public profile now. Garage reservations are available first; towing requests will be developed separately.</p>
-              </div>
-            )}
+            <ProviderCalendar providerId={provider.id} providerType={provider.provider_type}
+              initialCancelled={provider.provider_cancellation_count ?? 0}
+              initiallySuspended={Boolean(provider.booking_suspended)} />
           </div>
           <ProviderDashboard
             userId={user.id}
