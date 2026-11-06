@@ -375,8 +375,8 @@ export default function ProviderDashboard({
     <div className="mt-6 space-y-6">
       <nav aria-label="Business dashboard shortcuts" className="grid gap-3 sm:grid-cols-4">
         <a href="#garage-calendar" className="rounded-[17px] border border-[#BAC7D7] bg-[#EDF3FA] p-5 transition hover:border-[#4771A6] hover:bg-[#DFEAF7]">
-          <span className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">Calendar</span>
-          <span className="mt-2 block text-[18px] font-extrabold text-[#101828]">📅 Appointments</span>
+          <span className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">Availability</span>
+          <span className="mt-2 block text-[18px] font-extrabold text-[#101828]">📅 Block time</span>
           <span className="mt-1 block text-[12px] font-semibold text-[#4771A6]">View availability →</span>
         </a>
         <a href="#application-status" className="rounded-[17px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:border-[#4771A6] hover:bg-[#EDF3FA]">
