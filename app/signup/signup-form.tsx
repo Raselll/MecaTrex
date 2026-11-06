@@ -184,6 +184,7 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
 
   return (
     <form action={signup} className="mt-8">
+      <input type="hidden" name="next" value={next ?? ""} />
       <input type="hidden" name="account_type" value={accountType} />
       <input type="hidden" name="provider_type" value={providerType} />
       <input type="hidden" name="business_place_id" value={businessPlaceId} />
