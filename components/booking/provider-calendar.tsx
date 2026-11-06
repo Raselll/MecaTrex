@@ -220,6 +220,7 @@ export default function ProviderCalendar({
                     <h4 className="mt-1 text-[17px] font-extrabold">{formatMontrealTime(entry.booking.starts_at)} – {formatMontrealTime(entry.booking.ends_at)} · {entry.booking.duration_minutes} min</h4>
                     <p className="mt-2 text-[14px] font-bold">{entry.booking.service_name} · {formatPriceCents(entry.booking.price_cents)}</p>
                     <p className="mt-1 text-[13px]">Customer: {entry.booking.client_name}</p>
+                    {entry.booking.vehicle_description && <p className="mt-1 text-[13px] font-semibold">🚗 Vehicle: {entry.booking.vehicle_description}</p>}
                     <div className="mt-1 flex flex-wrap gap-3 text-[12px]">
                       <a href={`tel:${entry.booking.client_phone.replace(/[^\d+]/g, "")}`} className="font-semibold text-[#315C91] underline">📞 {entry.booking.client_phone}</a>
                       <a href={`mailto:${entry.booking.client_email}`} className="font-semibold text-[#315C91] underline">✉️ {entry.booking.client_email}</a>
