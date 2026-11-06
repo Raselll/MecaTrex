@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cancelGarageBooking } from "@/app/book/actions";
 import {
-  BOOKING_CANCEL_LIMIT, formatHour, formatMontrealDateTime, formatMontrealTime,
+  BOOKING_CANCEL_LIMIT, formatMontrealTime,
   formatPriceCents, montrealDate, plusCalendarMonths, WEEKDAYS,
   type BusinessHour, type GarageBooking, type CalendarBlock,
 } from "@/lib/booking";
@@ -37,6 +37,7 @@ export default function ProviderCalendar({
   const [loading, setLoading] = useState(true);
   const [savingHours, setSavingHours] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [remaining, setRemaining] = useState(Math.max(0, BOOKING_CANCEL_LIMIT - initialCancelled));
@@ -73,7 +74,7 @@ export default function ProviderCalendar({
 
   useEffect(() => {
     void refresh(true);
-    const timer = window.setInterval(() => void refresh(), 20_000);
+    const timer = window.setInterval(() => { setNowMs(Date.now()); void refresh(); }, 20_000);
     return () => window.clearInterval(timer);
   }, [refresh]);
 
@@ -129,7 +130,7 @@ export default function ProviderCalendar({
       `⚠️ Garage cancellations are limited to 3 in total. You have ${remaining} remaining.\n\nCancelling this appointment will leave ${remaining-1}. After 3 cancellations your garage is suspended from new bookings.\n\nCancel this customer's booking?`
     )) return;
     setBusy(true); setMessage(""); setError("");
-    const result = await cancelGarageBooking(booking.id, "provider");
+    const result = await cancelGarageBooking(booking.id);
     setBusy(false);
     if (!result.ok) setError(result.message);
     else {
@@ -149,7 +150,7 @@ export default function ProviderCalendar({
     ...todaysBookings.map((b) => ({ type: "booking" as const, start: b.starts_at, end: b.ends_at, booking: b })),
     ...todaysBlocks.map((b) => ({ type: "block" as const, start: b.starts_at, end: b.ends_at, block: b })),
   ].sort((a,b) => a.start.localeCompare(b.start));
-  const upcoming = bookings.filter((b) => b.status === "confirmed" && new Date(b.ends_at).getTime() > Date.now());
+  const upcoming = bookings.filter((b) => b.status === "confirmed" && new Date(b.ends_at).getTime() > nowMs);
 
   return (
     <section id="garage-calendar" className="scroll-mt-24 space-y-6">
@@ -225,7 +226,7 @@ export default function ProviderCalendar({
                     </div>
                     {entry.booking.note && <p className="mt-2 text-[12px] text-[#667085]">Note: {entry.booking.note}</p>}
                   </div>
-                  {entry.booking.status === "confirmed" && new Date(entry.booking.starts_at) > new Date() && (
+                  {entry.booking.status === "confirmed" && new Date(entry.booking.starts_at).getTime() > nowMs && (
                     <button type="button" disabled={busy || remaining === 0 || suspended}
                       onClick={() => void cancelBooking(entry.booking)} className="rounded-[11px] border border-[#FDA29B] bg-white px-4 py-3 text-[12px] font-bold text-[#B42318] hover:bg-[#FEF3F2] disabled:cursor-not-allowed disabled:opacity-40">
                       Cancel · {remaining} left
