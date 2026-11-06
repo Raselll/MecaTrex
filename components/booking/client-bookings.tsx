@@ -122,6 +122,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
               {booking.garage_phone && <a className="font-bold text-[#315C91] underline" href={`tel:${booking.garage_phone.replace(/[^\d+]/g, "")}`}>📞 {booking.garage_phone}</a>}
               {booking.garage_email && <a className="font-bold text-[#315C91] underline" href={`mailto:${booking.garage_email}`}>✉️ Email garage</a>}
             </div>
+            {booking.vehicle_description && <p className="mt-2 text-[12px] text-[#667085]">🚗 Vehicle: {booking.vehicle_description}</p>}
             {booking.note && <p className="mt-2 text-[12px] text-[#667085]">Your note: {booking.note}</p>}
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#EEF2F6] pt-4">
               <p className="text-[15px] font-extrabold text-[#101828]">{formatPriceCents(booking.price_cents)} <span className="text-[11px] font-normal text-[#667085]">· Pay at garage</span></p>
