@@ -119,7 +119,7 @@ export default function ProviderCalendar({
       <div className="rounded-[25px] border border-[#BAC7D7] bg-white p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">Included with MECATREX · basic availability</p>
-            <h2 className="mt-1 text-[27px] font-extrabold tracking-[-0.04em]">{providerType === "garage" ? "📅 Calendar & availability" : "🚚 Towing business hours"}</h2>
+            <h2 className="mt-1 text-[27px] font-extrabold tracking-[-0.04em]">{providerType === "garage" ? "📅 Booking availability" : "🚚 Towing business hours"}</h2>
             <p className="mt-1 text-[14px] text-[#667085]">{providerType === "garage" ? "Quickly block days or hours. Only the free times are offered to clients (Montreal time)." : "Update your towing company opening hours now. Towing dispatch and customer reservations will be connected in the next phase."}</p></div>
           <button type="button" onClick={() => void refresh()} className="rounded-[12px] border border-[#BAC7D7] px-4 py-3 text-[13px] font-bold text-[#315C91] hover:bg-[#EDF3FA]">↻ Refresh calendar</button>
         </div>
