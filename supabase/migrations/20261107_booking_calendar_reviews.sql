@@ -158,10 +158,12 @@ for select to anon, authenticated using (
     select 1 from public.service_providers sp
     where sp.id = provider_id and (
       (sp.status = 'approved'::public.mecatrex_provider_status and sp.is_listing_active = true)
-      or sp.owner_id = (select auth.uid()) or private.is_admin()
+      or sp.owner_id = (select auth.uid())
     )
   )
 );
+create policy "Admin reads all garage hours" on public.garage_business_hours
+for select to authenticated using (private.is_admin());
 grant select on public.garage_business_hours to anon, authenticated;
 
 create policy "Owner reads garage blocks" on public.garage_calendar_blocks
@@ -194,8 +196,10 @@ for select to anon, authenticated using (
     and sp.status='approved'::public.mecatrex_provider_status and sp.is_listing_active)
   or client_id=(select auth.uid())
   or exists(select 1 from public.service_providers sp where sp.id=provider_id
-    and (sp.owner_id=(select auth.uid()) or private.is_admin()))
+    and sp.owner_id=(select auth.uid()))
 );
+create policy "Admin reads garage reviews" on public.garage_reviews
+for select to authenticated using (private.is_admin());
 grant select on public.garage_reviews to anon, authenticated;
 
 -- Return true if entire interval fits opening hours, including overnight shifts.
@@ -360,6 +364,9 @@ begin
     raise exception 'Not allowed to change these opening hours.'; end if;
   if jsonb_typeof(p_hours)<>'array' or jsonb_array_length(p_hours)<>7 then
     raise exception 'Provide seven days of opening hours.'; end if;
+  if (select count(distinct (entry->>'weekday')::integer)
+      from jsonb_array_elements(p_hours) as entry) <> 7 then
+    raise exception 'Please provide every weekday exactly once.'; end if;
 
   for item in select value from jsonb_array_elements(p_hours) loop
     v_day := (item->>'weekday')::integer;
