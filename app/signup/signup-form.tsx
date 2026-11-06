@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { signup } from "./actions";
 import { WEEKDAYS } from "@/lib/booking";
+import { validateBusinessHours } from "@/lib/business-hours";
 
 type AccountType = "client" | "provider";
 type ProviderType = "garage" | "towing";
@@ -49,6 +50,8 @@ function Requirement({ met, active, children }: { met: boolean; active: boolean;
 }
 
 export default function SignupForm({ error, next }: { error?: string; next?: string }) {
+  const [actionState, signupAction, isSubmitting] = useActionState(signup, { error: error ?? null });
+  const [hoursError, setHoursError] = useState("");
   const [accountType, setAccountType] = useState<AccountType>("client");
   const [businessHours, setBusinessHours] = useState(() => WEEKDAYS.map((_, weekday) => ({
     weekday, is_open: false, open_time: "09:00", close_time: "17:00",
@@ -56,6 +59,16 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
 
   function changeBusinessHour(day: number, value: Partial<(typeof businessHours)[number]>) {
     setBusinessHours((current) => current.map((entry) => entry.weekday === day ? { ...entry, ...value } : entry));
+    setHoursError("");
+  }
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    if (accountType !== "provider") return;
+    if (!validateBusinessHours(businessHours)) {
+      event.preventDefault();
+      setHoursError("Check the opening and closing times for your selected days. Each open day needs two different valid times.");
+      document.getElementById("business-hours")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
   }
   const [providerType, setProviderType] = useState<ProviderType>("garage");
 
@@ -191,7 +204,7 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
   }
 
   return (
-    <form action={signup} className="mt-8">
+    <form action={signupAction} onSubmit={handleSubmit} className="mt-8">
       <input type="hidden" name="next" value={next ?? ""} />
       <input type="hidden" name="account_type" value={accountType} />
       <input type="hidden" name="provider_type" value={providerType} />
@@ -203,14 +216,14 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
       <div className="grid grid-cols-2 rounded-[18px] bg-[#F2F4F7] p-1.5">
         <button
           type="button"
-          onClick={() => setAccountType("client")}
+          onClick={() => { setAccountType("client"); setHoursError(""); }}
           className={`rounded-[14px] px-5 py-3.5 text-[15px] font-bold transition ${accountType === "client" ? "bg-white text-[#101828] shadow-sm" : "text-[#667085]"}`}
         >
           Client
         </button>
         <button
           type="button"
-          onClick={() => setAccountType("provider")}
+          onClick={() => { setAccountType("provider"); setHoursError(""); }}
           className={`rounded-[14px] px-5 py-3.5 text-[15px] font-bold transition ${accountType === "provider" ? "bg-white text-[#101828] shadow-sm" : "text-[#667085]"}`}
         >
           Service provider
@@ -241,9 +254,9 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
         </div>
       )}
 
-      {error && (
-        <div className="mt-5 rounded-[15px] bg-[#FEF3F2] px-4 py-3 text-[14px] font-semibold text-[#B42318]">
-          {error}
+      {(hoursError || actionState.error) && (
+        <div role="alert" className="mt-5 rounded-[15px] bg-[#FEF3F2] px-4 py-3 text-[14px] font-semibold text-[#B42318]">
+          {hoursError || actionState.error}
         </div>
       )}
 
@@ -378,9 +391,10 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
             </label>
           </div>
 
-          <div className="mt-7 rounded-[18px] border border-[#C9D6E5] bg-[#F8FAFC] p-5">
+          <div id="business-hours" className="mt-7 scroll-mt-12 rounded-[18px] border border-[#C9D6E5] bg-[#F8FAFC] p-5">
             <h3 className="text-[18px] font-extrabold text-[#101828]">🕒 Your business hours</h3>
             <p className="mt-1 text-[13px] leading-5 text-[#667085]">Select the days you operate and their opening hours. All days are closed by default until you set them. You can change this in your business dashboard later.</p>
+            {hoursError && <p role="alert" className="mt-3 rounded-xl bg-[#FEF3F2] p-3 text-[13px] font-semibold text-[#B42318]">{hoursError}</p>}
             <div className="mt-4 space-y-2">
               {WEEKDAYS.map((day, weekday) => {
                 const hour = businessHours[weekday];
@@ -489,10 +503,10 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
 
       <button
         type="submit"
-        disabled={!signupReady}
+        disabled={!signupReady || isSubmitting}
         className="mt-7 w-full rounded-[15px] bg-[#4771A6] px-6 py-4 text-[16px] font-bold text-white transition hover:bg-[#3C6190] disabled:cursor-not-allowed disabled:bg-[#B8C6D8] disabled:hover:bg-[#B8C6D8]"
       >
-        {accountType === "client" ? "Create client account" : "Submit provider application"}
+        {isSubmitting ? "Submitting application…" : accountType === "client" ? "Create client account" : "Submit provider application"}
       </button>
     </form>
   );
