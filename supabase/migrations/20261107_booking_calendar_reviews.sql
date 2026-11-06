@@ -29,16 +29,46 @@ create table if not exists public.garage_business_hours (
 insert into public.garage_business_hours (provider_id, weekday, is_open)
 select sp.id, d.day, false
 from public.service_providers sp cross join generate_series(0,6) as d(day)
-where sp.provider_type = 'garage'::public.mecatrex_provider_type
+where sp.provider_type in ('garage'::public.mecatrex_provider_type, 'towing'::public.mecatrex_provider_type)
 on conflict (provider_id,weekday) do nothing;
 
 create or replace function private.initialize_garage_business_hours()
 returns trigger language plpgsql security definer set search_path = '' as $$
+declare
+  v_hours jsonb;
+  v_item jsonb;
+  v_day integer;
+  v_open time;
+  v_close time;
+  v_enabled boolean;
 begin
-  if new.provider_type = 'garage'::public.mecatrex_provider_type then
-    insert into public.garage_business_hours(provider_id,weekday,is_open)
-    select new.id,d.day,false from generate_series(0,6) as d(day)
-    on conflict do nothing;
+  -- Both garages and towing businesses can declare operating hours.
+  -- Only garages are bookable online in this phase.
+  insert into public.garage_business_hours(provider_id,weekday,is_open)
+  select new.id,d.day,false from generate_series(0,6) as d(day)
+  on conflict do nothing;
+
+  -- Capture the opening hours chosen in the initial signup form.
+  -- No auth metadata is used for access decisions; this is business data only.
+  select raw_user_meta_data -> 'business_hours' into v_hours
+  from auth.users where id=new.owner_id;
+  if jsonb_typeof(v_hours)='array' and jsonb_array_length(v_hours)=7 then
+    for v_item in select value from jsonb_array_elements(v_hours) loop
+      begin
+        v_day := (v_item->>'weekday')::integer;
+        v_open := (v_item->>'open_time')::time;
+        v_close := (v_item->>'close_time')::time;
+        v_enabled := (v_item->>'is_open')::boolean;
+      exception when invalid_text_representation or datetime_field_overflow then
+        continue;
+      end;
+      if v_day between 0 and 6 and v_open is not null and v_close is not null
+         and v_enabled is not null and (not v_enabled or v_open<>v_close) then
+        update public.garage_business_hours
+        set is_open=v_enabled,open_time=v_open,close_time=v_close
+        where provider_id=new.id and weekday=v_day;
+      end if;
+    end loop;
   end if;
   return new;
 end;
@@ -370,7 +400,7 @@ declare
 begin
   if auth.uid() is null then raise exception 'Login required.'; end if;
   select * into v_provider from public.service_providers where id=p_provider_id for update;
-  if not found or v_provider.owner_id<>auth.uid() or v_provider.provider_type<>'garage'::public.mecatrex_provider_type then
+  if not found or v_provider.owner_id<>auth.uid() then
     raise exception 'Not allowed to change these opening hours.'; end if;
   if jsonb_typeof(p_hours)<>'array' or jsonb_array_length(p_hours)<>7 then
     raise exception 'Provide seven days of opening hours.'; end if;
