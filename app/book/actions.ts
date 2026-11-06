@@ -52,6 +52,7 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
   const day = formValue(formData, "day");
   const time = formValue(formData, "time");
   const note = formValue(formData, "note");
+  const vehicle = formValue(formData, "vehicle").slice(0, 120);
   if (!providerId || !serviceId || !/^\d{4}-\d{2}-\d{2}$/.test(day)
       || !/^([01]\d|2[0-3]):(00|30)$/.test(time) || note.length > 500) {
     return { ok: false, error: "Choose a valid garage, service, date, time and a note shorter than 500 characters." };
@@ -67,6 +68,7 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
     p_day: day,
     p_time: time,
     p_note: note,
+    p_vehicle: vehicle,
   });
 
   if (error || typeof data !== "string") {
