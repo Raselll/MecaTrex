@@ -26,7 +26,10 @@ type Profile = {
   accent_color: AccentColor;
 };
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: { searchParams: Promise<{ verified?: string }> }) {
+  const params = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -56,22 +59,35 @@ export default async function AccountPage() {
   const displayName = `${profile.first_name} ${profile.last_name}`.trim() || profile.email;
 
   if (profile.account_type === "provider") {
-    const { data: provider, error: providerError } = await supabase
+    const providerSelect = "id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, image_path, latitude, longitude, is_listing_active, is_removed, provider_cancellation_count, booking_suspended";
+    let { data: provider, error: providerError } = await supabase
       .from("service_providers")
-      .select(
-        "id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, image_path, latitude, longitude, is_listing_active, is_removed, provider_cancellation_count, booking_suspended"
-      )
+      .select(providerSelect)
       .eq("owner_id", user.id)
-      .single<ProviderRecord>();
+      .maybeSingle<ProviderRecord>();
+
+    // Existing accounts created before the provider trigger can be recovered.
+    if (!provider && !providerError) {
+      const recovery = await supabase.rpc("ensure_my_provider_record");
+      if (recovery.error) console.error("Provider recovery RPC failed:", recovery.error.message);
+      if (!recovery.error && recovery.data) {
+        const reloaded = await supabase.from("service_providers")
+          .select(providerSelect).eq("owner_id", user.id).maybeSingle<ProviderRecord>();
+        provider = reloaded.data;
+        providerError = reloaded.error;
+      }
+    }
 
     if (providerError || !provider) {
       return (
         <AccountShell>
           <div className="rounded-[24px] border border-[#FECACA] bg-[#FEF2F2] p-6 text-[#991B1B]">
-            <h1 className="text-[24px] font-bold">Provider profile not found.</h1>
+            <h1 className="text-[24px] font-bold">Your provider application needs to be synchronized.</h1>
             <p className="mt-3 text-[14px] leading-6">
-              Your account is marked as a service provider, but its provider record could not be loaded. Apply the latest database migration or contact the MECATREX administrator.
+              Your email is verified, but the business application could not be loaded. The MECATREX administrator must apply migration 20261110 after migrations 20261108 and 20261109. Your account has not been approved or published.
             </p>
+            {providerError && <p className="mt-3 text-[12px]">Database error code: {providerError.code}</p>}
+            <Link href="/account" className="mt-4 inline-flex rounded-xl bg-white px-4 py-2 font-bold text-[#991B1B]">Retry loading application</Link>
           </div>
         </AccountShell>
       );
@@ -110,6 +126,16 @@ export default async function AccountPage() {
             </div>
           </div>
 
+          {params.verified === "1" && provider.status !== "approved" && (
+            <div role="status" className="mt-6 rounded-[18px] border border-[#B7D9C6] bg-[#F0FDF4] p-5">
+              <h2 className="text-[20px] font-bold text-[#166534]">Email confirmed — application submitted</h2>
+              <p className="mt-2 text-[14px] leading-6 text-[#475467]">
+                Thank you for verifying your email. Our team will review your business registration
+                and submitted services. We aim to respond within 24 hours by email. You can sign in
+                anytime to check your application status. Services and prices remain locked until approval.
+              </p>
+            </div>
+          )}
           <AccentPicker userId={user.id} initialAccent={profile.accent_color ?? "blue"} />
           <div className="mt-6 space-y-6">
             <BookingNotifications userId={user.id} />

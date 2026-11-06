@@ -38,6 +38,7 @@ The migrations must be applied in filename order:
 7. `supabase/migrations/20261107_booking_calendar_reviews.sql`
 8. `supabase/migrations/20261108_provider_verification_and_removal.sql`
 9. `supabase/migrations/20261109_remove_provider_description_requirement.sql`
+10. `supabase/migrations/20261110_recover_missing_provider_applications.sql`
 
 For the current development project, the simplest method is Supabase Dashboard -> SQL Editor -> New query, paste each migration in order, then Run.
 
@@ -268,3 +269,10 @@ An admin removal is a soft removal: the account and bookings/reviews remain avai
 ## 16. Provider application form simplification (20261109)
 
 After the 20261108 migration, apply `supabase/migrations/20261109_remove_provider_description_requirement.sql`. A free-text application description is no longer required at signup or approval. The selected service categories remain required; an optional custom service can be supplied through **Other**. NEQ and business phone remain mandatory. The existing `application_description` column stays nullable for historical applications. Git pull does not execute this migration in the hosted Supabase project.
+
+
+## 17. Verified signup and missing-provider recovery (20261110)
+
+After pulling, apply `supabase/migrations/20261110_recover_missing_provider_applications.sql` in the MECATREX Supabase SQL Editor **after 20261108 and 20261109**. The migration backfills provider records that were missing for already-created Supabase Auth users, preserving all existing statuses and data. The new `ensure_my_provider_record` RPC permits a confirmed provider to repair a missing pending record only for themselves, never granting approval.
+
+New providers receive a confirmation link; confirmation sends them to `/account?verified=1` with an application-under-review confirmation. Their account stays locked until an admin uses `/admin?view=review` to approve. New application notifications are sent by Brevo on signup and retried on email confirmation when the first attempt failed in the same browser. To receive alerts, set `MECATREX_ADMIN_EMAIL`, `BREVO_API_KEY` and `BREVO_SENDER_EMAIL` server-side. Brevo API acceptance is not delivery; check Brevo transactional logs and the admin resend control. Some cross-device confirmation links can trigger a duplicate admin alert; moderation remains idempotent in the database.

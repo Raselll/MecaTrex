@@ -279,6 +279,8 @@ export async function signup(
     return signupError(friendlySignupError(error.message));
   }
 
+  // Send the admin a detailed notification. The verification callback retries if this fails.
+  let adminEmailAccepted = false;
   // Notify the admin for genuine new provider applications.
   if (
     accountType === "provider" &&
@@ -303,6 +305,7 @@ export async function signup(
         province: "Quebec",
         postalCode: businessPostalCode,
       });
+      adminEmailAccepted = true;
     } catch (emailError) {
       console.error(
         "MECATREX new provider alert was not delivered:",
@@ -311,12 +314,21 @@ export async function signup(
     }
   }
 
+  const cookieStore = await cookies();
+  // Prevent a second admin alert when the verification link is opened in this browser.
+  // This is delivery *acceptance* by Brevo, not proof of inbox delivery.
+  if (adminEmailAccepted && data.user) {
+    cookieStore.set("mecatrex_admin_alert", data.user.id, {
+      path: "/", httpOnly: true, sameSite: "lax",
+      secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 7,
+    });
+  }
+
   if (data.session) {
     redirect(safeNext);
   }
 
   // Remember the email securely for the verification page.
-  const cookieStore = await cookies();
 
   const cookieOptions = {
     path: "/signup",

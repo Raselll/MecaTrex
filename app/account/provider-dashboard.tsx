@@ -47,7 +47,7 @@ function statusCopy(status: ProviderStatus) {
   return {
     pending: {
       title: "Application under review",
-      description: "Your application is recorded. MECATREX will review your business registration and services. Prices and publishing stay locked until approval.",
+      description: "Your email is confirmed and your application is awaiting MECATREX review. We aim to respond within 24 hours by email. You can check your status here, but services and pricing remain locked until approval.",
       className: "bg-[#FFF7E8] text-[#92400E]",
     },
     approved: {
