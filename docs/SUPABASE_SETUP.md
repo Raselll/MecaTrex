@@ -36,6 +36,7 @@ The migrations must be applied in filename order:
 5. `supabase/migrations/20261105_provider_service_required_fields.sql`
 6. `supabase/migrations/20261106_fixed_price_services_only.sql`
 7. `supabase/migrations/20261107_booking_calendar_reviews.sql`
+8. `supabase/migrations/20261108_provider_verification_and_removal.sql`
 
 For the current development project, the simplest method is Supabase Dashboard -> SQL Editor -> New query, paste each migration in order, then Run.
 
@@ -67,16 +68,18 @@ Do not put an admin role in browser metadata and do not expose a service-role/se
 
 1. A garage/towing company signs up as `provider`.
 2. Supabase creates the provider with `pending` status.
-3. The provider can prepare the business profile, image, coordinates, and service catalogue while pending.
-4. An administrator reviews the application at `/admin`.
-5. `Approve` runs the protected `admin_set_provider_status` database function.
-6. If at least one active service is already listed, approval publishes the listing automatically.
-7. If an already-approved provider later adds or activates its first service, the listing publishes automatically.
-8. Removing/deactivating the last active service hides the listing. The provider can also manually unpublish at any time.
-9. Only `approved + is_listing_active` providers are readable by the public homepage.
-10. `Garages ready to help` reads the real Supabase listing and service catalogue; the old demo garage cards are no longer used.
+3. The provider submits a business NEQ, a separate business phone, an optional website, planned services and a written description. These are captured by a secure trigger in a separate provider_applications record.
+4. Pending providers can sign in only to view application status; creating/editing services and prices is locked in the UI and RLS.
+5. The administrator reviews the complete application at `/admin` and checks the NEQ manually in the Quebec enterprise registry.
+6. `Approve` runs the protected `admin_set_provider_status` database function. The database rejects missing NEQ, description, service categories, or business phone.
+7. After approval, a provider can configure the business profile, service catalogue and exact fixed prices. No listing is automatically public without an active service.
+8. Adding an active complete fixed-price service allows approved providers to publish their listing.
+9. Removing or deactivating the last active service hides the listing. The provider can also manually unpublish at any time.
+10. Only `approved + is_listing_active` providers are displayed publicly.
+11. The admin can remove an approved provider. Removal immediately unpublishes and blocks booking, preserving historical reviews, bookings and decision notes.
+12. `Garages ready to help` reads the real Supabase listing and service catalogue; the old demo garage cards are no longer used.
 
-Providers can hide their own listing, edit their public business information, upload a garage image, and manage services/prices. They cannot change their approval status.
+Only approved providers can edit their listing, upload images and manage services/prices. Pending, rejected or removed providers see an application-status page. They cannot change their approval status.
 
 ## 5. Provider images
 
@@ -251,3 +254,11 @@ order by b.created_at desc limit 20;
 - No SMS or mobile push (only in-app and best-effort transactional email).
 - No automated admin appeals/reinstatement after 3 garage cancellations.
 - The client selects a service listed at a fixed price; vehicle compatibility is not yet enforced.
+
+## 15. Provider application verification and removal (20261108)
+
+Run `supabase/migrations/20261108_provider_verification_and_removal.sql` **in Supabase SQL Editor after migration 20261107** before trying the updated signup or admin pages. Git push/pull does not apply a database migration. The migration creates `provider_applications` and `provider_review_history`, captures signup verification metadata, enforces service editing after approval via RLS, and provides admin-only approval and soft-removal RPCs.
+
+Admin email requires `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `MECATREX_ADMIN_EMAIL` server-only in `.env.local` (restart dev server after editing). The administrator can resend the detailed application email from the admin card if Brevo delivery fails. Supabase Auth confirmations use separate SMTP settings. Check Brevo transactional logs for actual delivery events. A provider application is saved even if email delivery fails. Existing provider applications without complete verification data remain unapproved until reviewed; do not invent NEQ values.
+
+An admin removal is a soft removal: the account and bookings/reviews remain available in secure history, its listing becomes invisible, and the provider cannot publish or edit services. Review any outstanding future appointments and contact affected customers.

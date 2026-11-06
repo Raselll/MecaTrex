@@ -29,6 +29,7 @@ export type ProviderRecord = {
   is_listing_active: boolean;
   provider_cancellation_count: number;
   booking_suspended: boolean;
+  is_removed: boolean;
 };
 
 export type ProviderService = {
@@ -46,7 +47,7 @@ function statusCopy(status: ProviderStatus) {
   return {
     pending: {
       title: "Application under review",
-      description: "Build your listing now. We aim to review applications within 24 hours. You can publish once MECATREX approves your account.",
+      description: "Your application is recorded. MECATREX will review your business registration and services. Prices and publishing stay locked until approval.",
       className: "bg-[#FFF7E8] text-[#92400E]",
     },
     approved: {
@@ -61,7 +62,7 @@ function statusCopy(status: ProviderStatus) {
     },
     rejected: {
       title: "Application not approved",
-      description: "This provider listing cannot be published. Contact MECATREX if you believe the application should be reviewed again.",
+      description: "This business cannot publish services. Contact MECATREX if you believe the application should be reviewed again.",
       className: "bg-[#FEF3F2] text-[#B42318]",
     },
   }[status];
@@ -369,6 +370,22 @@ export default function ProviderDashboard({
       setMessage(nextValue ? "Your garage is now published under Garages ready to help." : "Your garage listing is hidden from the public homepage.");
       router.refresh();
     }
+  }
+
+  if (provider.status !== "approved" || provider.is_removed) {
+    return (
+      <section id="application-status" className="mt-7 rounded-[24px] border border-[#D6E0ED] bg-[#F8FAFD] p-7">
+        <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">Application status</p>
+        <h2 className="mt-3 text-[27px] font-bold text-[#101828]">{provider.is_removed ? "Business removed" : status.title}</h2>
+        <p className="mt-3 text-[15px] leading-7 text-[#475467]">{status.description}</p>
+        {adminMessage && <div className="mt-5 rounded-[15px] border border-[#D6E0ED] bg-white p-5">
+          <p className="text-[13px] font-bold text-[#101828]">Message from MECATREX</p>
+          <p className="mt-2 whitespace-pre-wrap text-[14px] leading-6 text-[#475467]">{adminMessage}</p>
+          <p className="mt-2 text-[12px] text-[#667085]">Reply to our email with any requested documentation.</p>
+        </div>}
+        <p className="mt-5 text-[13px] font-semibold text-[#315C91]">After approval, the dashboard unlocks service details, fixed prices, and publication.</p>
+      </section>
+    );
   }
 
   return (

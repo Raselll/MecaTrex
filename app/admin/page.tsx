@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { resendProviderDecisionEmail, setProviderStatus } from "./actions";
+import { removeProvider, resendAdminApplicationEmail, resendProviderDecisionEmail, setProviderStatus } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +19,19 @@ type ProviderRow = {
   business_description: string | null;
   public_email: string | null;
   public_phone: string | null;
+  website: string | null;
+  is_removed: boolean;
   is_listing_active: boolean;
   booking_suspended: boolean;
   provider_cancellation_count: number;
   created_at: string;
+};
+
+type ApplicationRow = {
+  provider_id: string;
+  business_neq: string | null;
+  application_description: string | null;
+  application_services: string[];
 };
 
 type ProfileRow = {
@@ -72,20 +81,26 @@ export default async function AdminPage({
     .single();
   if (currentProfile?.account_type !== "admin") redirect("/account");
 
-  const [{ data: providerRows, error: providerError }, { data: profileRows, error: accountsError }] = await Promise.all([
+  const [
+    { data: providerRows, error: providerError },
+    { data: profileRows, error: accountsError },
+    { data: applicationRows, error: applicationError },
+  ] = await Promise.all([
     supabase
       .from("service_providers")
-      .select("id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, is_listing_active, booking_suspended, provider_cancellation_count, created_at")
+      .select("id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, is_removed, is_listing_active, booking_suspended, provider_cancellation_count, created_at")
       .order("created_at", { ascending: false }),
     supabase
       .from("profiles")
       .select("id, first_name, last_name, email, primary_phone, account_type, created_at")
       .order("created_at", { ascending: false }),
+    supabase.from("provider_applications").select("provider_id, business_neq, application_description, application_services"),
   ]);
   const providers = (providerRows ?? []) as ProviderRow[];
   const accounts = (profileRows ?? []) as ProfileRow[];
   const ownerMap = new Map(accounts.map((owner) => [owner.id, owner]));
   const providerMap = new Map(providers.map((provider) => [provider.owner_id, provider]));
+  const applicationMap = new Map(((applicationRows ?? []) as ApplicationRow[]).map((application) => [application.provider_id, application]));
   const pending = providers.filter((provider) => provider.status === "pending" || provider.status === "needs_information");
   const filtered = view === "review" ? pending : providers;
   const clientsCount = accounts.filter((account) => account.account_type === "client").length;
@@ -176,7 +191,8 @@ export default async function AdminPage({
             <section id="applications" className="scroll-mt-8 pt-6">
               <h2 className="text-[24px] font-bold">{view === "review" ? "Applications needing attention" : "All service providers"}</h2>
               <p className="mt-2 text-[14px] text-[#667085]">{view === "review" ? "Only pending applications and those awaiting information are shown here." : "View approved, pending and rejected businesses."}</p>
-              {providerError && <p role="alert" className="mt-4 text-[#B42318]">Could not load providers: {providerError.message}</p>}
+              {applicationError && <p role="alert" className="mt-4 text-[#B42318]">Verification data unavailable: {applicationError.message}. Run migration 20261108.</p>}
+               {providerError && <p role="alert" className="mt-4 text-[#B42318]">Could not load providers: {providerError.message}</p>}
               <div className="mt-5 space-y-5">
                 {filtered.length === 0 && !providerError && (
                   <div className="rounded-[20px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-8 text-center">
@@ -187,13 +203,15 @@ export default async function AdminPage({
                 )}
                 {filtered.map((provider) => {
                   const owner = ownerMap.get(provider.owner_id);
+                   const application = applicationMap.get(provider.id);
                   return (
                     <article key={provider.id} className="rounded-[22px] border border-[#BAC7D7] bg-white p-5 shadow-sm sm:p-6">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="mr-1 text-[22px] font-extrabold">{provider.business_name}</h3>
                         <span className={`rounded-full px-3 py-1.5 text-[11px] font-bold uppercase ${statusStyle(provider.status)}`}>{provider.status.replaceAll("_", " ")}</span>
                         <span className="rounded-full bg-[#EDF3FA] px-3 py-1.5 text-[11px] font-bold uppercase text-[#315C91]">{provider.provider_type}</span>
-                        {provider.is_listing_active && <span className="rounded-full bg-[#ECFDF3] px-3 py-1.5 text-[11px] font-bold text-[#027A48]">Published</span>}
+                        {provider.is_removed && <span className="rounded-full bg-[#FEF3F2] px-3 py-1.5 text-[11px] font-bold text-[#B42318]">Removed</span>}
+                         {provider.is_listing_active && <span className="rounded-full bg-[#ECFDF3] px-3 py-1.5 text-[11px] font-bold text-[#027A48]">Published</span>}
                         {provider.booking_suspended && <span className="rounded-full bg-[#FEF3F2] px-3 py-1.5 text-[11px] font-bold text-[#B42318]">⛔ Booking suspended · 3 cancellations</span>}
                       </div>
                       <p className="mt-3 text-[14px] leading-6 text-[#475467]">📍 {provider.address_line1}, {provider.city}, {provider.province} {provider.postal_code}</p>
@@ -207,19 +225,43 @@ export default async function AdminPage({
                         <p><strong>Submitted:</strong> {new Date(provider.created_at).toLocaleDateString("en-CA")}</p>
                         {provider.provider_type === "garage" && <p><strong>Garage cancellations:</strong> {provider.provider_cancellation_count} / 3 {provider.booking_suspended ? "· Account booking suspended" : ""}</p>}
                       </div>
-                      <form action={setProviderStatus} className="mt-5 rounded-[16px] border border-[#D0D5DD] bg-[#F8FAFC] p-4">
+                      <section className="mt-4 rounded-[17px] border border-[#D6E0ED] bg-[#F8FAFD] p-5">
+                         <h4 className="text-[15px] font-extrabold text-[#101828]">Business verification dossier</h4>
+                         <div className="mt-3 grid gap-3 text-[13px] sm:grid-cols-2">
+                           <p><strong>Quebec NEQ:</strong> {application?.business_neq || <span className="text-[#B42318]">Not provided (legacy account)</span>}</p>
+                           <p><strong>Website:</strong> {provider.website ? <a target="_blank" rel="noopener noreferrer" href={provider.website} className="break-all font-bold text-[#315C91] underline">{provider.website}</a> : "Not provided"}</p>
+                         </div>
+                         <p className="mt-3 text-[13px]"><strong>Planned services:</strong> {application?.application_services?.length ? application.application_services.join(" · ") : "Not provided"}</p>
+                         <p className="mt-3 whitespace-pre-wrap text-[13px] leading-6"><strong>Applicant description:</strong> {application?.application_description || "Not provided"}</p>
+                         <a target="_blank" rel="noopener noreferrer" href="https://www.quebec.ca/entreprises-et-travailleurs-autonomes/obtenir-renseignements-entreprise/recherche-registre-entreprises/acceder-registre-entreprises" className="mt-3 inline-block text-[13px] font-bold text-[#315C91] underline">Verify NEQ in Quebec enterprise registry ↗</a>
+                         <form action={resendAdminApplicationEmail} className="mt-4">
+                           <input type="hidden" name="provider_id" value={provider.id} />
+                           <button className="rounded-[12px] border border-[#93B4DC] bg-white px-4 py-2.5 text-[12px] font-bold text-[#315C91] hover:bg-[#EAF1F9]">↻ Resend detailed application email to admin</button>
+                         </form>
+                       </section>
+                       <form action={setProviderStatus} className="mt-5 rounded-[16px] border border-[#D0D5DD] bg-[#F8FAFC] p-4">
                         <input type="hidden" name="provider_id" value={provider.id} />
                         <label className="block">
                           <span className="mb-2 block text-[13px] font-bold text-[#101828]">Message to provider (required for rejection or more information)</span>
                           <textarea name="message" rows={3} placeholder="Clearly explain what you need, or why you declined the application..." className="w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]" />
                         </label>
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <button type="submit" name="status" value="approved" disabled={provider.status === "approved"} className="rounded-[12px] bg-[#027A48] px-4 py-3 text-[13px] font-bold text-white hover:bg-[#05603A] disabled:cursor-not-allowed disabled:opacity-40">✓ Approve</button>
-                          <button type="submit" name="status" value="needs_information" className="rounded-[12px] bg-[#4771A6] px-4 py-3 text-[13px] font-bold text-white hover:bg-[#315C91]">Request more info</button>
-                          <button type="submit" name="status" value="rejected" disabled={provider.status === "rejected"} className="rounded-[12px] border border-[#FDA29B] bg-white px-4 py-3 text-[13px] font-bold text-[#B42318] hover:bg-[#FEF3F2] disabled:opacity-40">Reject</button>
+                          <button type="submit" name="status" value="approved" disabled={provider.is_removed || provider.status === "approved"} className="rounded-[12px] bg-[#027A48] px-4 py-3 text-[13px] font-bold text-white hover:bg-[#05603A] disabled:cursor-not-allowed disabled:opacity-40">✓ Approve</button>
+                          <button type="submit" name="status" value="needs_information" disabled={provider.is_removed} className="rounded-[12px] bg-[#4771A6] px-4 py-3 text-[13px] font-bold text-white hover:bg-[#315C91]">Request more info</button>
+                          <button type="submit" name="status" value="rejected" disabled={provider.is_removed || provider.status === "rejected"} className="rounded-[12px] border border-[#FDA29B] bg-white px-4 py-3 text-[13px] font-bold text-[#B42318] hover:bg-[#FEF3F2] disabled:opacity-40">Reject</button>
                         </div>
                       </form>
-                      {provider.status !== "pending" && (
+                      {!provider.is_removed && (
+                         <form action={removeProvider} className="mt-4 rounded-[16px] border border-[#FDA29B] bg-[#FFF9F8] p-4">
+                           <input type="hidden" name="provider_id" value={provider.id} />
+                           <label className="block text-[13px] font-bold text-[#B42318]">Remove this provider from MECATREX
+                             <textarea name="removal_reason" required minLength={10} rows={2} placeholder="Reason for removal (at least 10 characters)" className="mt-2 w-full rounded-xl border border-[#FDA29B] bg-white px-4 py-3 text-[13px] text-[#101828]" />
+                           </label>
+                           <button type="submit" className="mt-3 rounded-xl bg-[#B42318] px-4 py-2.5 text-[13px] font-bold text-white hover:bg-[#912018]">Remove and unpublish</button>
+                           <p className="mt-2 text-[12px] text-[#667085]">Historical bookings and reviews are kept. Contact customers about upcoming appointments.</p>
+                         </form>
+                       )}
+                       {provider.status !== "pending" && (
                         <form action={resendProviderDecisionEmail} className="mt-3 flex flex-wrap items-center gap-3">
                           <input type="hidden" name="provider_id" value={provider.id} />
                           <button type="submit" className="rounded-[12px] border border-[#98A2B3] bg-white px-4 py-2.5 text-[13px] font-bold text-[#315C91] hover:bg-[#EDF3FA]">↻ Resend decision email</button>

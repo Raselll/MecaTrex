@@ -6,6 +6,8 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { sendAdminProviderApplicationEmail } from "@/lib/email/brevo";
 import { MECATREX_LEGAL_VERSION } from "@/lib/legal";
+import { normalizeBusinessWebsite } from "@/lib/service-listing";
+import { parseApplicationServices } from "@/lib/provider-application";
 import {
   validateBusinessHours,
   type BusinessHoursDraft,
@@ -89,6 +91,15 @@ export async function signup(
     "business_postal_code"
   ).toUpperCase();
 
+  const businessNEQ = value(formData, "business_neq").replace(/\s/g, "");
+  const businessPhone = value(formData, "business_phone");
+  const businessWebsite = value(formData, "business_website");
+  const applicationDescription = value(formData, "application_description");
+  const website = normalizeBusinessWebsite(businessWebsite);
+  const applicationServices = accountType === "provider" &&
+    (providerType === "garage" || providerType === "towing")
+      ? parseApplicationServices(value(formData, "application_services"), providerType)
+      : null;
   const businessPlaceId = value(formData, "business_place_id");
   const businessLatitude = optionalCoordinate(
     formData,
@@ -185,6 +196,21 @@ export async function signup(
       );
     }
 
+    if (!/^\d{10}$/.test(businessNEQ)) {
+      return signupError("Enter a valid 10-digit Quebec enterprise number (NEQ).");
+    }
+    if (!PHONE_REGEX.test(businessPhone)) {
+      return signupError("Business phone must use the format 514-555-1234.");
+    }
+    if (businessWebsite && !website) {
+      return signupError("Enter a valid business website URL.");
+    }
+    if (applicationDescription.length < 30 || applicationDescription.length > 1500) {
+      return signupError("Describe your business and services in 30 to 1500 characters.");
+    }
+    if (!applicationServices) {
+      return signupError("Select at least one service. Use Other for one custom service.");
+    }
     if (process.env.GOOGLE_MAPS_API_KEY && !businessPlaceId) {
       return signupError(
         "Please choose your business address from the Google address suggestions."
@@ -219,6 +245,11 @@ export async function signup(
 
         business_name:
           accountType === "provider" ? businessName : null,
+        business_neq: accountType === "provider" ? businessNEQ : null,
+        business_phone: accountType === "provider" ? businessPhone : null,
+        business_website: accountType === "provider" ? website : null,
+        application_description: accountType === "provider" ? applicationDescription : null,
+        application_services: accountType === "provider" ? applicationServices : null,
 
         business_hours:
           accountType === "provider" ? businessHours : null,
@@ -268,6 +299,11 @@ export async function signup(
         secondaryPhone,
         providerType: providerType as "garage" | "towing",
         businessName,
+        businessNEQ,
+        businessPhone,
+        businessWebsite: website ?? "",
+        applicationDescription,
+        applicationServices: applicationServices ?? [],
         businessAddress,
         city: "Montreal",
         province: "Quebec",

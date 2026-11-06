@@ -16,16 +16,6 @@ export default async function CheckEmailPage() {
     cookieStore.get("mecatrex_confirmation_last_resend")?.value ?? 0
   );
 
-  const initialCooldown =
-    lastRequest > 0 && Date.now() - lastRequest >= 0
-      ? Math.max(
-          0,
-          Math.ceil(
-            (60_000 - (Date.now() - lastRequest)) / 1000
-          )
-        )
-      : 0;
-
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F5F7FA] px-4 py-10 sm:px-6">
       <div
@@ -165,7 +155,7 @@ export default async function CheckEmailPage() {
 
           <ResendForm
             initialEmail={initialEmail}
-            initialCooldown={initialCooldown}
+            lastRequest={lastRequest}
           />
 
           <div className="mt-7 flex flex-col items-center justify-center gap-4 sm:flex-row">

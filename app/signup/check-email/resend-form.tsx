@@ -22,19 +22,23 @@ const INITIAL_RESEND_STATE: ResendState = {
 
 export default function ResendForm({
   initialEmail,
-  initialCooldown,
+  lastRequest,
 }: {
   initialEmail: string;
-  initialCooldown: number;
+  lastRequest: number;
 }) {
   const [state, action, isPending] = useActionState(
     resendConfirmation,
     INITIAL_RESEND_STATE
   );
 
-  const [secondsLeft, setSecondsLeft] = useState(
-    initialCooldown
-  );
+  const [secondsLeft, setSecondsLeft] = useState(0);
+
+  useEffect(() => {
+    if (lastRequest > 0) {
+      setSecondsLeft(Math.max(0, Math.ceil((60_000 - (Date.now() - lastRequest)) / 1000)));
+    }
+  }, [lastRequest]);
 
   useEffect(() => {
     if (state.requestId > 0) {
@@ -86,7 +90,7 @@ export default function ResendForm({
             id="resend-title"
             className="text-[17px] font-bold text-[#101828]"
           >
-            Didn't receive the email?
+            Didn&apos;t receive the email?
           </h2>
 
           <p className="mt-1 text-[13px] leading-6 text-[#667085]">

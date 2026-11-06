@@ -59,7 +59,7 @@ export default async function AccountPage() {
     const { data: provider, error: providerError } = await supabase
       .from("service_providers")
       .select(
-        "id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, image_path, latitude, longitude, is_listing_active, provider_cancellation_count, booking_suspended"
+        "id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, image_path, latitude, longitude, is_listing_active, is_removed, provider_cancellation_count, booking_suspended"
       )
       .eq("owner_id", user.id)
       .single<ProviderRecord>();
@@ -100,7 +100,9 @@ export default async function AccountPage() {
                 Welcome back, {profile.first_name}.
               </h1>
               <p className="mt-2 text-[15px] leading-6 text-[#667085]">
-                Manage your garage in three simple steps: check approval, update your business and list your services.
+                {provider.status === "approved" && !provider.is_removed
+                  ? "Manage your approved business, services and appointments."
+                  : "Your application is under review. Services and prices unlock only after MECATREX approves your business."}
               </p>
             </div>
             <div className="rounded-[15px] bg-[#F2F4F7] px-4 py-3 text-[12px] font-bold text-[#475467]">
@@ -111,9 +113,9 @@ export default async function AccountPage() {
           <AccentPicker userId={user.id} initialAccent={profile.accent_color ?? "blue"} />
           <div className="mt-6 space-y-6">
             <BookingNotifications userId={user.id} />
-            <ProviderCalendar providerId={provider.id} providerType={provider.provider_type}
+            {provider.status === "approved" && !provider.is_removed && <ProviderCalendar providerId={provider.id} providerType={provider.provider_type}
               initialCancelled={provider.provider_cancellation_count ?? 0}
-              initiallySuspended={Boolean(provider.booking_suspended)} />
+              initiallySuspended={Boolean(provider.booking_suspended)} />}
           </div>
           <ProviderDashboard
             userId={user.id}

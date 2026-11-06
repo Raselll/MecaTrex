@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { sendProviderDecisionEmail } from "@/lib/email/brevo";
+import { sendAdminProviderApplicationEmail, sendProviderDecisionEmail } from "@/lib/email/brevo";
 
 type Decision = "approved" | "needs_information" | "rejected";
 const ALLOWED_STATUSES: Decision[] = ["approved", "needs_information", "rejected"];
@@ -102,6 +102,81 @@ export async function setProviderStatus(formData: FormData) {
   }
 
   redirect(adminUrl("success", `${recipient.businessName} updated to ${status.replaceAll("_", " ")}. Brevo accepted the notification email.`));
+}
+
+// Manual admin resend if the original application email failed.
+export async function resendAdminApplicationEmail(formData: FormData) {
+  const providerId = field(formData, "provider_id");
+  if (!providerId) redirect(adminUrl("error", "Missing provider ID."));
+  const supabase = await adminContext();
+  const [{ data: provider }, { data: application }] = await Promise.all([
+    supabase.from("service_providers")
+      .select("id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, public_phone, website")
+      .eq("id", providerId).single(),
+    supabase.from("provider_applications")
+      .select("business_neq, application_description, application_services")
+      .eq("provider_id", providerId).maybeSingle(),
+  ]);
+  if (!provider) redirect(adminUrl("error", "Provider not found."));
+  const { data: owner } = await supabase.from("profiles")
+    .select("first_name, last_name, email, primary_phone, secondary_phone")
+    .eq("id", provider.owner_id).single();
+  if (!owner || !application) redirect(adminUrl("error", "Application details missing. Apply migration 20261108."));
+  try {
+    await sendAdminProviderApplicationEmail({
+      firstName: owner.first_name,
+      lastName: owner.last_name,
+      email: owner.email,
+      primaryPhone: owner.primary_phone,
+      secondaryPhone: owner.secondary_phone || "",
+      providerType: provider.provider_type as "garage" | "towing",
+      businessName: provider.business_name,
+      businessNEQ: application.business_neq || "Not provided",
+      businessPhone: provider.public_phone || "",
+      businessWebsite: provider.website || "",
+      applicationDescription: application.application_description || "Not provided",
+      applicationServices: application.application_services || [],
+      businessAddress: provider.address_line1,
+      city: provider.city,
+      province: provider.province,
+      postalCode: provider.postal_code,
+    });
+  } catch (error) {
+    console.error("Admin application email resend failed:", error);
+    redirect(adminUrl("error", "Brevo did not accept the email. Check API key, verified sender and transactional logs."));
+  }
+  redirect(adminUrl("success", "Brevo accepted the detailed application email request; check its delivery logs."));
+}
+
+// Non-destructive removal: existing booking and review history is preserved.
+export async function removeProvider(formData: FormData) {
+  const providerId = field(formData, "provider_id");
+  const reason = field(formData, "removal_reason");
+  if (!providerId || reason.length < 10) redirect(adminUrl("error", "Write at least 10 characters explaining the removal."));
+  const supabase = await adminContext();
+  const recipient = await recipientForProvider(supabase, providerId);
+  if (!recipient) redirect(adminUrl("error", "Provider or owner not found."));
+  const { error } = await supabase.rpc("admin_remove_service_provider", {
+    p_provider_id: providerId,
+    p_reason: reason,
+  });
+  if (error) redirect(adminUrl("error", error.message));
+  revalidatePath("/admin");
+  revalidatePath("/account");
+  revalidatePath("/");
+  try {
+    await sendProviderDecisionEmail({
+      email: recipient.email,
+      firstName: recipient.firstName,
+      businessName: recipient.businessName,
+      status: "rejected",
+      message: "Your business was removed from MECATREX. " + reason,
+    });
+  } catch (emailError) {
+    console.error("Business removed; email failed:", emailError);
+    redirect(adminUrl("warning", "Business removed and unpublished. Notification failed: check Brevo and resend the decision email."));
+  }
+  redirect(adminUrl("success", "Business removed and unpublished; notification request accepted by Brevo."));
 }
 
 export async function resendProviderDecisionEmail(formData: FormData) {

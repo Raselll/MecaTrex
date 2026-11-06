@@ -5,6 +5,7 @@ import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { signup } from "./actions";
 import { WEEKDAYS } from "@/lib/booking";
 import { validateBusinessHours } from "@/lib/business-hours";
+import { applicationServiceOptions } from "@/lib/provider-application";
 
 type AccountType = "client" | "provider";
 type ProviderType = "garage" | "towing";
@@ -79,6 +80,16 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
 
   const [businessAddress, setBusinessAddress] = useState("");
   const [businessPostalCode, setBusinessPostalCode] = useState("");
+  const [businessNEQ, setBusinessNEQ] = useState("");
+  const [businessPhone, setBusinessPhone] = useState("");
+  const [businessWebsite, setBusinessWebsite] = useState("");
+  const [applicationDescription, setApplicationDescription] = useState("");
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [otherServiceEnabled, setOtherServiceEnabled] = useState(false);
+  const [otherService, setOtherService] = useState("");
+  const applicationServices = [...selectedServices, ...(otherServiceEnabled && otherService.trim() ? [otherService.trim()] : [])];
+  const toggleService = (name: string) => setSelectedServices((current) =>
+    current.includes(name) ? current.filter((service) => service !== name) : [...current, name]);
   const [businessPlaceId, setBusinessPlaceId] = useState("");
   const [businessLatitude, setBusinessLatitude] = useState<number | null>(null);
   const [businessLongitude, setBusinessLongitude] = useState<number | null>(null);
@@ -115,7 +126,15 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
     primaryPhoneValid &&
     secondaryPhoneValid &&
     passwordValid &&
-    passwordsMatch;
+    passwordsMatch &&
+    (accountType === "client" || (
+      /^\d{10}$/.test(businessNEQ) &&
+      PHONE_REGEX.test(businessPhone) &&
+      applicationDescription.trim().length >= 30 &&
+      applicationDescription.trim().length <= 1500 &&
+      applicationServices.length > 0 &&
+      (!otherServiceEnabled || otherService.trim().length > 0)
+    ));
 
   useEffect(() => {
     if (accountType !== "provider") {
@@ -210,6 +229,7 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
       <input type="hidden" name="provider_type" value={providerType} />
       {accountType === "provider" && <input type="hidden" name="business_hours" value={JSON.stringify(businessHours)} />}
       <input type="hidden" name="business_place_id" value={businessPlaceId} />
+      {accountType === "provider" && <input type="hidden" name="application_services" value={JSON.stringify(applicationServices)} />}
       <input type="hidden" name="business_latitude" value={businessLatitude ?? ""} />
       <input type="hidden" name="business_longitude" value={businessLongitude ?? ""} />
 
@@ -236,7 +256,7 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => setProviderType("garage")}
+              onClick={() => { setProviderType("garage"); setSelectedServices([]); setOtherServiceEnabled(false); setOtherService(""); }}
               className={`rounded-[16px] border px-5 py-4 text-left transition ${providerType === "garage" ? "border-[#4771A6] bg-[#EDF3FA]" : "border-[#D0D5DD] bg-white"}`}
             >
               <div className="text-[25px]">🔧</div>
@@ -244,7 +264,7 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
             </button>
             <button
               type="button"
-              onClick={() => setProviderType("towing")}
+              onClick={() => { setProviderType("towing"); setSelectedServices([]); setOtherServiceEnabled(false); setOtherService(""); }}
               className={`rounded-[16px] border px-5 py-4 text-left transition ${providerType === "towing" ? "border-[#4771A6] bg-[#EDF3FA]" : "border-[#D0D5DD] bg-white"}`}
             >
               <div className="text-[25px]">🚛</div>
@@ -391,6 +411,60 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
             </label>
           </div>
 
+          <div className="mt-7 rounded-[20px] border border-[#D6E0ED] bg-[#F8FAFD] p-5">
+            <h3 className="text-[18px] font-extrabold text-[#101828]">Business verification</h3>
+            <p className="mt-1 text-[13px] leading-5 text-[#667085]">These details help MECATREX verify your company before you can publish services or prices.</p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <label>
+                <span className="mb-2 block text-[13px] font-bold text-[#344054]">Quebec enterprise number (NEQ) *</span>
+                <input name="business_neq" required inputMode="numeric" pattern="[0-9]{10}" maxLength={10} value={businessNEQ}
+                  onChange={(event) => setBusinessNEQ(event.target.value.replace(/\D/g, "").slice(0, 10))}
+                  placeholder="1234567890" className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[15px] outline-none focus:border-[#4771A6]" />
+                <span className="mt-1 block text-[11px] text-[#667085]">10 digits · <a className="font-bold text-[#315C91] underline" target="_blank" rel="noopener noreferrer" href="https://www.quebec.ca/entreprises-et-travailleurs-autonomes/obtenir-renseignements-entreprise/recherche-registre-entreprises/acceder-registre-entreprises">Check the Quebec registry ↗</a></span>
+              </label>
+              <label>
+                <span className="mb-2 block text-[13px] font-bold text-[#344054]">Business phone *</span>
+                <input name="business_phone" required type="tel" autoComplete="tel" value={businessPhone}
+                  onChange={(event) => setBusinessPhone(formatPhone(event.target.value))}
+                  placeholder="514-555-1234" className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[15px] outline-none focus:border-[#4771A6]" />
+              </label>
+              <label className="sm:col-span-2">
+                <span className="mb-2 block text-[13px] font-bold text-[#344054]">Business website (optional)</span>
+                <input name="business_website" type="text" maxLength={255} value={businessWebsite} onChange={(event) => setBusinessWebsite(event.target.value)}
+                  placeholder="https://yourgarage.ca" className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[15px] outline-none focus:border-[#4771A6]" />
+              </label>
+            </div>
+            <fieldset className="mt-6">
+              <legend className="text-[14px] font-bold text-[#101828]">Services you plan to offer *</legend>
+              <p className="mt-1 text-[12px] leading-5 text-[#667085]">Select all that apply. You will enter your exact prices only after approval.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {applicationServiceOptions(providerType).map((service) => (
+                  <button key={service} type="button" aria-pressed={selectedServices.includes(service)}
+                    onClick={() => toggleService(service)}
+                    className={`rounded-full border px-4 py-2.5 text-[12px] font-bold transition ${selectedServices.includes(service) ? "border-[#4771A6] bg-[#4771A6] text-white" : "border-[#C4D0DE] bg-white text-[#344054] hover:border-[#4771A6]"}`}>{selectedServices.includes(service) ? "✓ " : "+ "}{service}</button>
+                ))}
+                <button type="button" aria-pressed={otherServiceEnabled} onClick={() => { setOtherServiceEnabled(!otherServiceEnabled); setOtherService(""); }}
+                  className={`rounded-full border px-4 py-2.5 text-[12px] font-bold transition ${otherServiceEnabled ? "border-[#4771A6] bg-[#4771A6] text-white" : "border-[#C4D0DE] bg-white text-[#344054]"}`}>+ Other</button>
+              </div>
+              {otherServiceEnabled && (
+                <label className="mt-3 block">
+                  <span className="mb-2 block text-[12px] font-bold text-[#344054]">Describe your additional service *</span>
+                  <input required value={otherService} maxLength={100} onChange={(event) => setOtherService(event.target.value)}
+                    placeholder="e.g. Windshield repair" className="h-[50px] w-full rounded-[13px] border border-[#C4D0DE] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6]" />
+                </label>
+              )}
+              {applicationServices.length > 0 && <p className="mt-3 text-[12px] font-semibold text-[#315C91]">Selected: {applicationServices.join(" · ")}</p>}
+            </fieldset>
+            <label className="mt-6 block">
+              <span className="mb-2 block text-[14px] font-bold text-[#101828]">Describe your business and services *</span>
+              <textarea name="application_description" required minLength={30} maxLength={1500} rows={5}
+                value={applicationDescription} onChange={(event) => setApplicationDescription(event.target.value)}
+                placeholder="Tell us about your experience, equipment, specialities and the work your company performs."
+                className="w-full rounded-[14px] border border-[#C4D0DE] bg-white px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]" />
+              <span className="mt-1 block text-[11px] text-[#667085]">{applicationDescription.length}/1500 characters · minimum 30</span>
+            </label>
+          </div>
+
           <div id="business-hours" className="mt-7 scroll-mt-12 rounded-[18px] border border-[#C9D6E5] bg-[#F8FAFC] p-5">
             <h3 className="text-[18px] font-extrabold text-[#101828]">🕒 Your business hours</h3>
             <p className="mt-1 text-[13px] leading-5 text-[#667085]">Select the days you operate and their opening hours. All days are closed by default until you set them. You can change this in your business dashboard later.</p>
@@ -424,7 +498,7 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
 
           <div className="mt-5 rounded-[16px] bg-[#EDF3FA] p-4">
             <p className="text-[14px] leading-6 text-[#475467]">
-              MECATREX is launching in Montreal first. We aim to review provider applications within 24 hours. Approved businesses can then appear publicly and accept bookings once that feature launches.
+              After you apply, MECATREX will review your NEQ, business details and planned services. You can sign in to check your application status, but service pricing and publication stay locked until approval.
             </p>
           </div>
         </div>

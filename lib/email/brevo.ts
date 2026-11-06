@@ -6,6 +6,11 @@ type ProviderApplicationEmail = {
   secondaryPhone?: string;
   providerType: "garage" | "towing";
   businessName: string;
+  businessNEQ: string;
+  businessPhone: string;
+  businessWebsite: string;
+  applicationDescription: string;
+  applicationServices: string[];
   businessAddress: string;
   city: string;
   province: string;
@@ -104,6 +109,15 @@ export async function sendAdminProviderApplicationEmail(application: ProviderApp
           ${escapeHtml(application.businessAddress)}<br />
           ${escapeHtml(application.city)}, ${escapeHtml(application.province)} ${escapeHtml(application.postalCode)}
         </p>
+        <div style="padding:16px;background:#f4f7fb;border:1px solid #d7e2ef;border-radius:12px">
+          <p><strong>NEQ:</strong> ${escapeHtml(application.businessNEQ)}<br/>
+          <strong>Business phone:</strong> ${escapeHtml(application.businessPhone)}<br/>
+          <strong>Website:</strong> ${escapeHtml(application.businessWebsite || 'Not provided')}</p>
+          <p><strong>Planned services:</strong><br/>${application.applicationServices.map((service) => escapeHtml(service)).join('<br/>')}</p>
+          <p><strong>Application description:</strong><br/>${escapeHtml(application.applicationDescription)}</p>
+          <p>Verify the NEQ and matching business details in the <a href="https://www.quebec.ca/entreprises-et-travailleurs-autonomes/obtenir-renseignements-entreprise/recherche-registre-entreprises/acceder-registre-entreprises">Quebec enterprise registry</a>.</p>
+        </div>
+        <p>Sign in to MECATREX to <strong>approve, reject, or request more information</strong>. This email is a notification, not proof of registration validity.</p>
         <p style="margin:24px 0"><a href="${escapeHtml(appUrl("/admin?view=review#applications"))}" style="display:inline-block;background:#4771A6;padding:12px 20px;border-radius:10px;color:white;text-decoration:none;font-weight:bold">Review provider application</a></p>
         <p>This notification was sent because a new provider application was submitted on MECATREX. The application requires your decision.</p>
       </div>
@@ -121,7 +135,7 @@ export async function sendProviderDecisionEmail(data: ProviderDecisionEmail) {
     needs_information: {
       subject: "More information is needed for your MECATREX application",
       heading: "We need a little more information",
-      description: "We need additional information to complete your business review. Please read the note below and reply to this email, or contact MECATREX support. You can continue editing your profile while the application is on hold.",
+      description: "We need additional information to complete your business review. Please read the note below and reply to this email, or contact MECATREX support. Your business profile and service pricing remain locked until approval. Reply to this email with the requested information.",
     },
     rejected: {
       subject: "Update regarding your MECATREX provider application",
