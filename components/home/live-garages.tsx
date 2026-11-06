@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { normalizeBusinessWebsite, SERVICE_CATALOGUE } from "@/lib/service-listing";
+import { formatHour, WEEKDAYS, type BusinessHour } from "@/lib/booking";
 
 type Service = {
   id: string;
@@ -29,6 +31,7 @@ type Garage = {
   latitude: number | null;
   longitude: number | null;
   provider_services: Service[] | null;
+  booking_suspended: boolean;
 };
 
 function priceLabel(service: Service) {
@@ -48,7 +51,14 @@ export default function LiveGarages() {
   const [garages, setGarages] = useState<Garage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [bookingGarageId, setBookingGarageId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [hours, setHours] = useState<BusinessHour[]>([]);
+  const [reviews, setReviews] = useState<{provider_id:string;stars:number}[]>([]);
+
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("service");
+    if (q) setSearch(q);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -73,6 +83,7 @@ export default function LiveGarages() {
           image_path,
           latitude,
           longitude,
+          booking_suspended,
           provider_services (
             id,
             name,
@@ -86,6 +97,7 @@ export default function LiveGarages() {
         .eq("provider_type", "garage")
         .eq("status", "approved")
         .eq("is_listing_active", true)
+        .eq("booking_suspended", false)
         .order("updated_at", { ascending: false });
 
       if (!active) return;
@@ -95,13 +107,23 @@ export default function LiveGarages() {
         setError("Garage listings are temporarily unavailable.");
         setGarages([]);
       } else {
-        setGarages(
-          ((data ?? []) as Garage[]).filter((garage) =>
-            (garage.provider_services ?? []).some(
-              (service) => service.is_active && service.pricing_type === "fixed" && service.price_cents !== null && service.duration_minutes !== null && service.duration_minutes > 0
-            )
+        const approved = ((data ?? []) as Garage[]).filter((garage) =>
+          (garage.provider_services ?? []).some(
+            (service) => service.is_active && service.pricing_type === "fixed" && service.price_cents !== null && service.duration_minutes !== null && service.duration_minutes > 0
           )
         );
+        setGarages(approved);
+        if (approved.length > 0) {
+          const ids = approved.map((garage) => garage.id);
+          const [hourResult, reviewResult] = await Promise.all([
+            supabase.from("garage_business_hours").select("provider_id,weekday,is_open,open_time,close_time").in("provider_id", ids),
+            supabase.from("garage_reviews").select("provider_id,stars").in("provider_id", ids),
+          ]);
+          if (active) {
+            setHours((hourResult.data ?? []) as BusinessHour[]);
+            setReviews((reviewResult.data ?? []) as {provider_id:string;stars:number}[]);
+          }
+        }
       }
       setLoading(false);
     }
@@ -111,6 +133,11 @@ export default function LiveGarages() {
       active = false;
     };
   }, [supabase]);
+
+  const query = search.trim().toLowerCase();
+  const filtered = garages.filter((garage) =>
+    !query || (garage.provider_services ?? []).some((service) => service.is_active && service.pricing_type === "fixed" && service.name.toLowerCase().includes(query))
+  );
 
   if (loading) {
     return (
@@ -151,13 +178,40 @@ export default function LiveGarages() {
   }
 
   return (
-    <div className="grid gap-7 lg:grid-cols-3">
-      {garages.map((garage) => {
+    <div>
+      <div className="mb-8 rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-[0_10px_30px_rgba(16,24,40,0.06)]">
+        <label htmlFor="service-search" className="block text-[20px] font-extrabold text-[#101828]">🔎 What does your vehicle need?</label>
+        <p className="mt-1 text-[13px] text-[#667085]">Enter a service to see only garages that offer it, with their fixed prices.</p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <input id="service-search" type="search" list="service-options" value={search} onChange={(event) => setSearch(event.target.value)}
+            placeholder="Oil change, tire service, brakes…"
+            className="h-[55px] min-w-[200px] flex-1 rounded-[14px] border border-[#98A2B3] px-4 text-[16px] font-semibold text-[#101828] outline-none focus:border-[#4771A6]" />
+          <datalist id="service-options">{SERVICE_CATALOGUE.map((service) => <option key={service.name} value={service.name} />)}</datalist>
+          {search && <button type="button" onClick={() => setSearch("")} className="rounded-[12px] border border-[#BAC7D7] px-5 py-3 text-[13px] font-bold text-[#315C91]">Clear</button>}
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {SERVICE_CATALOGUE.map((service) => <button key={service.name} type="button" aria-pressed={search === service.name}
+            onClick={() => setSearch((current) => current === service.name ? "" : service.name)}
+            className={`rounded-full border px-3 py-2 text-[12px] font-bold transition ${search === service.name ? "border-[#4771A6] bg-[#4771A6] text-white" : "border-[#D0D5DD] bg-[#F8FAFC] text-[#344054] hover:border-[#4771A6]"}`}>
+            {service.icon} {service.name}
+          </button>)}
+        </div>
+      </div>
+      {filtered.length === 0 ? <div className="rounded-[22px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-8 text-center text-[15px] text-[#667085]">
+        No garages currently offer <strong>{search}</strong>. Try another service.
+      </div> : <p className="mb-5 text-[14px] font-semibold text-[#475467]">{filtered.length} approved {filtered.length === 1 ? "garage" : "garages"} ready to help</p>}
+      <div className="grid gap-7 lg:grid-cols-3">
+      {filtered.map((garage) => {
         const services = (garage.provider_services ?? []).filter(
           (service) => service.is_active && service.pricing_type === "fixed" && service.price_cents !== null && service.duration_minutes !== null && service.duration_minutes > 0
         );
         const websiteUrl = normalizeBusinessWebsite(garage.website ?? "");
-        const visibleServices = services.slice(0, 4);
+        const matchedServices = query ? services.filter((service) => service.name.toLowerCase().includes(query)) : services;
+        const visibleServices = matchedServices.slice(0, 4);
+        const selectedService = matchedServices[0] ?? services[0];
+        const garageHours = hours.filter((h) => h.provider_id === garage.id && h.is_open);
+        const garageReviews = reviews.filter((r) => r.provider_id === garage.id);
+        const average = garageReviews.length ? (garageReviews.reduce((sum,r) => sum + r.stars, 0) / garageReviews.length).toFixed(1) : null;
         const imageUrl = garage.image_path
           ? supabase.storage.from("garage-images").getPublicUrl(garage.image_path).data.publicUrl
           : "";
@@ -183,7 +237,10 @@ export default function LiveGarages() {
             </div>
 
             <div className="p-7">
-              <h3 className="text-[25px] font-bold tracking-[-0.02em] text-[#101828]">{garage.business_name}</h3>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-[25px] font-bold tracking-[-0.02em] text-[#101828]">{garage.business_name}</h3>
+                {average && <span className="rounded-full bg-[#FFFAEB] px-3 py-1.5 text-[12px] font-bold text-[#92400E]">⭐ {average} · {garageReviews.length} reviews</span>}
+              </div>
               {garage.business_description && (
                 <p className="mt-2 line-clamp-2 text-[14px] leading-6 text-[#667085]">{garage.business_description}</p>
               )}
@@ -225,7 +282,7 @@ export default function LiveGarages() {
               <div className="mt-6 rounded-[20px] bg-[#F8FAFC] p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">Services & prices</p>
-                  <span className="text-[12px] font-semibold text-[#4771A6]">{services.length} listed</span>
+                  <span className="text-[12px] font-semibold text-[#4771A6]">{matchedServices.length} listed</span>
                 </div>
                 {visibleServices.length > 0 ? (
                   <div className="space-y-2.5">
@@ -243,8 +300,8 @@ export default function LiveGarages() {
                         <p className="shrink-0 text-[13px] font-bold text-[#4771A6]">{priceLabel(service)}</p>
                       </div>
                     ))}
-                    {services.length > visibleServices.length && (
-                      <p className="px-1 pt-1 text-[12px] font-semibold text-[#667085]">+ {services.length - visibleServices.length} more services</p>
+                    {matchedServices.length > visibleServices.length && (
+                      <p className="px-1 pt-1 text-[12px] font-semibold text-[#667085]">+ {matchedServices.length - visibleServices.length} more services</p>
                     )}
                   </div>
                 ) : (
@@ -252,24 +309,19 @@ export default function LiveGarages() {
                 )}
               </div>
 
+              <div className="mt-5 rounded-[14px] border border-[#D5DFEA] bg-[#F8FAFC] p-4">
+                <p className="text-[12px] font-extrabold text-[#344054]">🕒 Business hours (Montreal)</p>
+                {garageHours.length ? <p className="mt-2 text-[12px] leading-5 text-[#667085]">{garageHours.map((h) => `${WEEKDAYS[h.weekday].slice(0,3)} ${formatHour(h.open_time)}–${formatHour(h.close_time)}`).join(" · ")}</p>
+                : <p className="mt-2 text-[12px] font-semibold text-[#92400E]">Hours not published yet — contact the garage</p>}
+              </div>
               <div className="mt-5 space-y-3">
-                <button
-                  type="button"
-                  aria-expanded={bookingGarageId === garage.id}
-                  aria-controls={`booking-info-${garage.id}`}
-                  onClick={() => setBookingGarageId((current) => current === garage.id ? null : garage.id)}
-                  className="flex w-full items-center justify-center gap-2 rounded-[15px] bg-[#4771A6] px-6 py-4 text-[17px] font-bold text-white shadow-[0_8px_22px_rgba(71,113,166,0.2)] transition hover:bg-[#315C91] focus-visible:outline-[#315C91]"
+                <Link
+                  href={`/book/${garage.id}?service=${encodeURIComponent(selectedService.id)}`}
+                  className="flex w-full items-center justify-center gap-2 rounded-[15px] bg-[#4771A6] px-6 py-4 text-[17px] font-bold text-white shadow-[0_8px_22px_rgba(71,113,166,0.2)] transition hover:bg-[#315C91]"
                 >
-                  <span aria-hidden="true">📅</span> Book a service
-                </button>
-
-                {bookingGarageId === garage.id && (
-                  <div id={`booking-info-${garage.id}`} className="rounded-[16px] border border-[#C9D6E5] bg-[#EFF6FF] p-4 text-[#344054]">
-                    <p className="text-[14px] font-bold text-[#101828]">Booking calendar coming soon</p>
-                    <p className="mt-1 text-[13px] leading-5">Online appointments are not yet enabled. Contact {garage.business_name} to arrange your preferred service and time.</p>
-                  </div>
-                )}
-
+                  📅 Book this garage →
+                </Link>
+                <p className="text-center text-[11px] text-[#667085]">Live availability · fixed price · pay at garage</p>
                 <div className="grid grid-cols-2 gap-3">
                   {garage.public_phone ? (
                     <a href={`tel:${garage.public_phone.replace(/[^\d+]/g, "")}`} className="rounded-[13px] border border-[#D0D5DD] px-3 py-3 text-center text-[13px] font-bold text-[#344054] hover:bg-[#F9FAFB]">Call garage</a>
@@ -283,6 +335,7 @@ export default function LiveGarages() {
           </article>
         );
       })}
+      </div>
     </div>
   );
 }
