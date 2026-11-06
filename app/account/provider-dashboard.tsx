@@ -454,7 +454,7 @@ export default function ProviderDashboard({
           <div className="mt-4 rounded-[14px] border border-[#BAC7D7] bg-white/85 px-4 py-4 text-[14px] leading-6 text-[#344054]">
             <strong className="block text-[#101828]">Message from MECATREX</strong>
             {adminMessage}
-            {provider.status === "needs_information" && <p className="mt-2 text-[12px] font-semibold text-[#4771A6]">Please reply to the notification email from MECATREX with the requested information.</p>}
+            
           </div>
         )}
       </section>
