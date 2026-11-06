@@ -71,7 +71,7 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
   return { ok: true, bookingId: data };
 }
 
-export async function cancelGarageBooking(bookingId: string, actor: "client" | "provider"):
+export async function cancelGarageBooking(bookingId: string):
   Promise<{ ok: boolean; message: string; remaining?: number }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
