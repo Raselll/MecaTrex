@@ -151,3 +151,72 @@ export async function sendProviderDecisionEmail(data: ProviderDecisionEmail) {
     `,
   });
 }
+
+type BookingEmailEvent = {
+  event: "confirmed" | "provider_cancelled" | "client_cancelled";
+  clientEmail: string;
+  clientName: string;
+  providerEmail: string;
+  providerName: string;
+  serviceName: string;
+  startsAt: string;
+  endsAt: string;
+};
+
+export async function sendBookingEmailNotifications(data: BookingEmailEvent) {
+  const start = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto", dateStyle: "full", timeStyle: "short",
+  }).format(new Date(data.startsAt));
+  const end = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto", timeStyle: "short",
+  }).format(new Date(data.endsAt));
+
+  const cancelled = data.event !== "confirmed";
+  const clientMessage = cancelled
+    ? data.event === "provider_cancelled"
+      ? `${data.providerName} cancelled your appointment. You can book another garage on MECATREX.`
+      : "Your appointment was cancelled as requested."
+    : `Your ${data.serviceName} appointment at ${data.providerName} is confirmed.`;
+  const providerMessage = cancelled
+    ? data.event === "provider_cancelled"
+      ? "You cancelled a confirmed booking. Your account cancellation count has been updated."
+      : `${data.clientName} cancelled their appointment.`
+    : `New booking from ${data.clientName} for ${data.serviceName}.`;
+
+  const mail = (title: string, message: string, link: string) => `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#101828;line-height:1.6">
+      <p style="color:#4771a6;font-weight:bold;letter-spacing:2px">MECATREX</p>
+      <h1 style="font-size:24px">${escapeHtml(title)}</h1>
+      <p>${escapeHtml(message)}</p>
+      <div style="padding:18px;background:#f5f7fa;border-radius:14px">
+        <strong>Service:</strong> ${escapeHtml(data.serviceName)}<br/>
+        <strong>Garage:</strong> ${escapeHtml(data.providerName)}<br/>
+        <strong>Time (Montreal):</strong> ${escapeHtml(start)} – ${escapeHtml(end)}
+      </div>
+      <p>${cancelled ? "This appointment has been cancelled." : "Payment is handled at the garage. No online charge was made."}</p>
+      <p style="margin-top:24px"><a href="${escapeHtml(appUrl(link))}" style="background:#4771a6;padding:14px 20px;border-radius:12px;color:#fff;text-decoration:none;font-weight:bold">Open your MECATREX account</a></p>
+    </div>`;
+
+  // Notify each participant independently: one failed address cannot prevent
+  // the other from receiving their booking notification.
+  const tasks = [
+    sendBrevoEmail({
+      toEmail: data.clientEmail,
+      toName: data.clientName,
+      subject: cancelled ? "MECATREX appointment cancelled" : "MECATREX booking confirmed",
+      html: mail(cancelled ? "Appointment update" : "Your booking is confirmed", clientMessage, "/account"),
+    }),
+    sendBrevoEmail({
+      toEmail: data.providerEmail,
+      toName: data.providerName,
+      subject: cancelled ? "MECATREX booking cancelled" : "New MECATREX garage booking",
+      html: mail(cancelled ? "Appointment cancelled" : "You have a new appointment", providerMessage, "/account#garage-calendar"),
+    }),
+  ];
+  const outcomes = await Promise.allSettled(tasks);
+  const failed = outcomes.filter((outcome) => outcome.status === "rejected").length;
+  if (failed > 0) {
+    console.error("MECATREX booking emails failed for", failed, "recipient(s). In-app notifications remain available.");
+  }
+  return { accepted: tasks.length - failed, failed };
+}
