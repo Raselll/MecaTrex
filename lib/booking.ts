@@ -19,6 +19,7 @@ export type GarageBooking = {
   client_name: string;
   client_email: string;
   client_phone: string;
+  vehicle_description: string;
   garage_name: string;
   garage_address: string;
   garage_phone: string | null;
