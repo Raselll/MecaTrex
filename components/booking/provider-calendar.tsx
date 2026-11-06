@@ -24,11 +24,12 @@ function localDate(value: string) {
 }
 
 export default function ProviderCalendar({
-  providerId, initialCancelled, initiallySuspended,
+  providerId, initialCancelled, initiallySuspended, providerType,
 }: {
   providerId: string;
   initialCancelled: number;
   initiallySuspended: boolean;
+  providerType: "garage" | "towing";
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [hours, setHours] = useState<BusinessHour[]>(EMPTY_HOURS);
@@ -157,23 +158,23 @@ export default function ProviderCalendar({
       <div className="rounded-[25px] border border-[#BAC7D7] bg-white p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">Included with MECATREX · no calendar add-on</p>
-            <h2 className="mt-1 text-[27px] font-extrabold tracking-[-0.04em]">📅 Calendar & availability</h2>
-            <p className="mt-1 text-[14px] text-[#667085]">Your bookings, walk-ins and closed slots share one live schedule (Montreal time).</p></div>
+            <h2 className="mt-1 text-[27px] font-extrabold tracking-[-0.04em]">{providerType === "garage" ? "📅 Calendar & availability" : "🚚 Towing business hours"}</h2>
+            <p className="mt-1 text-[14px] text-[#667085]">{providerType === "garage" ? "Your bookings, walk-ins and closed slots share one live schedule (Montreal time)." : "Update your towing company opening hours now. Towing dispatch and customer reservations will be connected in the next phase."}</p></div>
           <button type="button" onClick={() => void refresh()} className="rounded-[12px] border border-[#BAC7D7] px-4 py-3 text-[13px] font-bold text-[#315C91] hover:bg-[#EDF3FA]">↻ Refresh calendar</button>
         </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        {providerType === "garage" && <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <div className="rounded-[15px] bg-[#EDF3FA] p-5"><p className="text-[12px] font-bold text-[#667085]">Upcoming bookings</p><p className="mt-1 text-[28px] font-extrabold">{upcoming.length}</p></div>
           <div className="rounded-[15px] bg-[#F2F4F7] p-5"><p className="text-[12px] font-bold text-[#667085]">Cancellations remaining</p><p className={`mt-1 text-[28px] font-extrabold ${remaining === 0 ? "text-[#B42318]" : "text-[#101828]"}`}>{remaining} / 3</p></div>
           <div className={`rounded-[15px] p-5 ${suspended ? "bg-[#FEF3F2]" : "bg-[#ECFDF3]"}`}><p className="text-[12px] font-bold text-[#667085]">Booking status</p><p className={`mt-1 text-[19px] font-extrabold ${suspended ? "text-[#B42318]" : "text-[#027A48]"}`}>{suspended ? "Suspended · contact admin" : "Ready when hours are set"}</p></div>
-        </div>
-        {suspended && <p role="alert" className="mt-4 rounded-[13px] border border-[#FDA29B] bg-[#FEF3F2] p-4 text-[13px] font-bold text-[#B42318]">Your garage reached three provider cancellations. It cannot accept new MECATREX bookings or be published until an administrator reviews the account. Existing appointments must still be honored.</p>}
+        </div>}
+        {providerType === "garage" && suspended && <p role="alert" className="mt-4 rounded-[13px] border border-[#FDA29B] bg-[#FEF3F2] p-4 text-[13px] font-bold text-[#B42318]">Your garage reached three provider cancellations. It cannot accept new MECATREX bookings or be published until an administrator reviews the account. Existing appointments must still be honored.</p>}
         {error && <p role="alert" className="mt-4 rounded-[13px] bg-[#FEF3F2] p-4 text-[13px] font-semibold text-[#B42318]">{error}</p>}
         {message && <p role="status" className="mt-4 rounded-[13px] bg-[#ECFDF3] p-4 text-[13px] font-semibold text-[#027A48]">{message}</p>}
       </div>
 
       <div className="rounded-[25px] border border-[#BAC7D7] bg-white p-6 sm:p-8">
         <h3 className="text-[22px] font-extrabold text-[#101828]">🕘 Regular business hours</h3>
-        <p className="mt-1 text-[13px] leading-5 text-[#667085]">Nothing is assumed open until you enable the days your garage operates. Overnight hours are supported (for example 22:00 to 03:00).</p>
+        <p className="mt-1 text-[13px] leading-5 text-[#667085]">If you did not choose hours at registration, all days start closed. Set the hours your business operates; overnight hours (for example 22:00 to 03:00) are supported.</p>
         <div className="mt-5 space-y-3">
           {WEEKDAYS.map((day, weekday) => {
             const hour = hours.find((h) => h.weekday === weekday) ?? EMPTY_HOURS[weekday];
@@ -200,6 +201,7 @@ export default function ProviderCalendar({
         <p className="mt-2 text-[12px] text-[#667085]">Changing your hours will be blocked if it would conflict with an already confirmed customer appointment.</p>
       </div>
 
+      {providerType === "garage" && (<>
       <div className="rounded-[25px] border border-[#BAC7D7] bg-white p-6 sm:p-8">
         <h3 className="text-[22px] font-extrabold">🗓️ Daily calendar</h3>
         <p className="mt-1 text-[13px] text-[#667085]">Book time for a walk-in, broken equipment, staff absence or any other reason.</p>
@@ -276,6 +278,7 @@ export default function ProviderCalendar({
         <button disabled={busy || !selectedDay || selectedDay < today || selectedDay > maxDay} type="submit"
           className="mt-5 rounded-[13px] bg-[#101828] px-6 py-3.5 text-[14px] font-bold text-white hover:bg-[#315C91] disabled:opacity-50">{busy ? "Saving…" : "Block selected time"}</button>
       </form>
+      </>)}
     </section>
   );
 }
