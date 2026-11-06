@@ -418,8 +418,8 @@ begin
     or p_day > ((now() at time zone 'America/Toronto')::date+interval '6 months')::date
     or p_end_time <= p_start_time then
     raise exception 'Choose a valid same-day future interval within six months.'; end if;
-  v_start := (p_day::timestamp+p_start_time) at time zone 'America/Toronto';
-  v_end := (p_day::timestamp+p_end_time) at time zone 'America/Toronto';
+  v_start := (p_day+p_start_time) at time zone 'America/Toronto';
+  v_end := (p_day+p_end_time) at time zone 'America/Toronto';
   if v_start<=now() then raise exception 'Choose a future time.'; end if;
   select * into v_provider from public.service_providers
     where id=p_provider_id for update;
