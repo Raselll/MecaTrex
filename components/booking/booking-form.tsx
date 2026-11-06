@@ -36,9 +36,37 @@ export default function BookingForm({
   const [booking, setBooking] = useState(false);
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
+  const [vehicle, setVehicle] = useState("");
+  const [preferredTime, setPreferredTime] = useState("");
   const selectedService = services.find((service) => service.id === serviceId);
   const maxDay = plusCalendarMonths(today, 6);
   const hoursConfigured = hours.some((hour) => hour.is_open);
+
+  useEffect(() => {
+    try {
+      const storedVehicle = window.localStorage.getItem("mecatrex-selected-vehicle");
+      if (storedVehicle) {
+        const parsed = JSON.parse(storedVehicle) as Record<string, unknown>;
+        const description = [parsed.year, parsed.make, parsed.model, parsed.color]
+          .filter((item) => typeof item === "string" || typeof item === "number")
+          .map(String).join(" ").slice(0,120);
+        if (description) setVehicle(description);
+      }
+      const storedWhen = window.localStorage.getItem("mecatrex-service-when");
+      if (storedWhen) {
+        const saved = JSON.parse(storedWhen) as { mode?: string; date?: string; time?: string };
+        if (saved.mode === "scheduled" && saved.date && saved.date >= montrealDate()
+          && saved.date <= plusCalendarMonths(montrealDate(), 6)) {
+          setDay(saved.date);
+          if (saved.time && /^([01]\\d|2[0-3]):(00|30)$/.test(saved.time)) {
+            setPreferredTime(saved.time);
+          }
+        }
+      }
+    } catch {
+      // Malformed preferences are ignored; the client can always choose manually.
+    }
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -69,12 +97,16 @@ export default function BookingForm({
         setSlots([]);
         setError("Live availability is not ready. Make sure the booking migration is installed in Supabase.");
       } else {
-        setSlots((data ?? []) as Slot[]);
+        const available = (data ?? []) as Slot[];
+        setSlots(available);
+        if (preferredTime && available.some((candidate) => candidate.slot_time === preferredTime)) {
+          setSlot(preferredTime);
+        }
       }
     };
     void load();
     return () => { active = false; };
-  }, [providerId, serviceId, day, today, maxDay, supabase]);
+  }, [providerId, serviceId, day, today, maxDay, preferredTime, supabase]);
 
   function nextDay() {
     const [y,m,d] = day.split("-").map(Number);
@@ -93,6 +125,7 @@ export default function BookingForm({
     form.set("day", day);
     form.set("time", slot);
     form.set("note", note);
+    form.set("vehicle", vehicle);
     const result = await createGarageBooking(form);
     setBooking(false);
     if (!result.ok) {
@@ -185,6 +218,12 @@ export default function BookingForm({
           <div><p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">Step 3 of 3</p><h2 className="text-[21px] font-extrabold text-[#101828]">Confirm your appointment</h2></div>
         </div>
         <label className="mt-5 block">
+          <span className="mb-2 block text-[13px] font-bold text-[#344054]">Your vehicle (optional · prefilled from MECATREX)</span>
+          <input type="text" maxLength={120} value={vehicle} onChange={(event) => setVehicle(event.target.value)}
+            placeholder="e.g. 2020 Honda Civic"
+            className="w-full rounded-[13px] border border-[#98A2B3] px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]" />
+        </label>
+        <label className="mt-4 block">
           <span className="mb-2 block text-[13px] font-bold text-[#344054]">Notes for the garage (optional)</span>
           <textarea rows={3} maxLength={500} value={note} onChange={(event) => setNote(event.target.value)}
             placeholder="Vehicle details, symptoms, anything helpful…" className="w-full rounded-[13px] border border-[#98A2B3] px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]" />
