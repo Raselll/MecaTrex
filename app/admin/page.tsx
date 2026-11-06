@@ -20,6 +20,8 @@ type ProviderRow = {
   public_email: string | null;
   public_phone: string | null;
   is_listing_active: boolean;
+  booking_suspended: boolean;
+  provider_cancellation_count: number;
   created_at: string;
 };
 
@@ -73,7 +75,7 @@ export default async function AdminPage({
   const [{ data: providerRows, error: providerError }, { data: profileRows, error: accountsError }] = await Promise.all([
     supabase
       .from("service_providers")
-      .select("id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, is_listing_active, created_at")
+      .select("id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, is_listing_active, booking_suspended, provider_cancellation_count, created_at")
       .order("created_at", { ascending: false }),
     supabase
       .from("profiles")
@@ -192,6 +194,7 @@ export default async function AdminPage({
                         <span className={`rounded-full px-3 py-1.5 text-[11px] font-bold uppercase ${statusStyle(provider.status)}`}>{provider.status.replaceAll("_", " ")}</span>
                         <span className="rounded-full bg-[#EDF3FA] px-3 py-1.5 text-[11px] font-bold uppercase text-[#315C91]">{provider.provider_type}</span>
                         {provider.is_listing_active && <span className="rounded-full bg-[#ECFDF3] px-3 py-1.5 text-[11px] font-bold text-[#027A48]">Published</span>}
+                        {provider.booking_suspended && <span className="rounded-full bg-[#FEF3F2] px-3 py-1.5 text-[11px] font-bold text-[#B42318]">⛔ Booking suspended · 3 cancellations</span>}
                       </div>
                       <p className="mt-3 text-[14px] leading-6 text-[#475467]">📍 {provider.address_line1}, {provider.city}, {provider.province} {provider.postal_code}</p>
                       {provider.business_description && <p className="mt-2 text-[14px] text-[#667085]">{provider.business_description}</p>}
@@ -202,6 +205,7 @@ export default async function AdminPage({
                         <p><strong>Public phone:</strong> <PhoneLink number={provider.public_phone} /></p>
                         <p><strong>Public email:</strong> <EmailLink email={provider.public_email} /></p>
                         <p><strong>Submitted:</strong> {new Date(provider.created_at).toLocaleDateString("en-CA")}</p>
+                        {provider.provider_type === "garage" && <p><strong>Garage cancellations:</strong> {provider.provider_cancellation_count} / 3 {provider.booking_suspended ? "· Account booking suspended" : ""}</p>}
                       </div>
                       <form action={setProviderStatus} className="mt-5 rounded-[16px] border border-[#D0D5DD] bg-[#F8FAFC] p-4">
                         <input type="hidden" name="provider_id" value={provider.id} />
