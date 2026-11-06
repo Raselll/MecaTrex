@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signup } from "./actions";
+import { WEEKDAYS } from "@/lib/booking";
 
 type AccountType = "client" | "provider";
 type ProviderType = "garage" | "towing";
@@ -49,6 +50,13 @@ function Requirement({ met, active, children }: { met: boolean; active: boolean;
 
 export default function SignupForm({ error, next }: { error?: string; next?: string }) {
   const [accountType, setAccountType] = useState<AccountType>("client");
+  const [businessHours, setBusinessHours] = useState(() => WEEKDAYS.map((_, weekday) => ({
+    weekday, is_open: false, open_time: "09:00", close_time: "17:00",
+  })));
+
+  function changeBusinessHour(day: number, value: Partial<(typeof businessHours)[number]>) {
+    setBusinessHours((current) => current.map((entry) => entry.weekday === day ? { ...entry, ...value } : entry));
+  }
   const [providerType, setProviderType] = useState<ProviderType>("garage");
 
   const [primaryPhone, setPrimaryPhone] = useState("");
@@ -187,6 +195,7 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
       <input type="hidden" name="next" value={next ?? ""} />
       <input type="hidden" name="account_type" value={accountType} />
       <input type="hidden" name="provider_type" value={providerType} />
+      {accountType === "provider" && <input type="hidden" name="business_hours" value={JSON.stringify(businessHours)} />}
       <input type="hidden" name="business_place_id" value={businessPlaceId} />
       <input type="hidden" name="business_latitude" value={businessLatitude ?? ""} />
       <input type="hidden" name="business_longitude" value={businessLongitude ?? ""} />
@@ -367,6 +376,36 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
                 className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[16px] uppercase text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
               />
             </label>
+          </div>
+
+          <div className="mt-7 rounded-[18px] border border-[#C9D6E5] bg-[#F8FAFC] p-5">
+            <h3 className="text-[18px] font-extrabold text-[#101828]">🕒 Your business hours</h3>
+            <p className="mt-1 text-[13px] leading-5 text-[#667085]">Select the days you operate and their opening hours. All days are closed by default until you set them. You can change this in your business dashboard later.</p>
+            <div className="mt-4 space-y-2">
+              {WEEKDAYS.map((day, weekday) => {
+                const hour = businessHours[weekday];
+                return (
+                  <div key={day} className="grid gap-3 rounded-[12px] border border-[#D0D5DD] bg-white p-3 sm:grid-cols-[125px_1fr_1fr] sm:items-center">
+                    <label className="flex cursor-pointer items-center gap-2 text-[13px] font-bold text-[#101828]">
+                      <input type="checkbox" checked={hour.is_open} onChange={(event) => changeBusinessHour(weekday, { is_open: event.target.checked })}
+                        className="h-4 w-4 accent-[#4771A6]" />{day}
+                    </label>
+                    <label className="text-[12px] font-bold text-[#475467]">
+                      Open
+                      <input type="time" step={1800} value={hour.open_time} disabled={!hour.is_open}
+                        onChange={(event) => changeBusinessHour(weekday, { open_time: event.target.value })}
+                        className="mt-1 w-full rounded-[10px] border border-[#98A2B3] bg-white px-2 py-2 text-[13px] disabled:opacity-50" />
+                    </label>
+                    <label className="text-[12px] font-bold text-[#475467]">
+                      Close
+                      <input type="time" step={1800} value={hour.close_time} disabled={!hour.is_open}
+                        onChange={(event) => changeBusinessHour(weekday, { close_time: event.target.value })}
+                        className="mt-1 w-full rounded-[10px] border border-[#98A2B3] bg-white px-2 py-2 text-[13px] disabled:opacity-50" />
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="mt-5 rounded-[16px] bg-[#EDF3FA] p-4">
