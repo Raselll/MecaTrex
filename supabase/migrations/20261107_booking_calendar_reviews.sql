@@ -372,8 +372,8 @@ begin
     raise exception 'Not allowed to change these opening hours.'; end if;
   if jsonb_typeof(p_hours)<>'array' or jsonb_array_length(p_hours)<>7 then
     raise exception 'Provide seven days of opening hours.'; end if;
-  if (select count(distinct (entry->>'weekday')::integer)
-      from jsonb_array_elements(p_hours) as entry) <> 7 then
+  if (select count(distinct (d.value->>'weekday')::integer)
+      from jsonb_array_elements(p_hours) as d(value)) <> 7 then
     raise exception 'Please provide every weekday exactly once.'; end if;
 
   for item in select value from jsonb_array_elements(p_hours) loop
