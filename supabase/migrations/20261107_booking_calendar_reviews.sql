@@ -69,6 +69,7 @@ create table if not exists public.garage_bookings (
   client_name text not null,
   client_email text not null,
   client_phone text not null,
+  vehicle_description text not null default '',
   service_name text not null,
   duration_minutes integer not null check (duration_minutes > 0),
   price_cents integer not null check (price_cents >= 0),
@@ -288,7 +289,7 @@ grant execute on function public.garage_available_slots(uuid,uuid,date) to anon,
 
 -- Booking creation runs atomically under a provider row lock.
 create or replace function public.book_garage_service(
-  p_provider_id uuid,p_service_id uuid,p_day date,p_time text,p_note text default ''
+  p_provider_id uuid,p_service_id uuid,p_day date,p_time text,p_note text default '',p_vehicle text default ''
 ) returns uuid language plpgsql security definer set search_path = '' as $$
 declare
   v_user uuid := auth.uid();
@@ -304,6 +305,7 @@ begin
     select 1 from public.profiles where id=v_user and account_type='client'::public.mecatrex_account_type
   ) then raise exception 'Please log in with a client account to book.'; end if;
   if p_note is not null and length(p_note)>500 then raise exception 'Note is too long.'; end if;
+  if length(coalesce(p_vehicle,''))>120 then raise exception 'Vehicle description is too long.'; end if;
 
   select * into v_provider from public.service_providers
   where id=p_provider_id for update;
@@ -328,11 +330,11 @@ begin
   select trim(first_name || ' ' || last_name),email,primary_phone
   into v_name,v_email,v_phone from public.profiles where id=v_user;
   insert into public.garage_bookings(
-    provider_id,service_id,client_id,client_name,client_email,client_phone,
+    provider_id,service_id,client_id,client_name,client_email,client_phone,vehicle_description,
     service_name,duration_minutes,price_cents,
     garage_name,garage_address,garage_phone,garage_email,starts_at,ends_at,note
   ) values (
-    p_provider_id,p_service_id,v_user,v_name,v_email,v_phone,
+    p_provider_id,p_service_id,v_user,v_name,v_email,v_phone,trim(coalesce(p_vehicle,'')),
     v_service.name,v_service.duration_minutes,v_service.price_cents,
     v_provider.business_name,
     concat_ws(', ',v_provider.address_line1,v_provider.city,v_provider.province,v_provider.postal_code),
@@ -353,8 +355,8 @@ begin
   return v_booking_id;
 end;
 $$;
-revoke all on function public.book_garage_service(uuid,uuid,date,text,text) from public,anon,authenticated;
-grant execute on function public.book_garage_service(uuid,uuid,date,text,text) to authenticated;
+revoke all on function public.book_garage_service(uuid,uuid,date,text,text,text) from public,anon,authenticated;
+grant execute on function public.book_garage_service(uuid,uuid,date,text,text,text) to authenticated;
 
 create or replace function public.save_garage_business_hours(p_provider_id uuid,p_hours jsonb)
 returns void language plpgsql security definer set search_path = '' as $$
