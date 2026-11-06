@@ -47,7 +47,7 @@ function Requirement({ met, active, children }: { met: boolean; active: boolean;
   );
 }
 
-export default function SignupForm({ error }: { error?: string }) {
+export default function SignupForm({ error, next }: { error?: string; next?: string }) {
   const [accountType, setAccountType] = useState<AccountType>("client");
   const [providerType, setProviderType] = useState<ProviderType>("garage");
 
