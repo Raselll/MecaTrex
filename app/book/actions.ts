@@ -79,15 +79,19 @@ export async function cancelGarageBooking(bookingId: string, actor: "client" | "
   const { data, error } = await supabase.rpc("cancel_garage_booking", { p_booking_id: bookingId });
   if (error) return { ok: false, message: error.message };
 
+  // Derive the cancellation actor from the database, not an untrusted client argument.
+  const { data: updatedBooking } = await supabase
+    .from("garage_bookings").select("status").eq("id", bookingId).single();
+  const actualProviderCancellation = updatedBooking?.status === "provider_cancelled";
   try {
-    await notifyParticipants(bookingId, actor === "provider" ? "provider_cancelled" : "client_cancelled");
+    await notifyParticipants(bookingId, actualProviderCancellation ? "provider_cancelled" : "client_cancelled");
   } catch (mailError) {
     console.error("Cancellation saved, email notification unavailable:", mailError);
   }
 
   revalidatePath("/account");
   revalidatePath("/");
-  return { ok: true, message: actor === "provider"
+  return { ok: true, message: actualProviderCancellation
     ? `Appointment cancelled. ${data} garage cancellations remaining before suspension.`
     : "Appointment cancelled. The garage was notified.", remaining: typeof data === "number" ? data : undefined };
 }
