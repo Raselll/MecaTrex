@@ -30,11 +30,11 @@ export default async function SignupPage({
             Book vehicle services as a client, or join MECATREX as a garage or towing provider.
           </p>
 
-          <SignupForm error={params.error} />
+          <SignupForm error={params.error} next={params.next} />
 
           <p className="mt-7 text-center text-[14px] text-[#667085]">
             Already have an account?{" "}
-            <Link href="/login" className="font-bold text-[#4771A6]">Log in</Link>
+            <Link href={params.next ? `/login?next=${encodeURIComponent(params.next)}` : "/login"} className="font-bold text-[#4771A6]">Log in</Link>
           </p>
         </div>
       </div>
