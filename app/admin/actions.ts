@@ -122,8 +122,9 @@ export async function resendAdminApplicationEmail(formData: FormData) {
     .select("first_name, last_name, email, primary_phone, secondary_phone")
     .eq("id", provider.owner_id).single();
   if (!owner || !application) redirect(adminUrl("error", "Application details missing. Apply migration 20261108."));
+  let messageId: string | null = null;
   try {
-    const messageId = await sendAdminProviderApplicationEmail({
+    messageId = await sendAdminProviderApplicationEmail({
       firstName: owner.first_name,
       lastName: owner.last_name,
       email: owner.email,
@@ -142,7 +143,8 @@ export async function resendAdminApplicationEmail(formData: FormData) {
     });
   } catch (error) {
     console.error("Admin application email resend failed:", error);
-    redirect(adminUrl("error", "Brevo did not accept the email. Check API key, verified sender and transactional logs."));
+    const reason = error instanceof Error ? error.message : "Unknown error";
+    redirect(adminUrl("error", `Admin notification failed: ${reason}`));
   }
   redirect(adminUrl("success", `Brevo accepted the application alert. Message ID: ${messageId ?? "not returned"}. Check Brevo transactional logs for Delivered, Blocked or Bounced.`));
 }
