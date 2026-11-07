@@ -56,6 +56,12 @@ async function sendBrevoEmail({
   if (!apiKey || !senderEmail) {
     throw new Error("Missing BREVO_API_KEY or BREVO_SENDER_EMAIL in the MECATREX server environment.");
   }
+  if (!apiKey.startsWith("xkeysib-")) {
+    throw new Error("BREVO_API_KEY must be a Brevo v3 API key (starts with xkeysib-), not your SMTP password. Get it from Brevo Settings > SMTP & API > API Keys.");
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(senderEmail)) {
+    throw new Error("BREVO_SENDER_EMAIL must be a verified email address, not the SMTP server hostname.");
+  }
 
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
@@ -73,10 +79,17 @@ async function sendBrevoEmail({
     }),
   });
 
+  // Brevo returns a messageId when it accepts the API request. This does
+  // not imply mailbox delivery; use Brevo transactional logs for that.
+  const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    // Never put external API response content into logs or user-facing messages.
-    throw new Error(`Brevo transactional email request failed (HTTP ${response.status}).`);
+    const details = payload && typeof payload === "object" && "message" in payload &&
+      typeof payload.message === "string" ? payload.message.slice(0, 180) : "";
+    throw new Error(`Brevo rejected the email (HTTP ${response.status})${details ? ": " + details : ""}`);
   }
+  const messageId = payload && typeof payload === "object" && "messageId" in payload &&
+    typeof payload.messageId === "string" ? payload.messageId : null;
+  return messageId;
 }
 
 export async function sendAdminProviderApplicationEmail(application: ProviderApplicationEmail) {
@@ -87,7 +100,7 @@ export async function sendAdminProviderApplicationEmail(application: ProviderApp
 
   const type = application.providerType === "garage" ? "Garage" : "Towing service";
 
-  await sendBrevoEmail({
+  return await sendBrevoEmail({
     toEmail: adminEmail,
     toName: "MECATREX Admin",
     subject: `New ${type} application — ${application.businessName}`,

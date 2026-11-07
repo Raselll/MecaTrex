@@ -70,7 +70,7 @@ export async function GET(request: Request) {
           typeof service === "string" && service.length <= 100)
       : [];
     try {
-      await sendAdminProviderApplicationEmail({
+      const messageId = await sendAdminProviderApplicationEmail({
         firstName: String(meta.first_name ?? ""),
         lastName: String(meta.last_name ?? ""),
         email: user.email ?? "",
@@ -87,6 +87,7 @@ export async function GET(request: Request) {
         province: String(meta.business_province ?? "Quebec"),
         postalCode: String(meta.business_postal_code ?? ""),
       });
+      console.info("MECATREX verified application alert accepted by Brevo:", messageId ?? "no message ID");
       cookieStore.set("mecatrex_admin_alert", user.id, {
         path: "/", httpOnly: true, sameSite: "lax",
         secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 7,

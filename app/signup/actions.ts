@@ -288,7 +288,7 @@ export async function signup(
     data.user.identities?.length !== 0
   ) {
     try {
-      await sendAdminProviderApplicationEmail({
+      const messageId = await sendAdminProviderApplicationEmail({
         firstName,
         lastName,
         email,
@@ -306,6 +306,7 @@ export async function signup(
         postalCode: businessPostalCode,
       });
       adminEmailAccepted = true;
+      console.info("MECATREX admin application alert accepted by Brevo:", messageId ?? "no message ID");
     } catch (emailError) {
       console.error(
         "MECATREX new provider alert was not delivered:",

@@ -123,7 +123,7 @@ export async function resendAdminApplicationEmail(formData: FormData) {
     .eq("id", provider.owner_id).single();
   if (!owner || !application) redirect(adminUrl("error", "Application details missing. Apply migration 20261108."));
   try {
-    await sendAdminProviderApplicationEmail({
+    const messageId = await sendAdminProviderApplicationEmail({
       firstName: owner.first_name,
       lastName: owner.last_name,
       email: owner.email,
@@ -144,7 +144,7 @@ export async function resendAdminApplicationEmail(formData: FormData) {
     console.error("Admin application email resend failed:", error);
     redirect(adminUrl("error", "Brevo did not accept the email. Check API key, verified sender and transactional logs."));
   }
-  redirect(adminUrl("success", "Brevo accepted the detailed application email request; check its delivery logs."));
+  redirect(adminUrl("success", `Brevo accepted the application alert. Message ID: ${messageId ?? "not returned"}. Check Brevo transactional logs for Delivered, Blocked or Bounced.`));
 }
 
 // Non-destructive removal: existing booking and review history is preserved.
