@@ -172,29 +172,11 @@ export default async function AccountPage({
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <SummaryCard label="Email" value={profile.email} />
-          <SummaryCard label="Account type" value={profile.account_type === "admin" ? "Administrator" : "Client"} />
+          <SummaryCard label="Account type" value="Client" />
           <SummaryCard label="Primary phone" value={profile.primary_phone} />
           <SummaryCard label="Secondary phone" value={profile.secondary_phone || "Not provided"} />
         </div>
 
-        {profile.account_type === "admin" ? (
-          <div className="mt-7 rounded-[20px] bg-[#101828] p-6 text-white">
-            <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#83A7D3]">Administrator</p>
-            <h2 className="mt-2 text-[24px] font-bold">Provider approvals are ready.</h2>
-            <p className="mt-2 text-[14px] leading-6 text-white/70">
-              Review garage and towing applications, request additional information, approve providers, or reject applications.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link href="/admin?view=review#applications" className="inline-flex rounded-[13px] bg-white px-5 py-3 text-[14px] font-bold text-[#101828] hover:bg-[#EDF3FA]">
-                Review applications →
-              </Link>
-              <Link href="/admin?view=accounts#accounts" className="inline-flex rounded-[13px] border border-white/40 px-5 py-3 text-[14px] font-bold text-white hover:bg-white/10">
-                View all accounts →
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <>
           <div className="mt-7 space-y-6">
             <BookingNotifications userId={user.id} />
             <ClientBookings userId={user.id} />
@@ -206,8 +188,7 @@ export default async function AccountPage({
               Find garages →
             </Link>
           </div>
-          </>
-        )}
+
       </div>
     </AccountShell>
   );
