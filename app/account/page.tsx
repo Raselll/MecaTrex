@@ -56,6 +56,9 @@ export default async function AccountPage({
     );
   }
 
+  // Admin sign-ins go straight to the complete one-page dashboard.
+  if (profile.account_type === "admin") redirect("/admin");
+
   const displayName = `${profile.first_name} ${profile.last_name}`.trim() || profile.email;
 
   if (profile.account_type === "provider") {
@@ -107,11 +110,11 @@ export default async function AccountPage({
     ]);
 
     return (
-      <AccountShell wide>
-        <div className="rounded-[30px] border border-[#EAECF0] border-t-[5px] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-9" style={{ borderTopColor: (ACCENT_COLORS[profile.accent_color] ?? ACCENT_COLORS.blue).hex }}>
+      <AccountShell wide accent={profile.accent_color ?? "blue"}>
+        <div className="portal-main-card rounded-[30px] border border-[#EAECF0] border-t-[5px] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-9" style={{ borderTopColor: (ACCENT_COLORS[profile.accent_color] ?? ACCENT_COLORS.blue).hex }}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">MECATREX business dashboard</p>
+              <p className="portal-kicker text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">MECATREX business dashboard</p>
               <h1 className="mt-2 text-[32px] font-bold tracking-[-0.04em] text-[#101828] sm:text-[40px]">
                 Welcome back, {profile.first_name}.
               </h1>
@@ -155,9 +158,9 @@ export default async function AccountPage({
   }
 
   return (
-    <AccountShell>
-      <div className="rounded-[30px] border border-[#EAECF0] border-t-[5px] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-10" style={{ borderTopColor: (ACCENT_COLORS[profile.accent_color] ?? ACCENT_COLORS.blue).hex }}>
-        <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">MECATREX account</p>
+    <AccountShell accent={profile.accent_color ?? "blue"}>
+      <div className="portal-main-card rounded-[30px] border border-[#EAECF0] border-t-[5px] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-10" style={{ borderTopColor: (ACCENT_COLORS[profile.accent_color] ?? ACCENT_COLORS.blue).hex }}>
+        <p className="portal-kicker text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">MECATREX account</p>
         <h1 className="mt-3 text-[36px] font-bold tracking-[-0.04em] text-[#101828] sm:text-[44px]">
           Welcome, {displayName}.
         </h1>
@@ -196,7 +199,7 @@ export default async function AccountPage({
             <BookingNotifications userId={user.id} />
             <ClientBookings userId={user.id} />
           </div>
-          <div className="mt-7 rounded-[22px] border border-[#D5DFEA] bg-[#EDF3FA] p-6">
+          <div className="mt-7 rounded-[22px] border border-[#D5DFEA] bg-[#EDF3FA] p-6 portal-summary-card">
             <h2 className="text-[22px] font-bold text-[#101828]">Ready to find a garage?</h2>
             <p className="mt-2 text-[14px] leading-6 text-[#475467]">Browse approved businesses, compare their fixed service prices and contact your preferred garage. Online booking is coming next.</p>
             <Link href="/#garage-results" className="mt-5 inline-flex rounded-[13px] bg-[#4771A6] px-6 py-3.5 text-[14px] font-bold text-white hover:bg-[#315C91]">
@@ -210,9 +213,9 @@ export default async function AccountPage({
   );
 }
 
-function AccountShell({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
+function AccountShell({ children, wide = false, accent = "blue" }: { children: React.ReactNode; wide?: boolean; accent?: AccentColor }) {
   return (
-    <main className="min-h-screen bg-[#F5F7FA] px-5 py-10">
+    <main className="portal-theme min-h-screen px-5 py-10" data-portal-theme={accent}>
       <div className={`mx-auto ${wide ? "max-w-[1280px]" : "max-w-[820px]"}`}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Link href="/" className="inline-flex items-center">
@@ -246,7 +249,7 @@ function AccountShell({ children, wide = false }: { children: React.ReactNode; w
 
 function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[18px] border border-[#EAECF0] bg-[#F9FAFB] p-5">
+    <div className="portal-summary-card rounded-[18px] border border-[#EAECF0] bg-[#F9FAFB] p-5">
       <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">{label}</p>
       <p className="mt-2 break-all text-[16px] font-semibold text-[#101828]">{value}</p>
     </div>

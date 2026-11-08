@@ -48,6 +48,8 @@ export const ACCENT_COLORS = {
   teal: { name: "Deep teal", hex: "#157A76", soft: "#E9F8F6" },
   violet: { name: "Calm violet", hex: "#7048A6", soft: "#F4EEFB" },
   slate: { name: "Dark slate", hex: "#344054", soft: "#F2F4F7" },
+  rose: { name: "Berry rose", hex: "#963F62", soft: "#FFF0F5" },
+  amber: { name: "Copper amber", hex: "#92501E", soft: "#FFF4E5" },
 } as const;
 
 export type AccentColor = keyof typeof ACCENT_COLORS;

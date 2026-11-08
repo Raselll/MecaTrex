@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { removeProvider, resendAdminApplicationEmail, resendProviderDecisionEmail, setProviderStatus } from "./actions";
+import AccentPicker from "@/components/account/accent-picker";
+import type { AccentColor } from "@/lib/booking";
 
 export const dynamic = "force-dynamic";
 
@@ -68,14 +70,13 @@ export default async function AdminPage({
   searchParams: Promise<{ error?: string; success?: string; warning?: string; view?: string }>;
 }) {
   const params = await searchParams;
-  const view = params.view === "review" || params.view === "accounts" ? params.view : "all";
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const { data: currentProfile } = await supabase
     .from("profiles")
-    .select("account_type")
+    .select("account_type, accent_color, email")
     .eq("id", user.id)
     .single();
   if (currentProfile?.account_type !== "admin") redirect("/account");
@@ -101,39 +102,42 @@ export default async function AdminPage({
   const providerMap = new Map(providers.map((provider) => [provider.owner_id, provider]));
   const applicationMap = new Map(((applicationRows ?? []) as ApplicationRow[]).map((application) => [application.provider_id, application]));
   const pending = providers.filter((provider) => provider.status === "pending" || provider.status === "needs_information");
-  const filtered = view === "review" ? pending : providers;
+  // Show every section at once, with outstanding applications first.
+  const filtered = [...pending, ...providers.filter((provider) => !pending.some((item) => item.id === provider.id))];
+  const accent = (currentProfile.accent_color || "blue") as AccentColor;
   const clientsCount = accounts.filter((account) => account.account_type === "client").length;
   const businessCount = accounts.filter((account) => account.account_type === "provider").length;
   const brevoConfigured = Boolean(process.env.BREVO_API_KEY && process.env.BREVO_SENDER_EMAIL && process.env.MECATREX_ADMIN_EMAIL);
 
   return (
-    <main className="min-h-screen bg-[#F5F7FA] px-4 py-8 text-[#101828] sm:px-6">
+    <main className="portal-theme min-h-screen px-4 py-8 text-[#101828] sm:px-6" data-portal-theme={accent}>
       <div className="mx-auto max-w-[1250px]">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <Link href="/" aria-label="MECATREX homepage">
             <Image src="/mecatrex-logo-web.png" alt="MECATREX" width={260} height={74} priority className="h-[52px] w-auto" />
           </Link>
-          <Link href="/account" className="rounded-xl border border-[#BAC7D7] bg-white px-5 py-3 text-[14px] font-bold text-[#344054] hover:bg-[#EDF3FA]">← Back to account</Link>
+          <Link href="/" className="rounded-xl border border-[#BAC7D7] bg-white px-5 py-3 text-[14px] font-bold text-[#344054] hover:bg-[#EDF3FA]">← MECATREX home</Link>
         </header>
 
-        <div className="mt-7 rounded-[28px] border border-[#E4E7EC] bg-white p-6 shadow-[0_16px_50px_rgba(16,24,40,0.06)] sm:p-9">
-          <p className="text-[13px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">MECATREX administration</p>
-          <h1 className="mt-2 text-[34px] font-bold tracking-[-0.04em] sm:text-[44px]">Manage your marketplace</h1>
-          <p className="mt-2 text-[15px] text-[#667085]">Review applications, contact businesses and see exactly who has signed up.</p>
+        <div className="portal-main-card mt-7 rounded-[28px] border border-[#E4E7EC] bg-white p-6 shadow-[0_16px_50px_rgba(16,24,40,0.06)] sm:p-9">
+          <p className="portal-kicker text-[13px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">MECATREX administration</p>
+          <h1 className="mt-2 text-[34px] font-bold tracking-[-0.04em] sm:text-[44px]">Marketplace command center</h1>
+          <p className="mt-2 text-[15px] text-[#667085]">Review applications, manage garages and towing providers, and see all registered users — all on one page.</p>
 
+          <AccentPicker userId={user.id} initialAccent={accent} />
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <Link href="/admin?view=review#applications" className="rounded-[18px] border border-[#BAC7D7] bg-[#101828] p-5 text-white transition hover:bg-[#315C91]">
-              <p className="text-[12px] font-bold uppercase tracking-wide text-[#B9D4F2]">Needs review · open list ↗</p>
+            <a href="#applications" className="portal-feature-banner rounded-[18px] border border-[#BAC7D7] bg-[#101828] p-5 text-white transition hover:bg-[#315C91]">
+              <p className="text-[12px] font-bold uppercase tracking-wide text-[#B9D4F2]">Applications awaiting review</p>
               <p className="mt-1 text-[31px] font-extrabold">{pending.length}</p>
-            </Link>
-            <Link href="/admin?view=all#applications" className="rounded-[18px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:bg-[#EDF3FA]">
-              <p className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">Businesses · open list ↗</p>
+            </a>
+            <a href="#businesses" className="portal-summary-card rounded-[18px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:bg-[#EDF3FA]">
+              <p className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">Registered businesses</p>
               <p className="mt-1 text-[31px] font-extrabold">{businessCount}</p>
-            </Link>
-            <Link href="/admin?view=accounts#accounts" className="rounded-[18px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:bg-[#EDF3FA]">
-              <p className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">Client accounts · open list ↗</p>
+            </a>
+            <a href="#accounts" className="portal-summary-card rounded-[18px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:bg-[#EDF3FA]">
+              <p className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">Client accounts</p>
               <p className="mt-1 text-[31px] font-extrabold">{clientsCount}</p>
-            </Link>
+            </a>
           </div>
 
           {!brevoConfigured && (
@@ -145,66 +149,50 @@ export default async function AdminPage({
           {params.warning && <div role="alert" className="mt-5 rounded-[14px] bg-[#FFFAEB] p-4 text-[14px] font-semibold text-[#92400E]">{params.warning}</div>}
           {params.error && <div role="alert" className="mt-5 rounded-[14px] bg-[#FEF3F2] p-4 text-[14px] font-semibold text-[#B42318]">{params.error}</div>}
 
-          <nav aria-label="Admin sections" className="mt-7 flex flex-wrap gap-2 border-b border-[#E4E7EC] pb-4">
-            {[
-              { key: "review", label: `Needs review (${pending.length})`, target: "#applications" },
-              { key: "all", label: `All businesses (${providers.length})`, target: "#applications" },
-              { key: "accounts", label: `Accounts (${accounts.length})`, target: "#accounts" },
-            ].map((tab) => (
-              <Link key={tab.key} href={`/admin?view=${tab.key}${tab.target}`} aria-current={view === tab.key ? "page" : undefined}
-                className={`rounded-[12px] px-5 py-3 text-[14px] font-bold transition ${view === tab.key ? "bg-[#101828] text-white" : "border border-[#D0D5DD] text-[#344054] hover:bg-[#EDF3FA]"}`}>
-                {tab.label}
-              </Link>
-            ))}
+          <nav aria-label="Dashboard sections" className="mt-7 flex flex-wrap gap-2 border-b border-[#E4E7EC] pb-4">
+            <a className="portal-jump-link" href="#applications">Needs review ({pending.length})</a>
+            <a className="portal-jump-link" href="#businesses">Businesses ({providers.length})</a>
+            <a className="portal-jump-link" href="#accounts">Accounts ({accounts.length})</a>
           </nav>
 
-          {view === "accounts" ? (
-            <section id="accounts" className="scroll-mt-8 pt-6">
-              <h2 className="text-[24px] font-bold">Registered accounts</h2>
-              <p className="mt-2 text-[14px] text-[#667085]">These roles come from the secured <code>public.profiles.account_type</code> field, not the Supabase Authentication sign-in provider column.</p>
-              {accountsError && <p role="alert" className="mt-4 text-[#B42318]">Could not load accounts: {accountsError.message}</p>}
-              <div className="mt-5 overflow-x-auto rounded-[18px] border border-[#BAC7D7]">
-                <table className="w-full min-w-[730px] text-left text-[13px]">
-                  <thead className="bg-[#F2F4F7] font-bold text-[#344054]">
-                    <tr><th className="p-4">Name / account</th><th className="p-4">Type</th><th className="p-4">Business</th><th className="p-4">Phone</th><th className="p-4">Joined</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E4E7EC]">
-                    {accounts.map((account) => {
-                      const provider = providerMap.get(account.id);
-                      return (
-                        <tr key={account.id} className="hover:bg-[#F8FAFC]">
-                          <td className="p-4"><p className="font-bold">{account.first_name} {account.last_name}</p><EmailLink email={account.email} /></td>
-                          <td className="p-4"><span className="rounded-full bg-[#EDF3FA] px-3 py-1.5 font-bold uppercase text-[#315C91]">{account.account_type === "provider" ? "Business" : account.account_type}</span></td>
-                          <td className="p-4">{provider ? <><p className="font-semibold">{provider.business_name}</p><p className="mt-1 capitalize text-[#667085]">{provider.provider_type} · {provider.status.replaceAll("_", " ")}</p></> : "—"}</td>
-                          <td className="p-4"><PhoneLink number={account.primary_phone} /></td>
-                          <td className="p-4 text-[#667085]">{new Date(account.created_at).toLocaleDateString("en-CA")}</td>
-                        </tr>
-                      );
-                    })}
-                    {accounts.length === 0 && !accountsError && <tr><td colSpan={5} className="p-8 text-center text-[#667085]">No accounts found.</td></tr>}
-                  </tbody>
-                </table>
+          <section id="applications" className="portal-section scroll-mt-8 mt-8">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="portal-section-heading text-[24px] font-bold">Applications needing attention</h2>
+              <span className="rounded-full bg-white px-4 py-2 text-[13px] font-bold text-[#344054]">{pending.length} awaiting action</span>
+            </div>
+            <p className="mt-2 text-[14px] text-[#667085]">Open an applicant below to review their NEQ, services and contact details, then approve, decline or request information.</p>
+            {pending.length > 0 ? (
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                {pending.map((provider) => (
+                  <a href={`#provider-${provider.id}`} key={provider.id} className="portal-summary-card rounded-[16px] border border-[#BAC7D7] bg-[#F8FAFC] p-4 transition hover:shadow-md">
+                    <p className="font-bold text-[#101828]">{provider.business_name}</p>
+                    <p className="mt-2 text-[12px] font-semibold capitalize text-[#475467]">{provider.provider_type} · {provider.status.replaceAll("_", " ")}</p>
+                    <p className="mt-2 text-[12px] font-bold text-[#315C91]">Review application ↓</p>
+                  </a>
+                ))}
               </div>
-            </section>
-          ) : (
-            <section id="applications" className="scroll-mt-8 pt-6">
-              <h2 className="text-[24px] font-bold">{view === "review" ? "Applications needing attention" : "All service providers"}</h2>
-              <p className="mt-2 text-[14px] text-[#667085]">{view === "review" ? "Only pending applications and those awaiting information are shown here." : "View approved, pending and rejected businesses."}</p>
+            ) : (
+              <p className="mt-4 rounded-[16px] border border-dashed border-[#BAC7D7] bg-white p-6 text-center text-[14px] text-[#475467]">✓ Nothing needs review right now.</p>
+            )}
+          </section>
+            <section id="businesses" className="portal-section scroll-mt-8 mt-10">
+              <h2 className="text-[24px] font-bold">Business applications & providers</h2>
+              <p className="mt-2 text-[14px] text-[#667085]">Pending applications come first. Review details and make decisions here without leaving the dashboard.</p>
               {applicationError && <p role="alert" className="mt-4 text-[#B42318]">Verification data unavailable: {applicationError.message}. Run migration 20261108.</p>}
                {providerError && <p role="alert" className="mt-4 text-[#B42318]">Could not load providers: {providerError.message}</p>}
               <div className="mt-5 space-y-5">
                 {filtered.length === 0 && !providerError && (
                   <div className="rounded-[20px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-8 text-center">
                     <p className="text-[24px]" aria-hidden="true">✓</p>
-                    <p className="mt-2 text-[17px] font-bold">{view === "review" ? "Nothing needs review right now." : "No provider accounts yet."}</p>
-                    {view === "review" && <Link href="/admin?view=all#applications" className="mt-3 inline-block font-bold text-[#4771A6] underline">View all businesses</Link>}
+                    <p className="mt-2 text-[17px] font-bold">No provider accounts yet.</p>
+                    
                   </div>
                 )}
                 {filtered.map((provider) => {
                   const owner = ownerMap.get(provider.owner_id);
                    const application = applicationMap.get(provider.id);
                   return (
-                    <article key={provider.id} className="rounded-[22px] border border-[#BAC7D7] bg-white p-5 shadow-sm sm:p-6">
+                    <article key={provider.id} id={`provider-${provider.id}`} className={`scroll-mt-8 rounded-[22px] border border-[#BAC7D7] bg-white p-5 shadow-sm sm:p-6 ${provider.status === "pending" || provider.status === "needs_information" ? "portal-provider-urgent" : ""}`}>
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="mr-1 text-[22px] font-extrabold">{provider.business_name}</h3>
                         <span className={`rounded-full px-3 py-1.5 text-[11px] font-bold uppercase ${statusStyle(provider.status)}`}>{provider.status.replaceAll("_", " ")}</span>
@@ -271,7 +259,34 @@ export default async function AdminPage({
                 })}
               </div>
             </section>
-          )}
+            <section id="accounts" className="portal-section scroll-mt-8 mt-10">
+              <h2 className="portal-section-heading text-[24px] font-bold">Registered accounts</h2>
+              <p className="mt-2 text-[14px] text-[#667085]">These roles come from the secured <code>public.profiles.account_type</code> field, not the Supabase Authentication sign-in provider column.</p>
+              {accountsError && <p role="alert" className="mt-4 text-[#B42318]">Could not load accounts: {accountsError.message}</p>}
+              <div className="mt-5 overflow-x-auto rounded-[18px] border border-[#BAC7D7]">
+                <table className="w-full min-w-[730px] text-left text-[13px]">
+                  <thead className="bg-[#F2F4F7] font-bold text-[#344054]">
+                    <tr><th className="p-4">Name / account</th><th className="p-4">Type</th><th className="p-4">Business</th><th className="p-4">Phone</th><th className="p-4">Joined</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E7EC]">
+                    {accounts.map((account) => {
+                      const provider = providerMap.get(account.id);
+                      return (
+                        <tr key={account.id} className="hover:bg-[#F8FAFC]">
+                          <td className="p-4"><p className="font-bold">{account.first_name} {account.last_name}</p><EmailLink email={account.email} /></td>
+                          <td className="p-4"><span className="rounded-full bg-[#EDF3FA] px-3 py-1.5 font-bold uppercase text-[#315C91]">{account.account_type === "provider" ? "Business" : account.account_type}</span></td>
+                          <td className="p-4">{provider ? <><p className="font-semibold">{provider.business_name}</p><p className="mt-1 capitalize text-[#667085]">{provider.provider_type} · {provider.status.replaceAll("_", " ")}</p></> : "—"}</td>
+                          <td className="p-4"><PhoneLink number={account.primary_phone} /></td>
+                          <td className="p-4 text-[#667085]">{new Date(account.created_at).toLocaleDateString("en-CA")}</td>
+                        </tr>
+                      );
+                    })}
+                    {accounts.length === 0 && !accountsError && <tr><td colSpan={5} className="p-8 text-center text-[#667085]">No accounts found.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
         </div>
       </div>
     </main>

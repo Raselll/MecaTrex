@@ -459,3 +459,114 @@ model-viewer {
     will-change: auto;
   }
 }
+
+/* ========================================================= */
+/* ACCOUNT + ADMIN — SIX PERSISTENT, ACCESSIBLE PORTAL THEMES */
+/* ========================================================= */
+.portal-theme {
+  --portal-accent: #4771a6;
+  --portal-accent-deep: #284e7c;
+  --portal-soft: #edf3fa;
+  --portal-contrast: #ffffff;
+  --portal-border: #c5d5e8;
+  --portal-glow: rgba(71, 113, 166, .16);
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 80% -10%, var(--portal-glow), transparent 44%),
+    linear-gradient(170deg, var(--portal-soft) 0%, #f8fafc 64%, var(--portal-soft) 100%);
+  color: #101828;
+  transition: background 220ms ease, border-color 220ms ease;
+}
+.portal-theme[data-portal-theme="teal"] {
+  --portal-accent: #157a76; --portal-accent-deep: #095b57;
+  --portal-soft: #e9f8f6; --portal-border: #b1ddd6;
+  --portal-glow: rgba(21,122,118,.19);
+}
+.portal-theme[data-portal-theme="violet"] {
+  --portal-accent: #7048a6; --portal-accent-deep: #4e2d80;
+  --portal-soft: #f4eefb; --portal-border: #d6c2eb;
+  --portal-glow: rgba(112,72,166,.19);
+}
+.portal-theme[data-portal-theme="slate"] {
+  --portal-accent: #344054; --portal-accent-deep: #202b3a;
+  --portal-soft: #f2f4f7; --portal-border: #cbd2dc;
+  --portal-glow: rgba(52,64,84,.16);
+}
+.portal-theme[data-portal-theme="rose"] {
+  --portal-accent: #963f62; --portal-accent-deep: #702746;
+  --portal-soft: #fff0f5; --portal-border: #e9bed0;
+  --portal-glow: rgba(150,63,98,.18);
+}
+.portal-theme[data-portal-theme="amber"] {
+  --portal-accent: #92501e; --portal-accent-deep: #703709;
+  --portal-soft: #fff4e5; --portal-border: #e5cba4;
+  --portal-glow: rgba(146,80,30,.20);
+}
+.portal-theme .portal-main-card {
+  border-color: var(--portal-border) !important;
+  background: linear-gradient(160deg, var(--portal-soft) -45%, #ffffff 36%, #ffffff 82%, var(--portal-soft) 155%) !important;
+  box-shadow: 0 18px 60px var(--portal-glow);
+}
+.portal-theme .portal-kicker { color: var(--portal-accent-deep) !important; }
+.portal-theme .portal-theme-picker {
+  border-color: var(--portal-border) !important;
+  background: color-mix(in srgb, var(--portal-soft) 27%, #ffffff) !important;
+}
+.portal-theme .portal-summary-card {
+  border-color: var(--portal-border) !important;
+  background: color-mix(in srgb, var(--portal-soft) 56%, #ffffff) !important;
+}
+.portal-theme .portal-feature-banner {
+  background: linear-gradient(110deg, var(--portal-accent-deep), var(--portal-accent)) !important;
+  border-color: transparent !important;
+  color: var(--portal-contrast) !important;
+}
+.portal-theme .portal-feature-banner h2,
+.portal-theme .portal-feature-banner p { color: #ffffff !important; }
+.portal-theme .portal-feature-banner p.portal-banner-muted { color: rgba(255,255,255,.85) !important; }
+.portal-theme [class*="bg-[#4771A6]"],
+.portal-theme [class*="bg-[#315C91]"],
+.portal-theme [class*="bg-[#101828]"] {
+  background-color: var(--portal-accent) !important;
+  color: #ffffff !important;
+}
+.portal-theme [class*="text-[#4771A6]"],
+.portal-theme [class*="text-[#315C91]"] { color: var(--portal-accent-deep) !important; }
+.portal-theme [class*="border-[#D5DFEA]"],
+.portal-theme [class*="border-[#D6E0ED]"],
+.portal-theme [class*="border-[#BAC7D7]"],
+.portal-theme [class*="border-[#93B4DC]"] { border-color: var(--portal-border) !important; }
+.portal-theme [class*="bg-[#EDF3FA]"],
+.portal-theme [class*="bg-[#F8FAFC]"],
+.portal-theme [class*="bg-[#F8FAFD]"] { background-color: var(--portal-soft) !important; }
+.portal-theme a:not([class*="bg-"]):hover { color: var(--portal-accent-deep); }
+.portal-theme :is(a,button,input,textarea,select):focus-visible {
+  outline: 3px solid var(--portal-accent);
+  outline-offset: 3px;
+}
+.portal-theme .portal-section {
+  border-top: 1px solid var(--portal-border);
+  padding-top: 1.5rem;
+}
+.portal-theme .portal-section-heading { color: var(--portal-accent-deep); }
+.portal-theme .portal-provider-urgent {
+  border-color: var(--portal-accent) !important;
+  box-shadow: 0 0 0 2px var(--portal-glow);
+}
+.portal-theme .portal-jump-link {
+  border: 1px solid var(--portal-border);
+  background: color-mix(in srgb, var(--portal-soft) 56%, white);
+  color: var(--portal-accent-deep);
+  border-radius: 12px;
+  padding: 10px 15px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.portal-theme .portal-jump-link:hover {
+  background: var(--portal-accent);
+  color: white !important;
+}
+/* Blend white pixels into the background so the existing logo has no box. */
+img[src*="mecatrex-logo-web.png"] {
+  mix-blend-mode: multiply;
+}

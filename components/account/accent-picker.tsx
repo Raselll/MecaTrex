@@ -20,16 +20,19 @@ export default function AccentPicker({ userId, initialAccent }: { userId: string
     if (error) setMessage("Color not saved. Apply the latest database migration first.");
     else {
       setSelected(color);
-      setMessage("Your accent color is saved.");
+      document.querySelectorAll<HTMLElement>("[data-portal-theme]").forEach((element) => {
+        element.dataset.portalTheme = color;
+      });
+      setMessage("Theme saved and applied throughout your dashboard.");
     }
   }
 
   return (
-    <div className="mt-6 rounded-[20px] border border-[#D5DFEA] bg-white p-5" style={{ borderTop: `5px solid ${current.hex}` }}>
+    <div className="mt-6 rounded-[20px] border border-[#D5DFEA] bg-white p-5 portal-theme-picker" style={{ borderTop: `5px solid ${current.hex}` }}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-[16px] font-extrabold text-[#101828]">🎨 Make this portal yours</h3>
-          <p className="mt-1 text-[13px] leading-5 text-[#667085]">Choose a subtle accent. Form text and backgrounds stay high-contrast and easy to read.</p>
+          <p className="mt-1 text-[13px] leading-5 text-[#667085]">Choose your dashboard theme. Cards, buttons and backgrounds update while text stays readable.</p>
         </div>
         <div className="flex items-center gap-3" role="group" aria-label="Choose your portal accent color">
           {(Object.entries(ACCENT_COLORS) as [AccentColor, { name: string; hex: string; soft: string }][]).map(([name, color]) => (
