@@ -1,0 +1,19 @@
+/* MECATREX — Garage images 16:9 */
+
+div:has(> img[src*="garage-images"]) {
+  position: relative;
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #edf3fa;
+}
+
+div:has(> img[src*="garage-images"])
+  > img[src*="garage-images"] {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
