@@ -1,7 +1,16 @@
+
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type InputHTMLAttributes,
+  type ReactNode,
+} from "react";
 import { signup } from "./actions";
 import { WEEKDAYS } from "@/lib/booking";
 import { validateBusinessHours } from "@/lib/business-hours";
@@ -10,7 +19,7 @@ import ServiceCategorySelector from "@/components/services/service-category-sele
 type AccountType = "client" | "provider";
 type ProviderType = "garage" | "towing";
 
-type AddressSuggestion = {
+type Suggestion = {
   placeId: string;
   text: string;
   mainText: string;
@@ -30,51 +39,102 @@ type AddressDetails = {
 
 const PHONE_REGEX = /^\d{3}-\d{3}-\d{4}$/;
 
-function formatPhone(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 10);
+const inputClass =
+  "h-[52px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-4 text-[14px] text-[#101828] outline-none transition focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10";
 
+function formatPhone(text: string) {
+  const digits = text.replace(/\D/g, "").slice(0, 10);
   if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  if (digits.length <= 6) {
+    return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  }
   return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
-function Requirement({ met, active, children }: { met: boolean; active: boolean; children: React.ReactNode }) {
-  const icon = !active ? "•" : met ? "✓" : "×";
-  const color = !active ? "text-[#98A2B3]" : met ? "text-[#027A48]" : "text-[#B42318]";
-
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
   return (
-    <li className={`flex items-center gap-2 text-[12px] font-medium ${color}`}>
-      <span className="inline-flex w-3 justify-center font-bold">{icon}</span>
-      <span>{children}</span>
-    </li>
+    <label className="block min-w-0">
+      <span className="mb-2 block text-[12px] font-bold text-[#344054]">
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }
 
-export default function SignupForm({ error, next }: { error?: string; next?: string }) {
-  const [actionState, signupAction, isSubmitting] = useActionState(signup, { error: error ?? null });
-  const [hoursError, setHoursError] = useState("");
+function TextField({
+  label,
+  className = "",
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & {
+  label: string;
+}) {
+  return (
+    <div className={className}>
+      <Field label={label}>
+        <input
+          {...props}
+          className={`${inputClass} ${
+            props.readOnly ? "bg-[#F2F4F7] text-[#667085]" : ""
+          }`}
+        />
+      </Field>
+    </div>
+  );
+}
+
+function PhoneInput({
+  name,
+  label,
+  value,
+  onChange,
+  required,
+}: {
+  name: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+}) {
+  return (
+    <Field label={label}>
+      <input
+        name={name}
+        type="tel"
+        value={value}
+        onChange={(event) => onChange(formatPhone(event.target.value))}
+        required={required}
+        maxLength={12}
+        placeholder="514-555-1234"
+        className={inputClass}
+      />
+    </Field>
+  );
+}
+
+export default function SignupForm({
+  error,
+  next,
+}: {
+  error?: string;
+  next?: string;
+}) {
+  const [state, action, pending] = useActionState(signup, {
+    error: error ?? null,
+  });
+
   const [accountType, setAccountType] = useState<AccountType>("client");
-  const [businessHours, setBusinessHours] = useState(() => WEEKDAYS.map((_, weekday) => ({
-    weekday, is_open: false, open_time: "09:00", close_time: "17:00",
-  })));
-
-  function changeBusinessHour(day: number, value: Partial<(typeof businessHours)[number]>) {
-    setBusinessHours((current) => current.map((entry) => entry.weekday === day ? { ...entry, ...value } : entry));
-    setHoursError("");
-  }
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    if (accountType !== "provider") return;
-    if (!validateBusinessHours(businessHours)) {
-      event.preventDefault();
-      setHoursError("Check the opening and closing times for your selected days. Each open day needs two different valid times.");
-      document.getElementById("business-hours")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }
   const [providerType, setProviderType] = useState<ProviderType>("garage");
 
   const [primaryPhone, setPrimaryPhone] = useState("");
   const [secondaryPhone, setSecondaryPhone] = useState("");
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -83,77 +143,67 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
   const [businessNEQ, setBusinessNEQ] = useState("");
   const [businessPhone, setBusinessPhone] = useState("");
   const [businessWebsite, setBusinessWebsite] = useState("");
-  const [applicationDescription, setApplicationDescription] = useState("");
+
+  const [applicationDescription, setApplicationDescription] =
+    useState("");
+
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [otherServiceEnabled, setOtherServiceEnabled] = useState(false);
   const [otherService, setOtherService] = useState("");
-  const applicationServices = [...selectedServices, ...(otherServiceEnabled && otherService.trim() ? [otherService.trim()] : [])];
-  const toggleService = (name: string) => setSelectedServices((current) =>
-    current.includes(name) ? current.filter((service) => service !== name) : [...current, name]);
+
   const [businessPlaceId, setBusinessPlaceId] = useState("");
-  const [businessLatitude, setBusinessLatitude] = useState<number | null>(null);
-  const [businessLongitude, setBusinessLongitude] = useState<number | null>(null);
-  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [businessLatitude, setBusinessLatitude] = useState<number | null>(
+    null
+  );
+  const [businessLongitude, setBusinessLongitude] = useState<number | null>(
+    null
+  );
+
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [addressLoading, setAddressLoading] = useState(false);
   const [addressMessage, setAddressMessage] = useState("");
   const [addressDropdownOpen, setAddressDropdownOpen] = useState(false);
   const [sessionToken, setSessionToken] = useState("");
   const addressRequestId = useRef(0);
 
+  const [businessHours, setBusinessHours] = useState(() =>
+    WEEKDAYS.map((_, weekday) => ({
+      weekday,
+      is_open: false,
+      open_time: "09:00",
+      close_time: "17:00",
+    }))
+  );
+  const [hoursError, setHoursError] = useState("");
+
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+  const [photoError, setPhotoError] = useState("");
+
   useEffect(() => {
     setSessionToken(crypto.randomUUID());
   }, []);
 
-  const primaryPhoneValid = PHONE_REGEX.test(primaryPhone);
-  const secondaryPhoneValid = secondaryPhone === "" || PHONE_REGEX.test(secondaryPhone);
+  useEffect(() => {
+    if (!photo) return;
 
-  const passwordRequirements = useMemo(
-    () => ({
-      length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      special: /[^A-Za-z0-9\s]/.test(password),
-    }),
-    [password]
-  );
+    const url = URL.createObjectURL(photo);
+    setPhotoPreview(url);
 
-  const passwordValid =
-    passwordRequirements.length &&
-    passwordRequirements.uppercase &&
-    passwordRequirements.special;
-
-  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
-  const signupReady =
-    primaryPhoneValid &&
-    secondaryPhoneValid &&
-    passwordValid &&
-    passwordsMatch &&
-    (accountType === "client" || (
-      /^\d{10}$/.test(businessNEQ) &&
-      PHONE_REGEX.test(businessPhone) &&
-      applicationDescription.trim().length >= 30 &&
-      applicationDescription.trim().length <= 1500 &&
-      applicationServices.length > 0 &&
-      (!otherServiceEnabled || otherService.trim().length > 0)
-    ));
+    return () => URL.revokeObjectURL(url);
+  }, [photo]);
 
   useEffect(() => {
-    if (accountType !== "provider") {
-      setAddressSuggestions([]);
-      setAddressDropdownOpen(false);
-      return;
-    }
+    if (accountType !== "provider") return;
 
     const query = businessAddress.trim();
-    if (query.length < 3 || businessPlaceId) {
-      setAddressSuggestions([]);
-      setAddressDropdownOpen(false);
-      return;
-    }
+
+    if (query.length < 3 || businessPlaceId) return;
 
     const requestId = ++addressRequestId.current;
+
     const timer = window.setTimeout(async () => {
       setAddressLoading(true);
-      setAddressMessage("");
 
       try {
         const response = await fetch(
@@ -164,34 +214,40 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
         if (requestId !== addressRequestId.current) return;
 
         if (response.status === 503) {
-          setAddressSuggestions([]);
-          setAddressDropdownOpen(false);
-          setAddressMessage("Address suggestions will activate after the Google Places API key is configured.");
+          setAddressMessage(
+            "Address suggestions are not configured yet."
+          );
           return;
         }
 
-        if (!response.ok) throw new Error("Address lookup failed");
+        if (!response.ok) {
+          throw new Error("Address search failed.");
+        }
 
-        const data = (await response.json()) as { suggestions: AddressSuggestion[] };
-        setAddressSuggestions(data.suggestions ?? []);
-        setAddressDropdownOpen((data.suggestions ?? []).length > 0);
+        const result = (await response.json()) as {
+          suggestions: Suggestion[];
+        };
+
+        setSuggestions(result.suggestions ?? []);
+        setAddressDropdownOpen(true);
       } catch {
-        if (requestId !== addressRequestId.current) return;
-        setAddressSuggestions([]);
-        setAddressDropdownOpen(false);
-        setAddressMessage("Address suggestions are temporarily unavailable. You can continue typing the address manually.");
+        if (requestId === addressRequestId.current) {
+          setSuggestions([]);
+          setAddressMessage("Address lookup is unavailable.");
+        }
       } finally {
-        if (requestId === addressRequestId.current) setAddressLoading(false);
+        if (requestId === addressRequestId.current) {
+          setAddressLoading(false);
+        }
       }
-    }, 280);
+    }, 350);
 
     return () => window.clearTimeout(timer);
   }, [accountType, businessAddress, businessPlaceId, sessionToken]);
 
-  async function chooseAddress(suggestion: AddressSuggestion) {
+  async function chooseAddress(suggestion: Suggestion) {
     setAddressLoading(true);
     setAddressDropdownOpen(false);
-    setAddressMessage("");
 
     try {
       const response = await fetch(
@@ -199,241 +255,470 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
         { cache: "no-store" }
       );
 
-      const data = (await response.json()) as AddressDetails & { error?: string };
-      if (!response.ok) throw new Error(data.error ?? "Could not validate this address");
+      if (!response.ok) {
+        throw new Error("Could not verify the address.");
+      }
 
-      setBusinessAddress(data.streetAddress || suggestion.mainText);
-      setBusinessPostalCode(data.postalCode || "");
-      setBusinessPlaceId(data.placeId);
-      setBusinessLatitude(data.latitude ?? null);
-      setBusinessLongitude(data.longitude ?? null);
-      setAddressSuggestions([]);
-      setAddressMessage("Address verified in Montreal, Quebec.");
+      const result = (await response.json()) as AddressDetails;
+
+      setBusinessAddress(result.streetAddress || suggestion.mainText);
+      setBusinessPostalCode(result.postalCode || "");
+      setBusinessPlaceId(result.placeId);
+      setBusinessLatitude(result.latitude ?? null);
+      setBusinessLongitude(result.longitude ?? null);
+      setAddressMessage("✓ Address verified in Montreal.");
+      setSuggestions([]);
       setSessionToken(crypto.randomUUID());
-    } catch (selectionError) {
+    } catch {
+      setAddressMessage("Please select a valid Montreal address.");
       setBusinessPlaceId("");
-      setAddressMessage(
-        selectionError instanceof Error
-          ? selectionError.message
-          : "Please select a Montreal address."
-      );
     } finally {
       setAddressLoading(false);
     }
   }
 
+  function changeHour(
+    weekday: number,
+    changes: Partial<(typeof businessHours)[number]>
+  ) {
+    setBusinessHours((current) =>
+      current.map((entry) =>
+        entry.weekday === weekday
+          ? { ...entry, ...changes }
+          : entry
+      )
+    );
+    setHoursError("");
+  }
+
+  function toggleService(name: string) {
+    setSelectedServices((current) =>
+      current.includes(name)
+        ? current.filter((item) => item !== name)
+        : [...current, name]
+    );
+  }
+
+  function changePhoto(file: File | null) {
+    setPhotoError("");
+    setPhotoPreview("");
+
+    if (!file) {
+      setPhoto(null);
+      return;
+    }
+
+    if (
+      !["image/jpeg", "image/png", "image/webp"].includes(file.type)
+    ) {
+      setPhotoError("Use JPG, PNG or WebP.");
+      setPhoto(null);
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("Maximum image size is 5 MB.");
+      setPhoto(null);
+      return;
+    }
+
+    setPhoto(file);
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    if (accountType !== "provider") return;
+
+    if (!photo) {
+      event.preventDefault();
+      setPhotoError("A business photo is required.");
+      document.getElementById("business-photo")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      return;
+    }
+
+    if (!validateBusinessHours(businessHours)) {
+      event.preventDefault();
+      setHoursError("Check your business hours.");
+      document.getElementById("business-hours")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }
+
+  const applicationServices = [
+    ...selectedServices,
+    ...(otherServiceEnabled && otherService.trim()
+      ? [otherService.trim()]
+      : []),
+  ];
+
+  const passwordValid =
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[^A-Za-z0-9\s]/.test(password);
+
+  const signupReady =
+    PHONE_REGEX.test(primaryPhone) &&
+    (!secondaryPhone || PHONE_REGEX.test(secondaryPhone)) &&
+    passwordValid &&
+    password === confirmPassword &&
+    (accountType === "client" ||
+      (Boolean(photo) &&
+        /^\d{10}$/.test(businessNEQ) &&
+        PHONE_REGEX.test(businessPhone) &&
+        applicationDescription.trim().length >= 30 &&
+        applicationServices.length > 0 &&
+        (!otherServiceEnabled || Boolean(otherService.trim()))));
+
   return (
-    <form action={signupAction} onSubmit={handleSubmit} className="mt-8">
+    <form action={action} onSubmit={handleSubmit} className="mt-7">
       <input type="hidden" name="next" value={next ?? ""} />
       <input type="hidden" name="account_type" value={accountType} />
       <input type="hidden" name="provider_type" value={providerType} />
-      {accountType === "provider" && <input type="hidden" name="business_hours" value={JSON.stringify(businessHours)} />}
       <input type="hidden" name="business_place_id" value={businessPlaceId} />
-      {accountType === "provider" && <input type="hidden" name="application_services" value={JSON.stringify(applicationServices)} />}
-      <input type="hidden" name="business_latitude" value={businessLatitude ?? ""} />
-      <input type="hidden" name="business_longitude" value={businessLongitude ?? ""} />
+      <input
+        type="hidden"
+        name="business_latitude"
+        value={businessLatitude ?? ""}
+      />
+      <input
+        type="hidden"
+        name="business_longitude"
+        value={businessLongitude ?? ""}
+      />
+      <input
+        type="hidden"
+        name="application_services"
+        value={JSON.stringify(applicationServices)}
+      />
+      <input
+        type="hidden"
+        name="business_hours"
+        value={JSON.stringify(businessHours)}
+      />
 
-      <div className="grid grid-cols-2 rounded-[18px] bg-[#F2F4F7] p-1.5">
-        <button
-          type="button"
-          onClick={() => { setAccountType("client"); setHoursError(""); }}
-          className={`rounded-[14px] px-5 py-3.5 text-[15px] font-bold transition ${accountType === "client" ? "bg-white text-[#101828] shadow-sm" : "text-[#667085]"}`}
-        >
-          Client
-        </button>
-        <button
-          type="button"
-          onClick={() => { setAccountType("provider"); setHoursError(""); }}
-          className={`rounded-[14px] px-5 py-3.5 text-[15px] font-bold transition ${accountType === "provider" ? "bg-white text-[#101828] shadow-sm" : "text-[#667085]"}`}
-        >
-          Service provider
-        </button>
+      <div className="grid grid-cols-2 rounded-[16px] bg-[#F2F4F7] p-1">
+        {(["client", "provider"] as const).map((type) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => setAccountType(type)}
+            className={`rounded-[12px] px-4 py-3 text-[13px] font-bold ${
+              accountType === type
+                ? "bg-white text-[#101828] shadow-sm"
+                : "text-[#667085]"
+            }`}
+          >
+            {type === "client" ? "Client" : "Service provider"}
+          </button>
+        ))}
       </div>
 
       {accountType === "provider" && (
         <div className="mt-5">
-          <p className="mb-2 text-[13px] font-bold uppercase tracking-[0.12em] text-[#667085]">I operate a</p>
+          <p className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[#667085]">
+            I operate a
+          </p>
           <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => { setProviderType("garage"); setSelectedServices([]); setOtherServiceEnabled(false); setOtherService(""); }}
-              className={`rounded-[16px] border px-5 py-4 text-left transition ${providerType === "garage" ? "border-[#4771A6] bg-[#EDF3FA]" : "border-[#D0D5DD] bg-white"}`}
-            >
-              <div className="text-[25px]">🔧</div>
-              <p className="mt-2 font-bold">Garage</p>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setProviderType("towing"); setSelectedServices([]); setOtherServiceEnabled(false); setOtherService(""); }}
-              className={`rounded-[16px] border px-5 py-4 text-left transition ${providerType === "towing" ? "border-[#4771A6] bg-[#EDF3FA]" : "border-[#D0D5DD] bg-white"}`}
-            >
-              <div className="text-[25px]">🚛</div>
-              <p className="mt-2 font-bold">Towing service</p>
-            </button>
+            {(["garage", "towing"] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => {
+                  setProviderType(type);
+                  setSelectedServices([]);
+                  setOtherServiceEnabled(false);
+                  setOtherService("");
+                }}
+                className={`rounded-[15px] border p-4 text-left ${
+                  providerType === type
+                    ? "border-[#4771A6] bg-[#EDF3FA]"
+                    : "border-[#D0D5DD] bg-white"
+                }`}
+              >
+                <span className="text-[23px]">
+                  {type === "garage" ? "🔧" : "🚛"}
+                </span>
+                <p className="mt-2 text-[13px] font-bold">
+                  {type === "garage" ? "Garage" : "Towing service"}
+                </p>
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {(hoursError || actionState.error) && (
-        <div role="alert" className="mt-5 rounded-[15px] bg-[#FEF3F2] px-4 py-3 text-[14px] font-semibold text-[#B42318]">
-          {hoursError || actionState.error}
+      {(state.error || hoursError || photoError) && (
+        <div
+          role="alert"
+          className="mt-5 rounded-[13px] bg-[#FEF3F2] p-4 text-[13px] font-semibold text-[#B42318]"
+        >
+          {state.error || hoursError || photoError}
         </div>
       )}
 
-      <div className="mt-7 grid gap-5 sm:grid-cols-2">
-        <Field label="First name" name="first_name" autoComplete="given-name" required />
-        <Field label="Last name" name="last_name" autoComplete="family-name" required />
-        <Field label="Email" name="email" type="email" autoComplete="email" required className="sm:col-span-2" />
-
-        <PhoneField
-          label="Primary phone"
+      <section className="mt-7 grid gap-4 sm:grid-cols-2">
+        <TextField
+          label="First name *"
+          name="first_name"
+          autoComplete="given-name"
+          required
+        />
+        <TextField
+          label="Last name *"
+          name="last_name"
+          autoComplete="family-name"
+          required
+        />
+        <TextField
+          label="Email *"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          className="sm:col-span-2"
+        />
+        <PhoneInput
+          label="Primary phone *"
           name="primary_phone"
           value={primaryPhone}
           onChange={setPrimaryPhone}
           required
         />
-
-        <PhoneField
-          label="Secondary phone"
+        <PhoneInput
+          label="Secondary phone (optional)"
           name="secondary_phone"
           value={secondaryPhone}
           onChange={setSecondaryPhone}
-          optional
         />
-      </div>
+      </section>
 
       {accountType === "provider" && (
-        <div className="mt-8 border-t border-[#EAECF0] pt-7">
-          <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-[#4771A6]">Business information</p>
+        <section className="mt-8 space-y-6 border-t border-[#EAECF0] pt-7">
+          <div>
+            <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
+              Business information
+            </p>
+            <h3 className="mt-2 text-[20px] font-extrabold">
+              Tell us about your business
+            </h3>
+          </div>
 
-          <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <Field
-              label={providerType === "garage" ? "Garage name" : "Towing company name"}
-              name="business_name"
-              required
-              className="sm:col-span-2"
-            />
+          <TextField
+            label={
+              providerType === "garage"
+                ? "Garage name *"
+                : "Towing company name *"
+            }
+            name="business_name"
+            required
+          />
 
-            <div className="relative sm:col-span-2">
-              <label>
-                <span className="mb-2 block text-[13px] font-bold text-[#344054]">
-                  {providerType === "garage" ? "Garage address" : "Business / dispatch address"}
-                </span>
-                <div className="relative">
-                  <input
-                    name="business_address"
-                    value={businessAddress}
-                    onChange={(event) => {
-                      setBusinessAddress(event.target.value);
-                      setBusinessPlaceId("");
-                      setBusinessLatitude(null);
-                      setBusinessLongitude(null);
-                      setAddressMessage("");
-                    }}
-                    onFocus={() => addressSuggestions.length > 0 && setAddressDropdownOpen(true)}
-                    autoComplete="off"
-                    required
-                    placeholder="Start typing a Montreal address"
-                    className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 pr-11 text-[16px] text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
+          <div className="relative">
+            <Field label="Business / dispatch address *">
+              <input
+                name="business_address"
+                value={businessAddress}
+                required
+                autoComplete="off"
+                placeholder="Start typing a Montreal address"
+                className={inputClass}
+                onChange={(event) => {
+                  setBusinessAddress(event.target.value);
+                  setBusinessPlaceId("");
+                  setBusinessLatitude(null);
+                  setBusinessLongitude(null);
+                  setSuggestions([]);
+                  setAddressMessage("");
+                }}
+                onFocus={() => setAddressDropdownOpen(true)}
+              />
+            </Field>
+
+            {addressLoading && (
+              <p className="mt-2 text-[12px] text-[#667085]">
+                Searching addresses...
+              </p>
+            )}
+
+            {addressDropdownOpen && suggestions.length > 0 && (
+              <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-[15px] border border-[#D0D5DD] bg-white shadow-xl">
+                {suggestions.map((item) => (
+                  <button
+                    key={item.placeId}
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => void chooseAddress(item)}
+                    className="block w-full border-b border-[#EAECF0] p-3 text-left hover:bg-[#F8FAFC]"
+                  >
+                    <strong className="text-[13px]">
+                      {item.mainText}
+                    </strong>
+                    <p className="text-[11px] text-[#667085]">
+                      {item.secondaryText || item.text}
+                    </p>
+                  </button>
+                ))}
+                <div className="bg-[#F9FAFB] p-2 text-right">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="https://maps.gstatic.com/mapfiles/api-3/images/powered-by-google-on-white3.png"
+                    alt="Powered by Google"
+                    className="ml-auto h-[14px] w-auto"
                   />
-                  {addressLoading && (
-                    <span className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-[#D0D5DD] border-t-[#4771A6]" />
-                  )}
                 </div>
-              </label>
+              </div>
+            )}
 
-              {addressDropdownOpen && addressSuggestions.length > 0 && (
-                <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-[16px] border border-[#E4E7EC] bg-white shadow-[0_18px_55px_rgba(16,24,40,0.15)]">
-                  {addressSuggestions.map((suggestion) => (
-                    <button
-                      key={suggestion.placeId}
-                      type="button"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => chooseAddress(suggestion)}
-                      className="block w-full border-b border-[#F2F4F7] px-4 py-3 text-left transition last:border-b-0 hover:bg-[#F8FAFC]"
-                    >
-                      <p className="text-[14px] font-bold text-[#101828]">{suggestion.mainText}</p>
-                      <p className="mt-0.5 text-[12px] text-[#667085]">{suggestion.secondaryText || suggestion.text}</p>
-                    </button>
-                  ))}
+            {addressMessage && (
+              <p className="mt-2 text-[12px] text-[#4771A6]">
+                {addressMessage}
+              </p>
+            )}
+          </div>
 
-                  <div className="flex justify-end bg-[#F9FAFB] px-4 py-2">
-                    {/* Google requires attribution when Places predictions are displayed without a map. */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="https://maps.gstatic.com/mapfiles/api-3/images/powered-by-google-on-white3.png"
-                      alt="Powered by Google"
-                      className="h-[14px] w-auto"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {addressMessage && (
-                <p
-                  className={`mt-2 text-[12px] font-medium ${businessPlaceId ? "text-[#027A48]" : "text-[#667085]"}`}
-                  aria-live="polite"
-                >
-                  {addressMessage}
-                </p>
-              )}
-            </div>
-
-            <Field
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextField
               label="City"
               name="business_city"
               value="Montreal"
               readOnly
               required
-              className="opacity-90"
             />
-
-            <Field
+            <TextField
               label="Province"
               name="business_province"
               value="Quebec"
               readOnly
               required
-              className="opacity-90"
             />
-
-            <label>
-              <span className="mb-2 block text-[13px] font-bold text-[#344054]">Postal code</span>
-              <input
-                name="business_postal_code"
-                value={businessPostalCode}
-                onChange={(event) => setBusinessPostalCode(event.target.value.toUpperCase())}
-                autoComplete="postal-code"
-                required
-                placeholder="H2X 1Y4"
-                className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[16px] uppercase text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
-              />
-            </label>
+            <TextField
+              label="Postal code *"
+              name="business_postal_code"
+              value={businessPostalCode}
+              onChange={(event) =>
+                setBusinessPostalCode(event.target.value.toUpperCase())
+              }
+              required
+            />
           </div>
 
-          <div className="mt-7 rounded-[20px] border border-[#D6E0ED] bg-[#F8FAFD] p-5">
-            <h3 className="text-[18px] font-extrabold text-[#101828]">Business verification</h3>
-            <p className="mt-1 text-[13px] leading-5 text-[#667085]">These details help MECATREX verify your company before you can publish services or prices.</p>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <label>
-                <span className="mb-2 block text-[13px] font-bold text-[#344054]">Quebec enterprise number (NEQ) *</span>
-                <input name="business_neq" required inputMode="numeric" pattern="[0-9]{10}" maxLength={10} value={businessNEQ}
-                  onChange={(event) => setBusinessNEQ(event.target.value.replace(/\D/g, "").slice(0, 10))}
-                  placeholder="1234567890" className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[15px] outline-none focus:border-[#4771A6]" />
-                <span className="mt-1 block text-[11px] text-[#667085]">10 digits · <a className="font-bold text-[#315C91] underline" target="_blank" rel="noopener noreferrer" href="https://www.quebec.ca/entreprises-et-travailleurs-autonomes/obtenir-renseignements-entreprise/recherche-registre-entreprises/acceder-registre-entreprises">Check the Quebec registry ↗</a></span>
-              </label>
-              <label>
-                <span className="mb-2 block text-[13px] font-bold text-[#344054]">Business phone *</span>
-                <input name="business_phone" required type="tel" autoComplete="tel" value={businessPhone}
-                  onChange={(event) => setBusinessPhone(formatPhone(event.target.value))}
-                  placeholder="514-555-1234" className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[15px] outline-none focus:border-[#4771A6]" />
-              </label>
-              <label className="sm:col-span-2">
-                <span className="mb-2 block text-[13px] font-bold text-[#344054]">Business website (optional)</span>
-                <input name="business_website" type="text" maxLength={255} value={businessWebsite} onChange={(event) => setBusinessWebsite(event.target.value)}
-                  placeholder="https://yourgarage.ca" className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[15px] outline-none focus:border-[#4771A6]" />
-              </label>
+          <div
+            id="business-photo"
+            className="scroll-mt-20 rounded-[20px] border border-[#B7CDE4] bg-[#F7FAFE] p-5"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-[17px] font-extrabold text-[#101828]">
+                  📸 Business photo *
+                </h3>
+                <p className="mt-1 text-[12px] text-[#667085]">
+                  Required for verification and your public listing.
+                </p>
+              </div>
+              <span className="rounded-full bg-[#E4ECF8] px-3 py-1 text-[11px] font-bold text-[#315C91]">
+                Required
+              </span>
             </div>
+
+            <div
+              className="mt-4 aspect-video overflow-hidden rounded-[14px] border border-[#D0D5DD] bg-[#EAF1F8]"
+              style={
+                photoPreview
+                  ? {
+                      backgroundImage: `url("${photoPreview}")`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : undefined
+              }
+            >
+              {!photoPreview && (
+                <div className="flex h-full flex-col items-center justify-center text-[#667085]">
+                  <span className="text-[35px]">🏢</span>
+                  <p className="mt-2 text-[13px] font-semibold">
+                    Your business photo preview
+                  </p>
+                  <p className="mt-1 text-[11px]">
+                    Recommended 1600 × 900 (16:9)
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <label className="mt-4 block cursor-pointer rounded-[12px] border border-[#4771A6] bg-white px-4 py-3 text-center text-[13px] font-bold text-[#315C91]">
+              {photo ? "Change business photo" : "Upload business photo"}
+              <input
+                name="business_photo"
+                type="file"
+                required
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={(event) =>
+                  changePhoto(event.target.files?.[0] ?? null)
+                }
+              />
+            </label>
+
+            <p className="mt-2 text-center text-[11px] text-[#667085]">
+              JPG, PNG or WebP · Maximum 5 MB
+            </p>
+            {photo && (
+              <p className="mt-2 break-all text-center text-[12px] font-semibold text-[#027A48]">
+                ✓ {photo.name}
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-[20px] border border-[#D6E0ED] bg-[#F8FAFD] p-5">
+            <h3 className="text-[17px] font-extrabold">
+              Business verification
+            </h3>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Field label="Quebec enterprise number (NEQ) *">
+                <input
+                  name="business_neq"
+                  required
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  value={businessNEQ}
+                  onChange={(event) =>
+                    setBusinessNEQ(
+                      event.target.value.replace(/\D/g, "").slice(0, 10)
+                    )
+                  }
+                  className={inputClass}
+                  placeholder="1234567890"
+                />
+              </Field>
+              <PhoneInput
+                label="Business phone *"
+                name="business_phone"
+                value={businessPhone}
+                onChange={setBusinessPhone}
+                required
+              />
+            </div>
+
+            <div className="mt-4">
+              <Field label="Business website (optional)">
+                <input
+                  name="business_website"
+                  value={businessWebsite}
+                  onChange={(event) =>
+                    setBusinessWebsite(event.target.value)
+                  }
+                  placeholder="https://yourgarage.ca"
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+
             <ServiceCategorySelector
               key={providerType}
               providerType={providerType}
@@ -447,121 +732,156 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
               otherService={otherService}
               onOtherServiceChange={setOtherService}
             />
-            <label className="mt-6 block">
-              <span className="mb-2 block text-[14px] font-bold text-[#101828]">Describe your business and services *</span>
-              <textarea name="application_description" required minLength={30} maxLength={1500} rows={5}
-                value={applicationDescription} onChange={(event) => setApplicationDescription(event.target.value)}
-                placeholder="Tell us about your experience, equipment, specialities and the work your company performs."
-                className="w-full rounded-[14px] border border-[#C4D0DE] bg-white px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]" />
-              <span className="mt-1 block text-[11px] text-[#667085]">{applicationDescription.length}/1500 characters · minimum 30</span>
-            </label>
+
+            <div className="mt-5">
+              <Field label="Describe your business and services *">
+                <textarea
+                  name="application_description"
+                  required
+                  minLength={30}
+                  maxLength={1500}
+                  rows={4}
+                  value={applicationDescription}
+                  onChange={(event) =>
+                    setApplicationDescription(event.target.value)
+                  }
+                  className="w-full rounded-[13px] border border-[#D0D5DD] bg-white p-4 text-[13px] outline-none focus:border-[#4771A6]"
+                  placeholder="Tell us about your experience, specialties and equipment."
+                />
+              </Field>
+              <p className="mt-1 text-[11px] text-[#667085]">
+                {applicationDescription.length}/1500 characters
+              </p>
+            </div>
           </div>
 
-          <div id="business-hours" className="mt-7 scroll-mt-12 rounded-[18px] border border-[#C9D6E5] bg-[#F8FAFC] p-5">
-            <h3 className="text-[18px] font-extrabold text-[#101828]">🕒 Your business hours</h3>
-            <p className="mt-1 text-[13px] leading-5 text-[#667085]">Select the days you operate and their opening hours. All days are closed by default until you set them. You can change this in your business dashboard later.</p>
-            {hoursError && <p role="alert" className="mt-3 rounded-xl bg-[#FEF3F2] p-3 text-[13px] font-semibold text-[#B42318]">{hoursError}</p>}
+          <div
+            id="business-hours"
+            className="scroll-mt-20 rounded-[20px] border border-[#D6E0ED] bg-[#F8FAFC] p-5"
+          >
+            <h3 className="text-[17px] font-extrabold">
+              🕒 Your business hours
+            </h3>
+            <p className="mt-1 text-[12px] text-[#667085]">
+              These hours will automatically appear in your
+              business dashboard.
+            </p>
+
             <div className="mt-4 space-y-2">
               {WEEKDAYS.map((day, weekday) => {
                 const hour = businessHours[weekday];
+
                 return (
-                  <div key={day} className="grid gap-3 rounded-[12px] border border-[#D0D5DD] bg-white p-3 sm:grid-cols-[125px_1fr_1fr] sm:items-center">
-                    <label className="flex cursor-pointer items-center gap-2 text-[13px] font-bold text-[#101828]">
-                      <input type="checkbox" checked={hour.is_open} onChange={(event) => changeBusinessHour(weekday, { is_open: event.target.checked })}
-                        className="h-4 w-4 accent-[#4771A6]" />{day}
+                  <div
+                    key={day}
+                    className="grid gap-3 rounded-[12px] border border-[#E4E7EC] bg-white p-3 sm:grid-cols-[110px_1fr_1fr] sm:items-center"
+                  >
+                    <label className="flex items-center gap-2 text-[12px] font-bold">
+                      <input
+                        type="checkbox"
+                        checked={hour.is_open}
+                        onChange={(event) =>
+                          changeHour(weekday, {
+                            is_open: event.target.checked,
+                          })
+                        }
+                      />
+                      {day}
                     </label>
-                    <label className="text-[12px] font-bold text-[#475467]">
-                      Open
-                      <input type="time" step={1800} value={hour.open_time} disabled={!hour.is_open}
-                        onChange={(event) => changeBusinessHour(weekday, { open_time: event.target.value })}
-                        className="mt-1 w-full rounded-[10px] border border-[#98A2B3] bg-white px-2 py-2 text-[13px] disabled:opacity-50" />
-                    </label>
-                    <label className="text-[12px] font-bold text-[#475467]">
-                      Close
-                      <input type="time" step={1800} value={hour.close_time} disabled={!hour.is_open}
-                        onChange={(event) => changeBusinessHour(weekday, { close_time: event.target.value })}
-                        className="mt-1 w-full rounded-[10px] border border-[#98A2B3] bg-white px-2 py-2 text-[13px] disabled:opacity-50" />
-                    </label>
+                    <Field label="Open">
+                      <input
+                        type="time"
+                        step={1800}
+                        value={hour.open_time}
+                        disabled={!hour.is_open}
+                        onChange={(event) =>
+                          changeHour(weekday, {
+                            open_time: event.target.value,
+                          })
+                        }
+                        className={`${inputClass} disabled:opacity-40`}
+                      />
+                    </Field>
+                    <Field label="Close">
+                      <input
+                        type="time"
+                        step={1800}
+                        value={hour.close_time}
+                        disabled={!hour.is_open}
+                        onChange={(event) =>
+                          changeHour(weekday, {
+                            close_time: event.target.value,
+                          })
+                        }
+                        className={`${inputClass} disabled:opacity-40`}
+                      />
+                    </Field>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          <div className="mt-5 rounded-[16px] bg-[#EDF3FA] p-4">
-            <p className="text-[14px] leading-6 text-[#475467]">
-              After you apply, MECATREX will review your NEQ, business details and planned services. You can sign in to check your application status, but service pricing and publication stay locked until approval.
-            </p>
-          </div>
-        </div>
+          <p className="rounded-[13px] bg-[#EDF3FA] p-4 text-[12px] leading-5 text-[#475467]">
+            MECATREX reviews your registration, photo, business
+            information, planned services and opening hours.
+            Prices and publication become available after approval.
+          </p>
+        </section>
       )}
 
-      <div className="mt-8 border-t border-[#EAECF0] pt-7">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <label>
-            <span className="mb-2 block text-[13px] font-bold text-[#344054]">Password</span>
-            <input
-              name="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="new-password"
-              required
-              aria-invalid={password.length > 0 && !passwordValid}
-              className={`h-[55px] w-full rounded-[15px] border bg-white px-4 text-[16px] text-[#101828] outline-none transition focus:ring-4 ${
-                password.length > 0 && !passwordValid
-                  ? "border-[#FDA29B] focus:border-[#D92D20] focus:ring-[#D92D20]/10"
-                  : "border-[#D0D5DD] focus:border-[#4771A6] focus:ring-[#4771A6]/10"
+      <section className="mt-7 grid gap-4 border-t border-[#EAECF0] pt-7 sm:grid-cols-2">
+        <TextField
+          label="Password *"
+          name="password"
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          autoComplete="new-password"
+          required
+        />
+        <TextField
+          label="Confirm password *"
+          name="confirm_password"
+          type="password"
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          autoComplete="new-password"
+          required
+        />
+        <div className="text-[11px] text-[#667085] sm:col-span-2">
+          Password: minimum 8 characters, one uppercase and one special character.
+          {confirmPassword && (
+            <span
+              className={`ml-2 font-bold ${
+                password === confirmPassword
+                  ? "text-[#027A48]"
+                  : "text-[#B42318]"
               }`}
-            />
-
-            <ul className="mt-2 space-y-1" aria-live="polite">
-              <Requirement met={passwordRequirements.length} active={password.length > 0}>At least 8 characters</Requirement>
-              <Requirement met={passwordRequirements.uppercase} active={password.length > 0}>At least 1 uppercase letter</Requirement>
-              <Requirement met={passwordRequirements.special} active={password.length > 0}>At least 1 special character</Requirement>
-            </ul>
-          </label>
-
-          <label>
-            <span className="mb-2 block text-[13px] font-bold text-[#344054]">Confirm password</span>
-            <input
-              name="confirm_password"
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              autoComplete="new-password"
-              required
-              aria-invalid={confirmPassword.length > 0 && !passwordsMatch}
-              className={`h-[55px] w-full rounded-[15px] border bg-white px-4 text-[16px] text-[#101828] outline-none transition focus:ring-4 ${
-                confirmPassword.length > 0 && !passwordsMatch
-                  ? "border-[#FDA29B] focus:border-[#D92D20] focus:ring-[#D92D20]/10"
-                  : passwordsMatch
-                    ? "border-[#6CE9A6] focus:border-[#12B76A] focus:ring-[#12B76A]/10"
-                    : "border-[#D0D5DD] focus:border-[#4771A6] focus:ring-[#4771A6]/10"
-              }`}
-            />
-
-            {confirmPassword.length > 0 && (
-              <p
-                className={`mt-2 text-[12px] font-semibold ${passwordsMatch ? "text-[#027A48]" : "text-[#B42318]"}`}
-                aria-live="polite"
-              >
-                {passwordsMatch ? "✓ Passwords match" : "× Passwords do not match"}
-              </p>
-            )}
-          </label>
+            >
+              {password === confirmPassword
+                ? "✓ Passwords match"
+                : "Passwords do not match"}
+            </span>
+          )}
         </div>
-      </div>
+      </section>
 
-      <label className="mt-7 flex cursor-pointer items-start gap-3 text-[13px] leading-5 text-[#667085]">
-        <input name="legal_consent" value="accepted" type="checkbox" required className="mt-1 h-4 w-4" />
+      <label className="mt-6 flex items-start gap-3 text-[12px] leading-5 text-[#475467]">
+        <input
+          name="legal_consent"
+          value="accepted"
+          type="checkbox"
+          required
+          className="mt-1"
+        />
         <span>
           I agree to the MECATREX{" "}
-          <Link href="/terms" target="_blank" className="font-bold text-[#4771A6] underline underline-offset-2">
+          <Link href="/terms" target="_blank" className="font-bold underline">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" target="_blank" className="font-bold text-[#4771A6] underline underline-offset-2">
+          <Link href="/privacy" target="_blank" className="font-bold underline">
             Privacy Policy
           </Link>.
         </span>
@@ -569,79 +889,15 @@ export default function SignupForm({ error, next }: { error?: string; next?: str
 
       <button
         type="submit"
-        disabled={!signupReady || isSubmitting}
-        className="mt-7 w-full rounded-[15px] bg-[#4771A6] px-6 py-4 text-[16px] font-bold text-white transition hover:bg-[#3C6190] disabled:cursor-not-allowed disabled:bg-[#B8C6D8] disabled:hover:bg-[#B8C6D8]"
+        disabled={!signupReady || pending}
+        className="mt-7 w-full rounded-[14px] bg-[#4771A6] px-5 py-4 text-[15px] font-bold text-white hover:bg-[#315C91] disabled:cursor-not-allowed disabled:bg-[#B8C6D8]"
       >
-        {isSubmitting ? "Submitting application…" : accountType === "client" ? "Create client account" : "Submit provider application"}
+        {pending
+          ? "Submitting application..."
+          : accountType === "provider"
+            ? "Submit provider application"
+            : "Create client account"}
       </button>
     </form>
-  );
-}
-
-function PhoneField({
-  label,
-  name,
-  value,
-  onChange,
-  required = false,
-  optional = false,
-}: {
-  label: string;
-  name: string;
-  value: string;
-  onChange: (value: string) => void;
-  required?: boolean;
-  optional?: boolean;
-}) {
-  const valid = value === "" ? !required : PHONE_REGEX.test(value);
-  const active = value.length > 0;
-
-  return (
-    <label>
-      <span className="mb-2 block text-[13px] font-bold text-[#344054]">
-        {label} {optional && <span className="font-medium text-[#98A2B3]">(optional)</span>}
-      </span>
-      <input
-        name={name}
-        type="tel"
-        inputMode="numeric"
-        autoComplete={required ? "tel" : "off"}
-        value={value}
-        onChange={(event) => onChange(formatPhone(event.target.value))}
-        maxLength={12}
-        required={required}
-        placeholder="514-555-1234"
-        aria-invalid={active && !valid}
-        className={`h-[55px] w-full rounded-[15px] border bg-white px-4 text-[16px] text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:ring-4 ${
-          active && !valid
-            ? "border-[#FDA29B] focus:border-[#D92D20] focus:ring-[#D92D20]/10"
-            : active && valid
-              ? "border-[#6CE9A6] focus:border-[#12B76A] focus:ring-[#12B76A]/10"
-              : "border-[#D0D5DD] focus:border-[#4771A6] focus:ring-[#4771A6]/10"
-        }`}
-      />
-      <p className={`mt-2 text-[12px] font-medium ${active && !valid ? "text-[#B42318]" : "text-[#98A2B3]"}`}>
-        {active && !valid ? "Enter exactly 10 digits." : "Format: 514-555-1234"}
-      </p>
-    </label>
-  );
-}
-
-function Field({
-  label,
-  className = "",
-  ...props
-}: {
-  label: string;
-  className?: string;
-} & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <label className={className}>
-      <span className="mb-2 block text-[13px] font-bold text-[#344054]">{label}</span>
-      <input
-        {...props}
-        className={`h-[55px] w-full rounded-[15px] border border-[#D0D5DD] px-4 text-[16px] text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10 ${props.readOnly ? "cursor-default bg-[#F8FAFC] text-[#667085]" : "bg-white"}`}
-      />
-    </label>
   );
 }

@@ -2,9 +2,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/account/actions";
 import {
+  communicateWithProvider,
   removeProvider,
   resendAdminApplicationEmail,
   resendProviderDecisionEmail,
@@ -29,10 +31,21 @@ type ProviderRow = {
   public_email: string | null;
   public_phone: string | null;
   website: string | null;
+  image_path: string | null;
   is_removed: boolean;
   is_listing_active: boolean;
   booking_suspended: boolean;
   provider_cancellation_count: number;
+  created_at: string;
+};
+
+type ProfileRow = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  primary_phone: string;
+  account_type: "admin" | "client" | "provider";
   created_at: string;
 };
 
@@ -42,56 +55,46 @@ type ApplicationRow = {
   application_services: string[];
 };
 
-type ProfileRow = {
+type ServiceRow = {
   id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  primary_phone: string;
-  account_type: "client" | "provider" | "admin";
-  created_at: string;
+  provider_id: string;
+  name: string;
+  price_cents: number | null;
+  duration_minutes: number | null;
+  is_active: boolean;
 };
+
+type HourRow = {
+  provider_id: string;
+  weekday: number;
+  is_open: boolean;
+  open_time: string;
+  close_time: string;
+};
+
+const WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 const registryUrl =
   "https://www.quebec.ca/entreprises-et-travailleurs-autonomes/obtenir-renseignements-entreprise/recherche-registre-entreprises/acceder-registre-entreprises";
 
-function statusStyle(status: ProviderRow["status"]) {
+const fieldClass =
+  "w-full rounded-[12px] border border-[#CBD5E1] bg-white px-4 py-3 text-[13px] text-[#101828] outline-none focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10";
+
+function statusClass(status: ProviderRow["status"]) {
   return {
-    pending: "bg-[#FFF7E8] text-[#92400E]",
+    pending: "bg-[#FFF4D6] text-[#92400E]",
     approved: "bg-[#ECFDF3] text-[#027A48]",
     needs_information: "bg-[#EFF6FF] text-[#1D4ED8]",
     rejected: "bg-[#FEF3F2] text-[#B42318]",
   }[status];
-}
-
-function PhoneLink({ number }: { number?: string | null }) {
-  if (!number) {
-    return <span className="text-[#98A2B3]">Not provided</span>;
-  }
-
-  return (
-    <a
-      href={`tel:${number.replace(/[^\d+]/g, "")}`}
-      className="font-semibold text-[#315C91] underline underline-offset-2"
-    >
-      {number}
-    </a>
-  );
-}
-
-function EmailLink({ email }: { email?: string | null }) {
-  if (!email) {
-    return <span className="text-[#98A2B3]">Not provided</span>;
-  }
-
-  return (
-    <a
-      href={`mailto:${email}`}
-      className="break-all font-semibold text-[#315C91] underline underline-offset-2"
-    >
-      {email}
-    </a>
-  );
 }
 
 function DataField({
@@ -99,253 +102,362 @@ function DataField({
   children,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="min-w-0">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-[#667085]">
+      <p className="text-[10px] font-extrabold uppercase tracking-wide text-[#667085]">
         {label}
       </p>
-      <div className="mt-1 break-words text-[13px] font-medium text-[#101828]">
+      <div className="mt-1 break-words text-[13px] font-semibold text-[#101828]">
         {children}
       </div>
     </div>
   );
 }
 
-function ProviderCard({
+function EmailLink({ email }: { email?: string | null }) {
+  if (!email) return <span>Not provided</span>;
+
+  return (
+    <a
+      href={`mailto:${email}`}
+      className="break-all text-[#315C91] underline"
+    >
+      {email}
+    </a>
+  );
+}
+
+function PhoneLink({ number }: { number?: string | null }) {
+  if (!number) return <span>Not provided</span>;
+
+  return (
+    <a
+      href={`tel:${number.replace(/[^\d+]/g, "")}`}
+      className="text-[#315C91] underline"
+    >
+      {number}
+    </a>
+  );
+}
+
+function formatHour(value: string) {
+  const [h, m] = value.split(":");
+  const hour = Number(h);
+
+  if (!Number.isFinite(hour)) return value;
+
+  return `${hour % 12 || 12}:${m} ${hour >= 12 ? "PM" : "AM"}`;
+}
+
+function BusinessCard({
   provider,
   owner,
   application,
+  services,
+  hours,
+  imageUrl,
 }: {
   provider: ProviderRow;
   owner?: ProfileRow;
   application?: ApplicationRow;
+  services: ServiceRow[];
+  hours: HourRow[];
+  imageUrl: string;
 }) {
   const needsReview =
     provider.status === "pending" ||
     provider.status === "needs_information";
 
+  const approved = provider.status === "approved";
+
   const ownerName = owner
     ? `${owner.first_name} ${owner.last_name}`.trim()
-    : "Not found";
+    : "Not provided";
 
   return (
     <details
       id={`provider-${provider.id}`}
-      className={`meca-accordion scroll-mt-8 overflow-hidden rounded-[19px] border bg-white shadow-sm transition ${
-        needsReview
-          ? "portal-provider-urgent border-[#93B4DC]"
-          : "border-[#D6E0ED]"
+      className={`group scroll-mt-8 overflow-hidden rounded-[20px] border bg-white shadow-sm ${
+        needsReview ? "border-[#93B4DC]" : "border-[#D6E0ED]"
       }`}
     >
-      <summary className="relative cursor-pointer px-4 py-4 pr-14 sm:px-5 sm:py-5 sm:pr-16">
-        <span
-          aria-hidden="true"
-          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-[11px] border border-[#CAD6E5] bg-[#EDF3FA] text-[23px] font-semibold text-[#315C91]"
-        >
-          <span className="meca-plus">+</span>
-          <span className="meca-minus">−</span>
+      <summary className="relative cursor-pointer list-none px-5 py-5 pr-16 [&::-webkit-details-marker]:hidden">
+        <span className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#C9D6E5] bg-[#EDF3FA] text-[21px] font-bold text-[#315C91]">
+          <span className="group-open:hidden">+</span>
+          <span className="hidden group-open:inline">−</span>
         </span>
 
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-[18px] font-extrabold text-[#101828] sm:text-[20px]">
+          <h3 className="text-[19px] font-extrabold text-[#101828]">
             {provider.business_name}
           </h3>
 
           <span
-            className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase ${statusStyle(
-              provider.status
-            )}`}
+            className={`rounded-full px-3 py-1 text-[10px] font-extrabold uppercase ${statusClass(provider.status)}`}
           >
             {provider.status.replaceAll("_", " ")}
           </span>
 
-          <span className="rounded-full bg-[#EDF3FA] px-2.5 py-1 text-[10px] font-extrabold uppercase text-[#315C91]">
+          <span className="rounded-full bg-[#EDF3FA] px-3 py-1 text-[10px] font-bold uppercase text-[#315C91]">
             {provider.provider_type}
           </span>
 
           {provider.is_removed && (
-            <span className="rounded-full bg-[#FEF3F2] px-2.5 py-1 text-[10px] font-bold text-[#B42318]">
+            <span className="rounded-full bg-[#FEF3F2] px-3 py-1 text-[10px] font-bold text-[#B42318]">
               Removed
             </span>
           )}
 
           {provider.is_listing_active && (
-            <span className="rounded-full bg-[#ECFDF3] px-2.5 py-1 text-[10px] font-bold text-[#027A48]">
+            <span className="rounded-full bg-[#ECFDF3] px-3 py-1 text-[10px] font-bold text-[#027A48]">
               Published
             </span>
           )}
         </div>
 
-        <p className="mt-2 text-[13px] leading-5 text-[#667085]">
+        <p className="mt-2 text-[12px] text-[#667085]">
           📍 {provider.address_line1}, {provider.city},{" "}
           {provider.province} {provider.postal_code}
         </p>
 
-        <div className="portal-summary-card mt-3 grid gap-x-5 gap-y-3 rounded-[13px] border border-[#E4E7EC] bg-[#F8FAFC] p-3 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 rounded-[13px] border border-[#E4E7EC] bg-[#F8FAFC] p-4 sm:grid-cols-2">
           <DataField label="Owner">{ownerName}</DataField>
-
           <DataField label="Account email">
             {owner?.email || "Not provided"}
           </DataField>
-
           <DataField label="Account phone">
             {owner?.primary_phone || "Not provided"}
           </DataField>
-
           <DataField label="Public phone">
             {provider.public_phone || "Not provided"}
           </DataField>
-
-          <div className="sm:col-span-2">
-            <DataField label="Public email">
-              {provider.public_email || "Not provided"}
-            </DataField>
-          </div>
+          <DataField label="Public email">
+            {provider.public_email || "Not provided"}
+          </DataField>
         </div>
       </summary>
 
-      <div className="border-t border-[#D6E0ED] px-4 pb-5 pt-5 sm:px-5">
-        {provider.business_description && (
-          <p className="mb-4 whitespace-pre-wrap text-[13px] leading-6 text-[#475467]">
-            {provider.business_description}
-          </p>
-        )}
+      <div className="space-y-5 border-t border-[#D6E0ED] p-5">
+        <div className="grid gap-5 md:grid-cols-[280px_1fr]">
+          <section className="rounded-[16px] border border-[#D6E0ED] bg-[#F8FAFD] p-4">
+            <h4 className="text-[14px] font-extrabold">
+              📸 Business photo
+            </h4>
 
-        <div className="grid gap-3 rounded-[15px] border border-[#E4E7EC] bg-white p-4 text-[13px] sm:grid-cols-2">
-          <DataField label="Owner">
-            {ownerName}
-          </DataField>
+            {imageUrl ? (
+              <div className="relative mt-3 aspect-video overflow-hidden rounded-[12px]">
+                <Image
+                  src={imageUrl}
+                  alt={`Photo of ${provider.business_name}`}
+                  fill
+                  unoptimized
+                  sizes="280px"
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div className="mt-3 flex aspect-video items-center justify-center rounded-[12px] bg-[#EAECF0] text-center text-[12px] font-bold text-[#B42318]">
+                No photo uploaded
+              </div>
+            )}
+          </section>
 
-          <DataField label="Account email">
-            <EmailLink email={owner?.email} />
-          </DataField>
+          <section className="rounded-[16px] border border-[#D6E0ED] bg-[#F8FAFD] p-4">
+            <h4 className="text-[14px] font-extrabold">
+              Business verification dossier
+            </h4>
 
-          <DataField label="Account phone">
-            <PhoneLink number={owner?.primary_phone} />
-          </DataField>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <DataField label="Quebec NEQ">
+                {application?.business_neq || "Not provided"}
+              </DataField>
 
-          <DataField label="Public phone">
-            <PhoneLink number={provider.public_phone} />
-          </DataField>
+              <DataField label="Application submitted">
+                {new Date(provider.created_at).toLocaleDateString("en-CA")}
+              </DataField>
 
-          <DataField label="Public email">
-            <EmailLink email={provider.public_email} />
-          </DataField>
+              <DataField label="Owner">
+                {ownerName}
+              </DataField>
 
-          <DataField label="Application submitted">
-            {new Date(provider.created_at).toLocaleDateString("en-CA")}
-          </DataField>
+              <DataField label="Account email">
+                <EmailLink email={owner?.email} />
+              </DataField>
 
-          {provider.provider_type === "garage" && (
-            <DataField label="Garage cancellations">
-              {provider.provider_cancellation_count} / 3
-              {provider.booking_suspended
-                ? " · Booking suspended"
-                : ""}
-            </DataField>
-          )}
-        </div>
+              <DataField label="Public phone">
+                <PhoneLink number={provider.public_phone} />
+              </DataField>
 
-        <section className="portal-summary-card mt-4 rounded-[16px] border border-[#D6E0ED] bg-[#F8FAFD] p-4 sm:p-5">
-          <h4 className="text-[15px] font-extrabold text-[#101828]">
-            Business verification dossier
-          </h4>
+              <DataField label="Public email">
+                <EmailLink email={provider.public_email} />
+              </DataField>
+            </div>
 
-          <div className="mt-4 grid gap-4 text-[13px] sm:grid-cols-2">
-            <DataField label="Quebec NEQ">
-              {application?.business_neq || "Not provided"}
-            </DataField>
-
-            <DataField label="Website">
-              {provider.website ? (
+            {provider.website && (
+              <p className="mt-4 break-all text-[12px]">
+                Website:{" "}
                 <a
                   href={provider.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="break-all font-semibold text-[#315C91] underline"
+                  className="font-bold text-[#315C91] underline"
                 >
                   {provider.website}
                 </a>
-              ) : (
-                "Not provided"
-              )}
-            </DataField>
-          </div>
-
-          <div className="mt-4">
-            <DataField label="Planned services">
-              {application?.application_services?.length
-                ? application.application_services.join(" · ")
-                : "Not provided"}
-            </DataField>
-          </div>
-
-          <a
-            href={registryUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-block text-[13px] font-bold text-[#315C91] underline"
-          >
-            Verify NEQ in Quebec enterprise registry ↗
-          </a>
-
-          <form
-            action={resendAdminApplicationEmail}
-            className="mt-4"
-          >
-            <input
-              type="hidden"
-              name="provider_id"
-              value={provider.id}
-            />
-
-            <button
-              type="submit"
-              className="rounded-xl border border-[#93B4DC] bg-white px-4 py-2.5 text-[12px] font-bold text-[#315C91] transition hover:bg-[#EAF1F9]"
-            >
-              ↻ Resend detailed application email to admin
-            </button>
-          </form>
-        </section>
-
-        {!provider.is_removed && (
-          <form
-            action={setProviderStatus}
-            className="mt-4 rounded-[16px] border border-[#D0D5DD] bg-[#F8FAFC] p-4"
-          >
-            <input
-              type="hidden"
-              name="provider_id"
-              value={provider.id}
-            />
-
-            <label className="block">
-              <span className="mb-2 block text-[13px] font-bold text-[#101828]">
-                Message to provider
-              </span>
-
-              <p className="mb-3 text-[12px] leading-5 text-[#667085]">
-                Required when rejecting an application or requesting
-                additional information.
               </p>
+            )}
 
-              <textarea
-                name="message"
-                rows={3}
-                placeholder="Explain your decision or the information you need..."
-                className="w-full rounded-[13px] border border-[#CBD5E1] bg-white px-4 py-3 text-[14px] text-[#101828] outline-none focus:border-[#4771A6]"
-              />
-            </label>
+            <a
+              href={registryUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block text-[12px] font-bold text-[#315C91] underline"
+            >
+              Verify NEQ in Quebec enterprise registry
+            </a>
+          </section>
+        </div>
+
+        {provider.business_description && (
+          <section className="rounded-[15px] border border-[#D6E0ED] p-4">
+            <h4 className="text-[13px] font-extrabold">
+              Business description
+            </h4>
+            <p className="mt-2 whitespace-pre-wrap text-[12px] leading-6 text-[#475467]">
+              {provider.business_description}
+            </p>
+          </section>
+        )}
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <section className="rounded-[15px] border border-[#D6E0ED] p-4">
+            <h4 className="text-[14px] font-extrabold">
+              🔧 Selected services
+            </h4>
 
             <div className="mt-3 flex flex-wrap gap-2">
+              {(application?.application_services ?? []).map(
+                (service, index) => (
+                  <span
+                    key={`${service}-${index}`}
+                    className="rounded-full border border-[#D6E0ED] bg-[#EDF3FA] px-3 py-2 text-[11px] font-semibold text-[#315C91]"
+                  >
+                    {service}
+                  </span>
+                )
+              )}
+            </div>
+
+            {approved && services.length > 0 && (
+              <div className="mt-4 space-y-2 border-t border-[#EAECF0] pt-4">
+                <p className="text-[11px] font-bold uppercase text-[#667085]">
+                  Configured catalogue
+                </p>
+
+                {services.map((service) => (
+                  <div
+                    key={service.id}
+                    className="flex items-center justify-between gap-3 rounded-[10px] bg-[#F8FAFC] p-3 text-[12px]"
+                  >
+                    <span className="font-bold">{service.name}</span>
+                    <span className="text-[#475467]">
+                      {service.price_cents == null
+                        ? "Price required"
+                        : `${(service.price_cents / 100).toFixed(2)} CAD`}
+                      {!service.is_active && " · Draft"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-[15px] border border-[#D6E0ED] p-4">
+            <h4 className="text-[14px] font-extrabold">
+              🕒 Submitted business hours
+            </h4>
+
+            <div className="mt-3 overflow-hidden rounded-[12px] border border-[#D6E0ED]">
+              {WEEKDAYS.map((day, weekday) => {
+                const hour = hours.find(
+                  (row) => row.weekday === weekday
+                );
+
+                return (
+                  <div
+                    key={day}
+                    className="flex items-center justify-between gap-3 border-b border-[#E4E7EC] px-3 py-2.5 text-[12px] last:border-b-0"
+                  >
+                    <span className="font-bold">{day}</span>
+                    {hour?.is_open ? (
+                      <span className="font-semibold text-[#027A48]">
+                        {formatHour(hour.open_time)} –{" "}
+                        {formatHour(hour.close_time)}
+                      </span>
+                    ) : (
+                      <span className="text-[#98A2B3]">Closed</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+
+        {needsReview && !provider.is_removed && (
+          <form
+            action={resendAdminApplicationEmail}
+            className="flex justify-start"
+          >
+            <input
+              type="hidden"
+              name="provider_id"
+              value={provider.id}
+            />
+            <button
+              type="submit"
+              className="rounded-[10px] border border-[#BAC7D7] bg-white px-4 py-2 text-[12px] font-bold text-[#315C91]"
+            >
+              Resend detailed application to admin
+            </button>
+          </form>
+        )}
+
+        {!approved && !provider.is_removed && (
+          <form
+            action={setProviderStatus}
+            className="rounded-[16px] border border-[#BAC7D7] bg-[#F8FAFC] p-5"
+          >
+            <input
+              type="hidden"
+              name="provider_id"
+              value={provider.id}
+            />
+
+            <h4 className="text-[16px] font-extrabold">
+              Application decision
+            </h4>
+
+            <p className="mt-1 text-[12px] text-[#667085]">
+              Approve, reject or request additional information before
+              the company is accepted.
+            </p>
+
+            <textarea
+              name="message"
+              rows={3}
+              placeholder="Message or missing information..."
+              className={`${fieldClass} mt-4`}
+            />
+
+            <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="submit"
                 name="status"
                 value="approved"
-                disabled={provider.status === "approved"}
-                className="rounded-xl bg-[#027A48] px-4 py-3 text-[13px] font-bold text-white transition hover:bg-[#05603A] disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-[11px] bg-[#027A48] px-4 py-3 text-[12px] font-bold text-white"
               >
                 ✓ Approve
               </button>
@@ -354,7 +466,7 @@ function ProviderCard({
                 type="submit"
                 name="status"
                 value="needs_information"
-                className="rounded-xl bg-[#4771A6] px-4 py-3 text-[13px] font-bold text-white transition hover:bg-[#315C91]"
+                className="rounded-[11px] bg-[#4771A6] px-4 py-3 text-[12px] font-bold text-white"
               >
                 Request more info
               </button>
@@ -363,8 +475,7 @@ function ProviderCard({
                 type="submit"
                 name="status"
                 value="rejected"
-                disabled={provider.status === "rejected"}
-                className="rounded-xl border border-[#FDA29B] bg-white px-4 py-3 text-[13px] font-bold text-[#B42318] transition hover:bg-[#FEF3F2] disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-[11px] border border-[#FDA29B] bg-white px-4 py-3 text-[12px] font-bold text-[#B42318]"
               >
                 Reject
               </button>
@@ -372,65 +483,139 @@ function ProviderCard({
           </form>
         )}
 
-        {!provider.is_removed && (
-          <form
-            action={removeProvider}
-            className="mt-4 rounded-[16px] border border-[#FDA29B] bg-[#FFF9F8] p-4"
-          >
-            <input
-              type="hidden"
-              name="provider_id"
-              value={provider.id}
-            />
+        {approved && !provider.is_removed && (
+          <section className="rounded-[17px] border border-[#A4C1DB] bg-[#F0F6FC] p-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-white text-[22px]">
+                ✉️
+              </span>
+              <div>
+                <h4 className="text-[17px] font-extrabold text-[#101828]">
+                  Communicate with provider
+                </h4>
+                <p className="mt-1 text-[12px] text-[#667085]">
+                  Send a message without changing the approval status.
+                </p>
+              </div>
+            </div>
 
-            <label className="block text-[13px] font-bold text-[#B42318]">
-              Remove this provider from MECATREX
+            <form
+              action={communicateWithProvider}
+              className="mt-4 space-y-3"
+            >
+              <input
+                type="hidden"
+                name="provider_id"
+                value={provider.id}
+              />
+
+              <div>
+                <label className="mb-1 block text-[12px] font-bold">
+                  To
+                </label>
+                <input
+                  value={owner?.email ?? ""}
+                  readOnly
+                  className={`${fieldClass} bg-[#E9F0F7]`}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor={`subject-${provider.id}`}
+                  className="mb-1 block text-[12px] font-bold"
+                >
+                  Subject *
+                </label>
+                <input
+                  id={`subject-${provider.id}`}
+                  name="subject"
+                  required
+                  minLength={3}
+                  maxLength={150}
+                  placeholder="Important update about your business"
+                  className={fieldClass}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor={`message-${provider.id}`}
+                  className="mb-1 block text-[12px] font-bold"
+                >
+                  Message *
+                </label>
+                <textarea
+                  id={`message-${provider.id}`}
+                  name="message"
+                  required
+                  minLength={3}
+                  maxLength={3000}
+                  rows={4}
+                  placeholder="Write your communication here..."
+                  className={fieldClass}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="rounded-[11px] bg-[#315C91] px-5 py-3 text-[12px] font-bold text-white hover:bg-[#234674]"
+              >
+                ✉ Send communication
+              </button>
+            </form>
+
+            <p className="mt-3 text-[11px] font-semibold text-[#027A48]">
+              ✓ Approved status stays unchanged.
+            </p>
+          </section>
+        )}
+
+        {!provider.is_removed && (
+          <section className="rounded-[16px] border border-[#FDA29B] bg-[#FFF9F8] p-4">
+            <h4 className="text-[13px] font-extrabold text-[#B42318]">
+              Remove this business from MECATREX
+            </h4>
+
+            <form action={removeProvider} className="mt-3">
+              <input
+                type="hidden"
+                name="provider_id"
+                value={provider.id}
+              />
 
               <textarea
                 name="removal_reason"
                 required
                 minLength={10}
                 rows={2}
-                placeholder="Reason for removal (at least 10 characters)"
-                className="mt-2 w-full rounded-xl border border-[#FDA29B] bg-white px-4 py-3 text-[13px] text-[#101828]"
+                placeholder="Explain the reason for removal..."
+                className={fieldClass}
               />
-            </label>
 
-            <button
-              type="submit"
-              className="mt-3 rounded-xl bg-[#B42318] px-4 py-2.5 text-[13px] font-bold text-white transition hover:bg-[#912018]"
-            >
-              Remove and unpublish
-            </button>
-
-            <p className="mt-2 text-[12px] leading-5 text-[#667085]">
-              Historical bookings and reviews are retained. Contact
-              customers about upcoming appointments.
-            </p>
-          </form>
+              <button
+                type="submit"
+                className="mt-3 rounded-[10px] bg-[#B42318] px-4 py-2.5 text-[12px] font-bold text-white"
+              >
+                Remove and unpublish
+              </button>
+            </form>
+          </section>
         )}
 
-        {provider.status !== "pending" && (
-          <form
-            action={resendProviderDecisionEmail}
-            className="mt-4 flex flex-wrap items-center gap-3"
-          >
+        {!provider.is_removed && provider.status !== "pending" && (
+          <form action={resendProviderDecisionEmail}>
             <input
               type="hidden"
               name="provider_id"
               value={provider.id}
             />
-
             <button
               type="submit"
-              className="rounded-xl border border-[#98A2B3] bg-white px-4 py-2.5 text-[13px] font-bold text-[#315C91] hover:bg-[#EDF3FA]"
+              className="rounded-[10px] border border-[#BAC7D7] bg-white px-4 py-2.5 text-[12px] font-bold text-[#315C91]"
             >
-              ↻ Resend decision email
+              ↻ Resend approval / decision email
             </button>
-
-            <span className="text-[12px] text-[#667085]">
-              Sends the current decision to the provider.
-            </span>
           </form>
         )}
       </div>
@@ -446,65 +631,42 @@ function AccountCard({
   provider?: ProviderRow;
 }) {
   return (
-    <details className="meca-accordion overflow-hidden rounded-[16px] border border-[#D6E0ED] bg-white">
-      <summary className="relative cursor-pointer px-4 py-4 pr-14 sm:px-5">
-        <span
-          aria-hidden="true"
-          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg border border-[#CBD5E1] bg-[#EDF3FA] text-[23px] font-semibold text-[#315C91]"
-        >
-          <span className="meca-plus">+</span>
-          <span className="meca-minus">−</span>
+    <details className="group overflow-hidden rounded-[15px] border border-[#D6E0ED] bg-white">
+      <summary className="relative cursor-pointer list-none p-4 pr-14 [&::-webkit-details-marker]:hidden">
+        <span className="absolute right-4 top-4 rounded-lg bg-[#EDF3FA] px-3 py-1 text-[20px] text-[#315C91]">
+          <span className="group-open:hidden">+</span>
+          <span className="hidden group-open:inline">−</span>
         </span>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-[15px] font-bold text-[#101828]">
-            {account.first_name} {account.last_name}
-          </h3>
-
-          <span className="rounded-full bg-[#EDF3FA] px-2.5 py-1 text-[10px] font-bold uppercase text-[#315C91]">
+        <p className="text-[14px] font-bold">
+          {account.first_name} {account.last_name}
+          <span className="ml-2 rounded-full bg-[#EDF3FA] px-2 py-1 text-[10px] uppercase text-[#315C91]">
             {account.account_type}
           </span>
-        </div>
-
-        <p className="mt-1 break-all text-[13px] text-[#667085]">
+        </p>
+        <p className="mt-1 text-[12px] text-[#667085]">
           {account.email}
         </p>
-
         {provider && (
-          <p className="mt-1 text-[12px] text-[#667085]">
-            {provider.business_name} · {provider.status.replaceAll("_", " ")}
+          <p className="mt-1 text-[11px] text-[#667085]">
+            {provider.business_name} · {provider.status}
           </p>
         )}
       </summary>
 
-      <div className="grid gap-4 border-t border-[#E4E7EC] bg-[#F8FAFC] p-4 sm:grid-cols-2 sm:p-5">
-        <DataField label="Account email">
+      <div className="grid gap-4 border-t border-[#EAECF0] bg-[#F8FAFC] p-4 sm:grid-cols-2">
+        <DataField label="Email">
           <EmailLink email={account.email} />
         </DataField>
-
-        <DataField label="Account phone">
+        <DataField label="Phone">
           <PhoneLink number={account.primary_phone} />
         </DataField>
-
         <DataField label="Account type">
           {account.account_type}
         </DataField>
-
         <DataField label="Joined">
           {new Date(account.created_at).toLocaleDateString("en-CA")}
         </DataField>
-
-        {provider && (
-          <>
-            <DataField label="Business">
-              {provider.business_name}
-            </DataField>
-
-            <DataField label="Business status">
-              {provider.status.replaceAll("_", " ")}
-            </DataField>
-          </>
-        )}
       </div>
     </details>
   );
@@ -521,16 +683,15 @@ export default async function AdminPage({
   }>;
 }) {
   const params = await searchParams;
+
   const adminEmail =
     process.env.MECATREX_ADMIN_EMAIL?.trim() ||
     "RaselChowdhury12345@hotmail.com";
 
-  const loginQuery = new URLSearchParams({
+  const loginUrl = `/login?${new URLSearchParams({
     next: "/admin#applications",
     email: adminEmail,
-  });
-
-  const adminLoginUrl = `/login?${loginQuery.toString()}`;
+  }).toString()}`;
 
   const supabase = await createClient();
 
@@ -538,29 +699,29 @@ export default async function AdminPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect(adminLoginUrl);
-  }
+  if (!user) redirect(loginUrl);
 
-  const { data: currentProfile } = await supabase
+  const { data: profile } = await supabase
     .from("profiles")
-    .select("account_type, accent_color, email")
+    .select("account_type, accent_color")
     .eq("id", user.id)
     .single();
 
-  if (currentProfile?.account_type !== "admin") {
-    redirect(adminLoginUrl);
+  if (profile?.account_type !== "admin") {
+    redirect("/account");
   }
 
   const [
-    { data: providerRows, error: providerError },
-    { data: profileRows, error: accountsError },
-    { data: applicationRows, error: applicationError },
+    { data: providerData, error: providerError },
+    { data: profileData, error: accountsError },
+    { data: applicationData, error: applicationError },
+    { data: serviceData },
+    { data: hourData },
   ] = await Promise.all([
     supabase
       .from("service_providers")
       .select(
-        "id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, is_removed, is_listing_active, booking_suspended, provider_cancellation_count, created_at"
+        "id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, image_path, is_removed, is_listing_active, booking_suspended, provider_cancellation_count, created_at"
       )
       .order("created_at", { ascending: false }),
 
@@ -574,13 +735,27 @@ export default async function AdminPage({
     supabase
       .from("provider_applications")
       .select("provider_id, business_neq, application_services"),
+
+    supabase
+      .from("provider_services")
+      .select(
+        "id, provider_id, name, price_cents, duration_minutes, is_active"
+      ),
+
+    supabase
+      .from("garage_business_hours")
+      .select(
+        "provider_id, weekday, is_open, open_time, close_time"
+      ),
   ]);
 
-  const providers = (providerRows ?? []) as ProviderRow[];
-  const accounts = (profileRows ?? []) as ProfileRow[];
-  const applications = (applicationRows ?? []) as ApplicationRow[];
+  const providers = (providerData ?? []) as ProviderRow[];
+  const accounts = (profileData ?? []) as ProfileRow[];
+  const applications = (applicationData ?? []) as ApplicationRow[];
+  const services = (serviceData ?? []) as ServiceRow[];
+  const hours = (hourData ?? []) as HourRow[];
 
-  const ownerMap = new Map(
+  const accountMap = new Map(
     accounts.map((account) => [account.id, account])
   );
 
@@ -602,15 +777,15 @@ export default async function AdminPage({
         provider.status === "needs_information")
   );
 
-  const filtered = [
+  const orderedProviders = [
     ...pending,
     ...providers.filter(
       (provider) =>
-        !pending.some((pendingProvider) => pendingProvider.id === provider.id)
+        !pending.some((item) => item.id === provider.id)
     ),
   ];
 
-  const accent = (currentProfile.accent_color || "blue") as AccentColor;
+  const accent = (profile.accent_color || "blue") as AccentColor;
 
   const clientsCount = accounts.filter(
     (account) => account.account_type === "client"
@@ -620,50 +795,11 @@ export default async function AdminPage({
     (account) => account.account_type === "provider"
   ).length;
 
-  const brevoConfigured = Boolean(
-    process.env.BREVO_API_KEY &&
-      process.env.BREVO_SENDER_EMAIL &&
-      process.env.MECATREX_ADMIN_EMAIL
-  );
-
   return (
     <main
       className="portal-theme min-h-screen px-4 py-8 text-[#101828] sm:px-6"
       data-portal-theme={accent}
     >
-      <style>{`
-        .meca-accordion > summary {
-          list-style: none;
-        }
-
-        .meca-accordion > summary::-webkit-details-marker {
-          display: none;
-        }
-
-        .meca-accordion .meca-minus {
-          display: none;
-        }
-
-        .meca-accordion[open] > summary .meca-plus {
-          display: none;
-        }
-
-        .meca-accordion[open] > summary .meca-minus {
-          display: inline;
-        }
-
-        .meca-accordion[open] {
-          border-color: var(--portal-accent, #4771A6);
-          box-shadow: 0 8px 24px rgba(16, 24, 40, 0.06);
-        }
-
-        .meca-accordion > summary:focus-visible {
-          outline: 3px solid var(--portal-accent, #4771A6);
-          outline-offset: -3px;
-          border-radius: 14px;
-        }
-      `}</style>
-
       <div className="mx-auto max-w-[1250px]">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <Link href="/" aria-label="MECATREX homepage">
@@ -673,14 +809,14 @@ export default async function AdminPage({
               width={260}
               height={74}
               priority
-              className="h-[52px] w-auto"
+              className="h-[50px] w-auto"
             />
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex gap-2">
             <Link
               href="/"
-              className="rounded-xl border border-[#BAC7D7] bg-white px-5 py-3 text-[13px] font-bold text-[#344054] hover:bg-[#EDF3FA]"
+              className="rounded-[11px] border border-[#BAC7D7] bg-white px-4 py-3 text-[12px] font-bold"
             >
               ← MECATREX home
             </Link>
@@ -688,7 +824,7 @@ export default async function AdminPage({
             <form action={signOut}>
               <button
                 type="submit"
-                className="rounded-xl border border-[#BAC7D7] bg-white px-5 py-3 text-[13px] font-bold text-[#344054] hover:bg-[#EDF3FA]"
+                className="rounded-[11px] border border-[#BAC7D7] bg-white px-4 py-3 text-[12px] font-bold"
               >
                 Log out
               </button>
@@ -696,87 +832,68 @@ export default async function AdminPage({
           </div>
         </header>
 
-        <div className="portal-main-card mt-7 rounded-[28px] border border-[#E4E7EC] bg-white p-6 shadow-[0_16px_50px_rgba(16,24,40,0.06)] sm:p-9">
-          <p className="portal-kicker text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
+        <div className="portal-main-card mt-7 rounded-[25px] border border-[#E4E7EC] bg-white p-5 shadow-sm sm:p-8">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-[#4771A6]">
             MECATREX administration
           </p>
 
-          <h1 className="mt-2 text-[30px] font-bold tracking-[-0.04em] sm:text-[42px]">
+          <h1 className="mt-2 text-[32px] font-extrabold tracking-tight">
             Marketplace command center
           </h1>
 
-          <p className="mt-2 text-[14px] leading-6 text-[#667085]">
-            Manage applications, garages, towing providers and registered
-            accounts from one dashboard.
+          <p className="mt-2 text-[13px] text-[#667085]">
+            Review applications, contact approved businesses and manage
+            registered accounts in one place.
           </p>
 
-          <AccentPicker
-            userId={user.id}
-            initialAccent={accent}
-          />
+          <AccentPicker userId={user.id} initialAccent={accent} />
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <a
-              href="#applications"
-              className="portal-feature-banner rounded-[18px] border border-[#BAC7D7] bg-[#101828] p-5 text-white"
-            >
-              <p className="text-[12px] font-bold uppercase tracking-wide">
-                Applications awaiting review
-              </p>
-              <p className="mt-2 text-[32px] font-extrabold">
-                {pending.length}
-              </p>
-            </a>
-
-            <a
-              href="#businesses"
-              className="portal-summary-card rounded-[18px] border border-[#BAC7D7] bg-[#F8FAFC] p-5"
-            >
-              <p className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">
-                Registered businesses
-              </p>
-              <p className="mt-2 text-[32px] font-extrabold">
-                {businessCount}
-              </p>
-            </a>
-
-            <a
-              href="#accounts"
-              className="portal-summary-card rounded-[18px] border border-[#BAC7D7] bg-[#F8FAFC] p-5"
-            >
-              <p className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">
-                Client accounts
-              </p>
-              <p className="mt-2 text-[32px] font-extrabold">
-                {clientsCount}
-              </p>
-            </a>
+            {[
+              {
+                label: "Applications awaiting review",
+                count: pending.length,
+                href: "#applications",
+              },
+              {
+                label: "Registered businesses",
+                count: businessCount,
+                href: "#businesses",
+              },
+              {
+                label: "Client accounts",
+                count: clientsCount,
+                href: "#accounts",
+              },
+            ].map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                className="rounded-[16px] border border-[#BAC7D7] bg-[#F5F8FC] p-5 hover:border-[#4771A6]"
+              >
+                <p className="text-[11px] font-bold text-[#667085]">
+                  {item.label}
+                </p>
+                <p className="mt-2 text-[30px] font-extrabold">
+                  {item.count}
+                </p>
+              </a>
+            ))}
           </div>
-
-          {!brevoConfigured && (
-            <div
-              role="alert"
-              className="mt-5 rounded-[16px] border border-[#FEC84B] bg-[#FFFAEB] p-4 text-[13px] leading-6 text-[#92400E]"
-            >
-              <strong>Email notifications are not fully configured.</strong>
-              {" "}Verify BREVO_API_KEY, BREVO_SENDER_EMAIL and
-              MECATREX_ADMIN_EMAIL in your server environment.
-            </div>
-          )}
 
           {params.success && (
             <div
               role="status"
-              className="mt-5 rounded-[14px] bg-[#ECFDF3] p-4 text-[13px] font-semibold text-[#027A48]"
+              className="mt-5 rounded-[12px] bg-[#ECFDF3] p-4 text-[13px] font-bold text-[#027A48]"
             >
-              {params.success}
+              ✓ {params.success}
             </div>
           )}
 
           {params.warning && (
             <div
               role="alert"
-              className="mt-5 rounded-[14px] bg-[#FFFAEB] p-4 text-[13px] font-semibold text-[#92400E]"
+              className="mt-5 rounded-[12px] bg-[#FFFAEB] p-4 text-[13px] font-bold text-[#92400E]"
             >
               {params.warning}
             </div>
@@ -785,7 +902,7 @@ export default async function AdminPage({
           {params.error && (
             <div
               role="alert"
-              className="mt-5 rounded-[14px] bg-[#FEF3F2] p-4 text-[13px] font-semibold text-[#B42318]"
+              className="mt-5 rounded-[12px] bg-[#FEF3F2] p-4 text-[13px] font-bold text-[#B42318]"
             >
               {params.error}
             </div>
@@ -805,131 +922,105 @@ export default async function AdminPage({
 
           <section
             id="applications"
-            className="portal-section mt-8 scroll-mt-8"
+            className="mt-8 scroll-mt-8"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="portal-section-heading text-[23px] font-bold">
-                Applications needing attention
-              </h2>
-
-              <span className="rounded-full bg-[#EDF3FA] px-4 py-2 text-[12px] font-bold text-[#344054]">
-                {pending.length} awaiting action
-              </span>
-            </div>
-
-            <p className="mt-2 text-[13px] text-[#667085]">
-              Select an application below to open its full verification
-              dossier.
+            <h2 className="text-[23px] font-extrabold">
+              Applications needing attention
+            </h2>
+            <p className="mt-2 text-[12px] text-[#667085]">
+              Only pending and incomplete applications appear here.
             </p>
 
-            {pending.length > 0 ? (
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {pending.length === 0 ? (
+              <div className="mt-4 rounded-[15px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-6 text-center text-[13px]">
+                ✓ Nothing needs review right now.
+              </div>
+            ) : (
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {pending.map((provider) => (
                   <a
                     key={provider.id}
                     href={`#provider-${provider.id}`}
-                    className="portal-summary-card rounded-[15px] border border-[#BAC7D7] bg-[#F8FAFC] p-4 transition hover:shadow-md"
+                    className="rounded-[15px] border border-[#BAC7D7] bg-[#F8FAFC] p-4 hover:border-[#4771A6]"
                   >
-                    <p className="font-bold text-[#101828]">
-                      {provider.business_name}
+                    <strong>{provider.business_name}</strong>
+                    <p className="mt-1 text-[12px] text-[#667085]">
+                      {provider.provider_type} · {provider.status}
                     </p>
-
-                    <p className="mt-1 text-[12px] capitalize text-[#667085]">
-                      {provider.provider_type} ·{" "}
-                      {provider.status.replaceAll("_", " ")}
-                    </p>
-
                     <p className="mt-2 text-[12px] font-bold text-[#315C91]">
-                      View business and expand with + ↓
+                      Open verification dossier
                     </p>
                   </a>
                 ))}
-              </div>
-            ) : (
-              <div className="mt-5 rounded-[15px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-6 text-center">
-                <p className="text-[14px] font-semibold text-[#475467]">
-                  ✓ Nothing needs review right now.
-                </p>
               </div>
             )}
           </section>
 
           <section
             id="businesses"
-            className="portal-section mt-10 scroll-mt-8"
+            className="mt-9 scroll-mt-8"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="portal-section-heading text-[23px] font-bold">
-                  Business applications & providers
-                </h2>
+            <h2 className="text-[23px] font-extrabold">
+              Business applications & providers
+            </h2>
+            <p className="mt-2 text-[12px] text-[#667085]">
+              Click + to expand a business and − to collapse it.
+            </p>
 
-                <p className="mt-2 text-[13px] text-[#667085]">
-                  Click + to expand a business and − to minimize it.
-                  Pending applications appear first.
-                </p>
-              </div>
-
-              <span className="rounded-full bg-[#EDF3FA] px-4 py-2 text-[12px] font-bold text-[#344054]">
-                {providers.length} businesses
-              </span>
-            </div>
-
-            {applicationError && (
-              <p role="alert" className="mt-4 text-[13px] text-[#B42318]">
-                Verification data unavailable: {applicationError.message}
-              </p>
-            )}
-
-            {providerError && (
-              <p role="alert" className="mt-4 text-[13px] text-[#B42318]">
-                Could not load providers: {providerError.message}
+            {(providerError || applicationError) && (
+              <p role="alert" className="mt-3 text-[12px] text-[#B42318]">
+                {providerError?.message || applicationError?.message}
               </p>
             )}
 
             <div className="mt-5 space-y-3">
-              {filtered.length === 0 && !providerError && (
-                <div className="rounded-[18px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-8 text-center">
-                  <p className="font-bold text-[#344054]">
-                    No provider accounts yet.
-                  </p>
-                </div>
-              )}
+              {orderedProviders.map((provider) => {
+                const imageUrl = provider.image_path
+                  ? supabase.storage
+                      .from("garage-images")
+                      .getPublicUrl(provider.image_path)
+                      .data.publicUrl
+                  : "";
 
-              {filtered.map((provider) => (
-                <ProviderCard
-                  key={provider.id}
-                  provider={provider}
-                  owner={ownerMap.get(provider.owner_id)}
-                  application={applicationMap.get(provider.id)}
-                />
-              ))}
+                return (
+                  <BusinessCard
+                    key={provider.id}
+                    provider={provider}
+                    owner={accountMap.get(provider.owner_id)}
+                    application={applicationMap.get(provider.id)}
+                    services={services.filter(
+                      (item) => item.provider_id === provider.id
+                    )}
+                    hours={hours.filter(
+                      (item) => item.provider_id === provider.id
+                    )}
+                    imageUrl={imageUrl}
+                  />
+                );
+              })}
+
+              {orderedProviders.length === 0 && (
+                <p className="rounded-[15px] bg-[#F8FAFC] p-6 text-center text-[13px]">
+                  No provider accounts yet.
+                </p>
+              )}
             </div>
           </section>
 
           <section
             id="accounts"
-            className="portal-section mt-10 scroll-mt-8"
+            className="mt-9 scroll-mt-8"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="portal-section-heading text-[23px] font-bold">
-                  Registered accounts
-                </h2>
-
-                <p className="mt-2 text-[13px] text-[#667085]">
-                  Click + to view account details.
-                </p>
-              </div>
-
-              <span className="rounded-full bg-[#EDF3FA] px-4 py-2 text-[12px] font-bold text-[#344054]">
-                {accounts.length} accounts
-              </span>
-            </div>
+            <h2 className="text-[23px] font-extrabold">
+              Registered accounts
+            </h2>
+            <p className="mt-2 text-[12px] text-[#667085]">
+              Click + to view account information.
+            </p>
 
             {accountsError && (
-              <p role="alert" className="mt-4 text-[13px] text-[#B42318]">
-                Could not load accounts: {accountsError.message}
+              <p role="alert" className="mt-3 text-[12px] text-[#B42318]">
+                {accountsError.message}
               </p>
             )}
 
@@ -941,12 +1032,6 @@ export default async function AdminPage({
                   provider={providerMap.get(account.id)}
                 />
               ))}
-
-              {accounts.length === 0 && !accountsError && (
-                <p className="rounded-[15px] border border-dashed border-[#BAC7D7] p-6 text-center text-[13px] text-[#667085]">
-                  No accounts found.
-                </p>
-              )}
             </div>
           </section>
         </div>
