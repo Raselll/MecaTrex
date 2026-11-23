@@ -10,9 +10,9 @@ import ProviderDashboard, {
 import { signOut } from "./actions";
 import AccentPicker from "@/components/account/accent-picker";
 import ClientPortalOverview from "@/components/account/client-portal-overview";
+import AccountWorkspace from "@/components/account/account-workspace";
 import ClientBookings from "@/components/booking/client-bookings";
 import ProviderCalendar from "@/components/booking/provider-calendar";
-import BookingNotifications from "@/components/booking/booking-notifications";
 import {
   ACCENT_COLORS,
   type AccentColor,
@@ -393,14 +393,6 @@ export default async function AccountPage({
               </p>
             </div>
 
-            {/* Six compact theme colors.
-                Replaces the email display. */}
-
-            <AccentPicker
-              userId={user.id}
-              initialAccent={accent}
-              compact
-            />
           </header>
 
           {/* ================================================ */}
@@ -427,82 +419,64 @@ export default async function AccountPage({
             </div>
           )}
 
-          {/* ================================================ */}
-          {/* PROVIDER CHECKLIST */}
-          {/* ================================================ */}
-
-          <ProviderReadiness
-            provider={provider}
-            services={services}
+          <AccountWorkspace
+            kind="provider"
+            userId={user.id}
+            firstName={profile.first_name}
+            approved={approved}
+            overview={
+              <ProviderReadiness provider={provider} services={services} />
+            }
+            calendar={
+              approved ? (
+                <ProviderCalendar
+                  providerId={provider.id}
+                  providerType={provider.provider_type}
+                  initialCancelled={provider.provider_cancellation_count ?? 0}
+                  initiallySuspended={Boolean(provider.booking_suspended)}
+                />
+              ) : undefined
+            }
+            providerDashboard={
+              <div className="provider-dashboard-compact">
+                <ProviderDashboard
+                  userId={user.id}
+                  initialProvider={provider}
+                  initialServices={services}
+                  adminMessage={adminNote?.message ?? null}
+                />
+              </div>
+            }
+            settings={
+              <div className="space-y-5">
+                <section className="rounded-[20px] border border-[#D5DFEA] bg-white p-5 sm:p-6">
+                  <h3 className="text-[18px] font-extrabold text-[#101828]">Dashboard appearance</h3>
+                  <p className="mt-1 text-[12px] text-[#667085]">Choose your workspace colour.</p>
+                  <div className="mt-4">
+                    <AccentPicker userId={user.id} initialAccent={accent} compact />
+                  </div>
+                </section>
+                <section className="rounded-[20px] border border-[#D5DFEA] bg-white p-5 sm:p-6">
+                  <h3 className="text-[18px] font-extrabold text-[#101828]">Account information</h3>
+                  <p className="mt-1 text-[12px] text-[#667085]">
+                    These account details are separate from your public business listing.
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <SummaryCard label="Account email" value={profile.email} />
+                    <SummaryCard label="Account type" value="Service provider" />
+                    <SummaryCard label="Primary phone" value={profile.primary_phone} />
+                    <SummaryCard label="Secondary phone" value={profile.secondary_phone || "Not provided"} />
+                  </div>
+                </section>
+              </div>
+            }
           />
 
-          {/* ================================================ */}
-          {/* NOTIFICATIONS */}
-          {/* ================================================ */}
-
-          <section className="mt-6">
-            <BookingNotifications userId={user.id} />
-          </section>
-
-          {/* ================================================ */}
-          {/* PROVIDER CALENDAR */}
-          {/* ================================================ */}
-
-          {approved && (
-            <div className="mt-6">
-              <ProviderCalendar
-                providerId={provider.id}
-                providerType={provider.provider_type}
-                initialCancelled={
-                  provider.provider_cancellation_count ??
-                  0
-                }
-                initiallySuspended={Boolean(
-                  provider.booking_suspended
-                )}
-              />
-            </div>
-          )}
-
-          {/* ================================================ */}
-          {/* PROVIDER DASHBOARD */}
-          {/* FIX: NO CHILDREN PROP */}
-          {/* ================================================ */}
-
-          <div className="provider-dashboard-compact">
-            <ProviderDashboard
-              userId={user.id}
-              initialProvider={provider}
-              initialServices={services}
-              adminMessage={
-                adminNote?.message ?? null
-              }
-            />
-          </div>
-
-          {/*
-            Hide the original shortcut navigation
-            and its associated section.
-
-            The conditional checklist above replaces
-            the old readiness presentation.
-
-            Provider editing, photo uploads, prices
-            and publication functionality remain
-            inside ProviderDashboard.
-          */}
-
           <style>{`
-            .provider-dashboard-compact
-              > div
-              > nav[aria-label="Business dashboard shortcuts"] {
+            .provider-dashboard-compact > div > nav[aria-label="Business dashboard shortcuts"] {
               display: none !important;
             }
-
-            .provider-dashboard-compact
-              > div
-              > nav[aria-label="Business dashboard shortcuts"]
-              + div {
+            .provider-dashboard-compact > div > nav[aria-label="Business dashboard shortcuts"] + div {
               display: none !important;
             }
           `}</style>
@@ -515,103 +489,59 @@ export default async function AccountPage({
   /* CLIENT ACCOUNT */
   /* ======================================================= */
 
-  const accent =
-    profile.accent_color ?? "blue";
+  const accent = profile.accent_color ?? "blue";
+
+  const clientProps = {
+    userId: user.id,
+    firstName: profile.first_name,
+    lastName: profile.last_name,
+    primaryPhone: profile.primary_phone,
+    secondaryPhone: profile.secondary_phone,
+  };
 
   return (
-    <AccountShell accent={accent}>
+    <AccountShell wide accent={accent}>
       <div
-        className="portal-main-card rounded-[30px] border border-[#EAECF0] border-t-[5px] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-10"
-        style={{
-          borderTopColor:
-            (ACCENT_COLORS[accent] ??
-              ACCENT_COLORS.blue).hex,
-        }}
+        className="portal-main-card rounded-[30px] border border-[#EAECF0] border-t-[5px] bg-white p-4 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-7"
+        style={{ borderTopColor: (ACCENT_COLORS[accent] ?? ACCENT_COLORS.blue).hex }}
       >
-        <p className="portal-kicker text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">
-          MECATREX account
-        </p>
+        <div className="px-1 pt-2 sm:px-2">
+          <p className="portal-kicker text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
+            MECATREX client account
+          </p>
+          <h1 className="mt-2 text-[28px] font-extrabold tracking-tight text-[#101828] sm:text-[36px]">
+            Welcome back, {profile.first_name}.
+          </h1>
+          <p className="mt-1 text-[13px] text-[#667085]">
+            Find the right garage and manage your appointments without the clutter.
+          </p>
+        </div>
 
-        <h1 className="mt-3 text-[36px] font-bold tracking-[-0.04em] text-[#101828] sm:text-[44px]">
-          Welcome, {displayName}.
-        </h1>
-
-        <p className="mt-3 text-[16px] leading-7 text-[#667085]">
-          Your email is confirmed and your
-          MECATREX session is active.
-        </p>
-
-        {/* CLIENT THEME PICKER */}
-
-        <AccentPicker
-          userId={user.id}
-          initialAccent={accent}
-        />
-
-        <ClientPortalOverview
+        <AccountWorkspace
+          kind="client"
           userId={user.id}
           firstName={profile.first_name}
-          lastName={profile.last_name}
-          primaryPhone={profile.primary_phone}
-          secondaryPhone={profile.secondary_phone}
+          overview={<ClientPortalOverview {...clientProps} mode="overview" />}
+          appointments={<ClientBookings userId={user.id} />}
+          settings={
+            <div className="space-y-5">
+              <section className="rounded-[20px] border border-[#D5DFEA] bg-white p-5 sm:p-6">
+                <h3 className="text-[18px] font-extrabold text-[#101828]">Dashboard appearance</h3>
+                <p className="mt-1 text-[12px] text-[#667085]">Choose your dashboard colour.</p>
+                <div className="mt-4">
+                  <AccentPicker userId={user.id} initialAccent={accent} compact />
+                </div>
+              </section>
+
+              <ClientPortalOverview {...clientProps} mode="settings" />
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <SummaryCard label="Email" value={profile.email} />
+                <SummaryCard label="Account type" value="Client" />
+              </div>
+            </div>
+          }
         />
-
-        {/* CLIENT INFORMATION */}
-
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <SummaryCard
-            label="Email"
-            value={profile.email}
-          />
-
-          <SummaryCard
-            label="Account type"
-            value="Client"
-          />
-
-          <SummaryCard
-            label="Primary phone"
-            value={profile.primary_phone}
-          />
-
-          <SummaryCard
-            label="Secondary phone"
-            value={
-              profile.secondary_phone ||
-              "Not provided"
-            }
-          />
-        </div>
-
-        <div id="client-notifications" className="scroll-mt-24" />
-
-        {/* CLIENT NOTIFICATIONS & BOOKINGS */}
-
-        <div className="mt-7 space-y-6">
-          <BookingNotifications userId={user.id} />
-          <ClientBookings userId={user.id} />
-        </div>
-
-        {/* FIND A GARAGE */}
-
-        <div className="portal-summary-card mt-7 rounded-[22px] border border-[#D5DFEA] bg-[#EDF3FA] p-6">
-          <h2 className="text-[22px] font-bold text-[#101828]">
-            Ready to find a garage?
-          </h2>
-
-          <p className="mt-2 text-[14px] leading-6 text-[#475467]">
-            Browse approved businesses, compare
-            fixed service prices and book your
-            preferred garage.
-          </p>
-
-          <Link
-            href="/#garage-results"
-            className="mt-5 inline-flex rounded-[13px] bg-[#4771A6] px-6 py-3.5 text-[14px] font-bold text-white hover:bg-[#315C91]"
-          >
-            Find garages →
-          </Link>
-        </div>
       </div>
     </AccountShell>
   );
