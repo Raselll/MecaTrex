@@ -245,10 +245,6 @@ export default async function AccountPage({
     redirect("/admin");
   }
 
-  const displayName =
-    `${profile.first_name} ${profile.last_name}`.trim() ||
-    profile.email;
-
   /* ======================================================= */
   /* SERVICE PROVIDER ACCOUNT */
   /* ======================================================= */
