@@ -59,6 +59,9 @@ export default function ProviderCalendar({
   const [bookings, setBookings] =
     useState<GarageBooking[]>([]);
 
+  const [towingStatuses, setTowingStatuses] =
+    useState<{ booking_id: string; status: "pending" | "accepted" | "cancelled" }[]>([]);
+
   const [blocks, setBlocks] =
     useState<CalendarBlock[]>([]);
 
@@ -84,6 +87,7 @@ export default function ProviderCalendar({
         blockResult,
         providerResult,
         hourResult,
+        towingResult,
       ] = await Promise.all([
         supabase
           .from("garage_bookings")
@@ -117,7 +121,15 @@ export default function ProviderCalendar({
               .eq("provider_id", providerId)
               .order("weekday")
           : Promise.resolve({ data: null, error: null }),
+        providerType === "garage"
+          ? supabase.from("towing_requests").select("booking_id,status")
+              .eq("garage_provider_id", providerId)
+          : Promise.resolve({ data: null, error: null }),
       ]);
+
+      if (!towingResult.error && towingResult.data) {
+        setTowingStatuses(towingResult.data as { booking_id: string; status: "pending" | "accepted" | "cancelled" }[]);
+      }
 
       if (bookingResult.error) {
         setError(bookingResult.error.message);
@@ -217,7 +229,7 @@ export default function ProviderCalendar({
 
       setLoading(false);
     },
-    [providerId, supabase]
+    [providerId, supabase, providerType]
   );
 
   useEffect(() => {
@@ -384,7 +396,7 @@ export default function ProviderCalendar({
             <p className="mt-1 text-[14px] text-[#667085]">
               {providerType === "garage"
                 ? "Manage available and unavailable times in Montreal time."
-                : "Update your towing opening hours. Dispatch integration will be added in a future phase."}
+                : "Update your towing business hours. Accepted jobs appear above in your towing schedule."}
             </p>
           </div>
 
@@ -453,6 +465,32 @@ export default function ProviderCalendar({
                   : "Ready when hours are set"}
               </p>
             </div>
+          </div>
+        )}
+
+        {providerType === "garage" && towingStatuses.some((request) => request.status !== "cancelled") && (
+          <div className="mt-5 rounded-[16px] border border-[#D7E4F0] bg-[#F7FAFD] p-4">
+            <p className="text-[13px] font-extrabold text-[#101828]">🚛 Towing requests on your calendar</p>
+            <div className="mt-3 space-y-2">
+              {towingStatuses.filter((request) => request.status !== "cancelled")
+                .map((request) => {
+                  const linkedBooking = bookings.find((booking) => booking.id === request.booking_id);
+                  if (!linkedBooking || linkedBooking.status !== "confirmed") return null;
+                  return (
+                    <div key={request.booking_id} className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-[#E1E9F2] bg-white px-3 py-3 text-[12px]">
+                      <div>
+                        <p className="font-bold text-[#344054]">{linkedBooking.client_name} · {linkedBooking.service_name}</p>
+                        <p className="mt-1 text-[#667085]">{formatMontrealDateTime(linkedBooking.starts_at)}</p>
+                      </div>
+                      <span className={"rounded-full px-3 py-1.5 font-bold " +
+                        (request.status === "accepted" ? "bg-[#ECFDF3] text-[#027A48]" : "bg-[#FFF7E9] text-[#92400E]")}>
+                        {request.status === "accepted" ? "✓ Towing accepted" : "⏳ Towing pending"}
+                      </span>
+                    </div>
+                  );
+                })}
+            </div>
+            <p className="mt-2 text-[11px] text-[#667085]">The garage appointment remains confirmed regardless of towing status.</p>
           </div>
         )}
 
