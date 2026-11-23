@@ -1286,6 +1286,44 @@ export default function LiveGarages() {
                             </p>
                           )}
 
+                          {/* Expand the complete catalogue without replacing the compact preview. */}
+                          {services.length > displayed.length && (
+                            <details className="group mt-3 overflow-hidden rounded-[12px] border border-[#C9D8E9] bg-white">
+                              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-[12px] font-extrabold text-[#315C91] hover:bg-[#EDF3FA] [&::-webkit-details-marker]:hidden">
+                                <span>
+                                  <span className="group-open:hidden">+ </span>
+                                  <span className="hidden group-open:inline">− </span>
+                                  View all {services.length} services
+                                </span>
+                                <span aria-hidden="true" className="text-[16px] transition-transform group-open:rotate-180">
+                                  ⌄
+                                </span>
+                              </summary>
+                              <div className="max-h-[390px] space-y-1 overflow-y-auto border-t border-[#E4E7EC] p-2">
+                                {services.map((service) => {
+                                  const catalogue = ALL_SERVICE_CATALOGUE.find(
+                                    (item) => normalizeName(item.name) === normalizeName(service.name)
+                                  );
+                                  return (
+                                    <div key={service.id} className="flex items-start justify-between gap-3 rounded-[9px] bg-[#F8FAFC] px-3 py-2.5">
+                                      <div className="min-w-0">
+                                        <p className="text-[12px] font-bold text-[#101828]">
+                                          {catalogue?.icon ?? "🔧"} {service.name}
+                                        </p>
+                                        <p className="mt-0.5 text-[10px] text-[#98A2B3]">
+                                          Approx. {service.duration_minutes} min
+                                        </p>
+                                      </div>
+                                      <span className="shrink-0 text-[12px] font-bold text-[#4771A6]">
+                                        {priceLabel(service)}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </details>
+                          )}
+
                           {selectedServices.length >
                             1 && (
                             <div className="mt-3 rounded-[9px] bg-[#ECFDF3] px-3 py-2">
