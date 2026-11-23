@@ -805,7 +805,7 @@ export default function BookingForm({
             {vehicleDescription && <p className="text-[12px] font-bold text-[#315C91]">{vehicleDescription}</p>}
           </div>
           <p className="mt-1 text-[12px] text-[#667085]">
-            Saved MECATREX vehicle details appear automatically. If you don't know the details, leave all fields blank.
+            Saved MECATREX vehicle details appear automatically. If you do not know the details, leave all fields blank.
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className="block text-[12px] font-bold text-[#344054]">
