@@ -9,6 +9,7 @@ import ProviderDashboard, {
 } from "./provider-dashboard";
 import { signOut } from "./actions";
 import AccentPicker from "@/components/account/accent-picker";
+import ClientPortalOverview from "@/components/account/client-portal-overview";
 import ClientBookings from "@/components/booking/client-bookings";
 import ProviderCalendar from "@/components/booking/provider-calendar";
 import BookingNotifications from "@/components/booking/booking-notifications";
@@ -547,6 +548,14 @@ export default async function AccountPage({
           initialAccent={accent}
         />
 
+        <ClientPortalOverview
+          userId={user.id}
+          firstName={profile.first_name}
+          lastName={profile.last_name}
+          primaryPhone={profile.primary_phone}
+          secondaryPhone={profile.secondary_phone}
+        />
+
         {/* CLIENT INFORMATION */}
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -573,6 +582,8 @@ export default async function AccountPage({
             }
           />
         </div>
+
+        <div id="client-notifications" className="scroll-mt-24" />
 
         {/* CLIENT NOTIFICATIONS & BOOKINGS */}
 
