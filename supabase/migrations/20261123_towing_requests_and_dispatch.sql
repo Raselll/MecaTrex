@@ -55,7 +55,7 @@ using (
           and exists (
             select 1 from public.service_providers garage2
             where garage2.id = garage_provider_id
-              and lower(trim(garage2.city)) = lower(trim(tow.city))
+              and lower(trim(garage2.province)) = lower(trim(tow.province))
           )
         )
       )
@@ -83,7 +83,7 @@ declare
   v_request_id uuid;
   v_client_name text;
   v_service_name text;
-  v_garage_city text;
+  v_garage_province text;
   v_booking_time timestamptz;
 begin
   if v_user is null then
@@ -108,8 +108,8 @@ begin
     return v_booking_id;
   end if;
 
-  select b.client_name, b.service_name, g.city, b.starts_at
-  into v_client_name, v_service_name, v_garage_city, v_booking_time
+  select b.client_name, b.service_name, g.province, b.starts_at
+  into v_client_name, v_service_name, v_garage_province, v_booking_time
   from public.garage_bookings b
   join public.service_providers g on g.id = b.provider_id
   where b.id = v_booking_id and b.client_id = v_user;
@@ -145,7 +145,7 @@ begin
     and tow.status::text = 'approved'
     and tow.is_listing_active
     and not tow.is_removed
-    and lower(trim(tow.city)) = lower(trim(v_garage_city));
+    and lower(trim(tow.province)) = lower(trim(v_garage_province));
 
   return v_booking_id;
 end;
@@ -177,10 +177,10 @@ language plpgsql security definer set search_path = ''
 as $$
 declare
   v_provider_id uuid;
-  v_city text;
+  v_province text;
 begin
-  select sp.id, sp.city
-    into v_provider_id, v_city
+  select sp.id, sp.province
+    into v_provider_id, v_province
   from public.service_providers sp
   where sp.owner_id = auth.uid()
     and sp.provider_type::text = 'towing'
@@ -214,7 +214,7 @@ begin
     and b.starts_at > now()
     and (
       (r.status = 'pending'
-        and lower(trim(garage.city)) = lower(trim(v_city)))
+        and lower(trim(garage.province)) = lower(trim(v_province)))
       or (r.status = 'accepted' and r.towing_provider_id = v_provider_id)
     )
   order by b.starts_at asc;
@@ -232,17 +232,17 @@ as $$
 declare
   v_provider_id uuid;
   v_owner uuid := auth.uid();
-  v_city text;
+  v_province text;
   v_request public.towing_requests%rowtype;
   v_booking public.garage_bookings%rowtype;
   v_garage_owner uuid;
-  v_garage_city text;
+  v_garage_province text;
   v_company_name text;
 begin
   if v_owner is null then raise exception 'Please sign in.'; end if;
 
-  select sp.id, sp.city, sp.business_name
-    into v_provider_id, v_city, v_company_name
+  select sp.id, sp.province, sp.business_name
+    into v_provider_id, v_province, v_company_name
   from public.service_providers sp
   where sp.owner_id = v_owner
     and sp.provider_type::text = 'towing'
@@ -268,10 +268,10 @@ begin
     raise exception 'This appointment is no longer available for towing.';
   end if;
 
-  select g.owner_id, g.city into v_garage_owner, v_garage_city
+  select g.owner_id, g.province into v_garage_owner, v_garage_province
   from public.service_providers g where g.id = v_request.garage_provider_id;
 
-  if lower(trim(v_city)) <> lower(trim(v_garage_city)) then
+  if lower(trim(v_province)) <> lower(trim(v_garage_province)) then
     raise exception 'This request is outside your current service area.';
   end if;
 
