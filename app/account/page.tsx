@@ -12,6 +12,7 @@ import AccentPicker from "@/components/account/accent-picker";
 import ClientPortalOverview from "@/components/account/client-portal-overview";
 import AccountWorkspace from "@/components/account/account-workspace";
 import ClientBookings from "@/components/booking/client-bookings";
+import FinancialOverview from "@/components/account/financial-overview";
 import ProviderCalendar from "@/components/booking/provider-calendar";
 import {
   ACCENT_COLORS,
@@ -423,6 +424,7 @@ export default async function AccountPage({
             overview={
               <ProviderReadiness provider={provider} services={services} />
             }
+            financials={approved ? <FinancialOverview ownerId={provider.id} kind="provider" /> : undefined}
             calendar={
               approved ? (
                 <ProviderCalendar
@@ -519,6 +521,7 @@ export default async function AccountPage({
           firstName={profile.first_name}
           overview={<ClientPortalOverview {...clientProps} mode="overview" />}
           appointments={<ClientBookings userId={user.id} />}
+          financials={<FinancialOverview ownerId={user.id} kind="client" />}
           settings={
             <div className="space-y-5">
               <section className="rounded-[20px] border border-[#D5DFEA] bg-white p-5 sm:p-6">
