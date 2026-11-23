@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createGarageBooking } from "@/app/book/actions";
+import { VEHICLE_YEARS, VEHICLE_MAKES, VEHICLE_MODELS_BY_MAKE, VEHICLE_COLORS } from "@/lib/vehicle-options";
 import {
   formatHour,
   formatPriceCents,
@@ -83,8 +84,21 @@ export default function BookingForm({
 
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
-  const [vehicle, setVehicle] =
-    useState("");
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [vehicleYear, setVehicleYear] = useState("");
+  const [vehicleMake, setVehicleMake] = useState("");
+  const [vehicleModel, setVehicleModel] = useState("");
+  const [vehicleColor, setVehicleColor] = useState("");
+  const [wantsTowing, setWantsTowing] = useState<boolean | null>(null);
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [towingNote, setTowingNote] = useState("");
+  const [stepError, setStepError] = useState("");
+
+  const vehicleDescription = [
+    vehicleYear, vehicleMake, vehicleModel, vehicleColor,
+  ].filter(Boolean).join(" ").slice(0, 120);
+  const partialVehicle = Boolean(vehicleYear || vehicleMake || vehicleModel || vehicleColor);
+  const validVehicle = !partialVehicle || Boolean(vehicleYear && vehicleMake && vehicleModel);
 
   const [
     preferredTime,
@@ -135,8 +149,11 @@ export default function BookingForm({
           .join(" ")
           .slice(0, 120);
 
-        if (description) {
-          setVehicle(description);
+        if (description && parsed.year && parsed.make && parsed.model) {
+          setVehicleYear(String(parsed.year));
+          setVehicleMake(String(parsed.make));
+          setVehicleModel(String(parsed.model));
+          setVehicleColor(typeof parsed.color === "string" ? parsed.color : "");
         }
       }
 
@@ -338,7 +355,10 @@ export default function BookingForm({
       !selectedService ||
       !slot ||
       booking ||
-      !canConfirm
+      !canConfirm ||
+      !validVehicle ||
+      wantsTowing === null ||
+      (wantsTowing && pickupAddress.trim().length < 8)
     ) {
       return;
     }
@@ -359,7 +379,10 @@ export default function BookingForm({
     form.set("day", day);
     form.set("time", slot);
     form.set("note", note);
-    form.set("vehicle", vehicle);
+    form.set("vehicle", vehicleDescription);
+    form.set("wants_towing", wantsTowing ? "yes" : "no");
+    form.set("pickup_address", wantsTowing ? pickupAddress.trim() : "");
+    form.set("towing_note", wantsTowing ? towingNote.trim() : "");
 
     const result =
       await createGarageBooking(form);
@@ -381,6 +404,7 @@ export default function BookingForm({
 
       setSlots((data ?? []) as Slot[]);
       setSlot("");
+      setStep(2);
       return;
     }
 
@@ -416,13 +440,75 @@ export default function BookingForm({
       ) >= 18
   );
 
+  const steps = [
+    { number: 1, name: "Service", icon: "🔧" },
+    { number: 2, name: "Date & time", icon: "📅" },
+    { number: 3, name: "Details", icon: "🚘" },
+    { number: 4, name: "Towing & confirm", icon: "🚛" },
+  ] as const;
+
+  function goForward() {
+    setStepError("");
+    if (step === 1 && !selectedService) {
+      setStepError("Please select a service first.");
+      return;
+    }
+    if (step === 2 && (!slot || loading)) {
+      setStepError("Choose an available date and time before continuing.");
+      return;
+    }
+    if (step === 3 && !validVehicle) {
+      setStepError("Complete the year, make and model, or leave all vehicle fields empty.");
+      return;
+    }
+    setStep((current) => Math.min(4, current + 1) as 1 | 2 | 3 | 4);
+  }
+
+  function goBack() {
+    setStepError("");
+    setError("");
+    setStep((current) => Math.max(1, current - 1) as 1 | 2 | 3 | 4);
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      <div className="rounded-[23px] border border-[#C5D5E9] bg-white px-4 py-5 shadow-sm sm:px-6">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
+          One step at a time
+        </p>
+        <div className="mt-4 grid grid-cols-4 gap-2" aria-label="Booking progress">
+          {steps.map((item) => {
+            const active = step === item.number;
+            const done = step > item.number;
+            return (
+              <button key={item.number} type="button"
+                disabled={item.number > step}
+                onClick={() => {
+                  setStep(item.number);
+                  setStepError("");
+                }}
+                aria-current={active ? "step" : undefined}
+                className={"flex flex-col items-center gap-1 rounded-[14px] px-1 py-3 text-center transition sm:flex-row sm:justify-center sm:gap-2 " +
+                  (active ? "bg-[#4771A6] text-white shadow-sm" :
+                    done ? "bg-[#EDF7F2] text-[#027A48] hover:bg-[#DEF2E7]" :
+                    "bg-[#F3F6FA] text-[#98A2B3]")}
+              >
+                <span className="text-[15px]" aria-hidden="true">{done ? "✓" : item.icon}</span>
+                <span className="text-[10px] font-extrabold sm:text-[12px]">{item.name}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-center text-[12px] text-[#667085]">
+          Step {step} of 4 · {steps[step - 1].name}
+        </p>
+      </div>
+
       {/* ================================================
           STEP 1: SERVICE
       ================================================ */}
 
-      <section className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
+      <section hidden={step !== 1} className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#EDF3FA] text-[24px]">
             🔧
@@ -430,7 +516,7 @@ export default function BookingForm({
 
           <div>
             <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">
-              Step 1 of 3
+              Step 1 of 4
             </p>
 
             <h2 className="text-[21px] font-extrabold text-[#101828]">
@@ -502,7 +588,7 @@ export default function BookingForm({
           STEP 2: DATE AND AVAILABILITY
       ================================================ */}
 
-      <section className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
+      <section hidden={step !== 2} className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#EDF3FA] text-[24px]">
             📅
@@ -510,7 +596,7 @@ export default function BookingForm({
 
           <div>
             <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">
-              Step 2 of 3
+              Step 2 of 4
             </p>
 
             <h2 className="text-[21px] font-extrabold text-[#101828]">
@@ -695,7 +781,7 @@ export default function BookingForm({
           STEP 3: CONFIRM BOOKING
       ================================================ */}
 
-      <section className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
+      <section hidden={step !== 3} className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#EDF3FA] text-[24px]">
             ✓
@@ -703,35 +789,64 @@ export default function BookingForm({
 
           <div>
             <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">
-              Step 3 of 3
+              Step 3 of 4
             </p>
 
             <h2 className="text-[21px] font-extrabold text-[#101828]">
-              Confirm your appointment
+              Your appointment details
             </h2>
           </div>
         </div>
 
-        <label className="mt-5 block">
-          <span className="mb-2 block text-[13px] font-bold text-[#344054]">
-            Your vehicle (optional · prefilled
-            from MECATREX)
-          </span>
 
-          <input
-            type="text"
-            maxLength={120}
-            value={vehicle}
-            onChange={(event) =>
-              setVehicle(
-                event.target.value
-              )
-            }
-            placeholder="e.g. 2020 Honda Civic"
-            className="w-full rounded-[13px] border border-[#98A2B3] px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]"
-          />
-        </label>
-
+        <div className="mt-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[13px] font-bold text-[#344054]">Your vehicle <span className="font-normal text-[#667085]">(optional)</span></p>
+            {vehicleDescription && <p className="text-[12px] font-bold text-[#315C91]">{vehicleDescription}</p>}
+          </div>
+          <p className="mt-1 text-[12px] text-[#667085]">
+            Saved MECATREX vehicle details appear automatically. If you don't know the details, leave all fields blank.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="block text-[12px] font-bold text-[#344054]">
+              Year
+              <select value={vehicleYear} onChange={(event) => setVehicleYear(event.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-[#BAC7D7] bg-white px-3 py-3 text-[14px] text-[#101828]">
+                <option value="">Select year</option>
+                {VEHICLE_YEARS.map((year) => <option value={year} key={year}>{year}</option>)}
+              </select>
+            </label>
+            <label className="block text-[12px] font-bold text-[#344054]">
+              Make
+              <select value={vehicleMake} onChange={(event) => {
+                setVehicleMake(event.target.value);
+                setVehicleModel("");
+              }} className="mt-1.5 w-full rounded-xl border border-[#BAC7D7] bg-white px-3 py-3 text-[14px] text-[#101828]">
+                <option value="">Select make</option>
+                {VEHICLE_MAKES.map((make) => <option value={make} key={make}>{make}</option>)}
+              </select>
+            </label>
+            <label className="block text-[12px] font-bold text-[#344054]">
+              Model
+              <select value={vehicleModel} disabled={!vehicleMake} onChange={(event) => setVehicleModel(event.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-[#BAC7D7] bg-white px-3 py-3 text-[14px] text-[#101828] disabled:bg-[#F3F6FA]">
+                <option value="">{vehicleMake ? "Select model" : "Select a make first"}</option>
+                {(VEHICLE_MODELS_BY_MAKE[vehicleMake] ?? []).map((model) => <option value={model} key={model}>{model}</option>)}
+              </select>
+            </label>
+            <label className="block text-[12px] font-bold text-[#344054]">
+              Colour <span className="font-normal text-[#667085]">(optional)</span>
+              <select value={vehicleColor} onChange={(event) => setVehicleColor(event.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-[#BAC7D7] bg-white px-3 py-3 text-[14px] text-[#101828]">
+                <option value="">Select colour</option>
+                {VEHICLE_COLORS.map((color) => <option value={color} key={color}>{color}</option>)}
+              </select>
+            </label>
+          </div>
+          {!validVehicle && <p role="alert" className="mt-2 text-[12px] font-semibold text-[#B42318]">
+            If you enter a vehicle, please complete its year, make and model. Otherwise, leave the fields empty.
+          </p>}
+        </div>
         <label className="mt-4 block">
           <span className="mb-2 block text-[13px] font-bold text-[#344054]">
             Notes for the garage (optional)
@@ -751,21 +866,58 @@ export default function BookingForm({
           />
         </label>
 
-        <div className="mt-4 flex items-center gap-3 rounded-[14px] bg-[#F2F4F7] p-4 text-[13px] leading-6 text-[#475467]">
-          <span aria-hidden="true">
-            🚙
-          </span>
 
-          <p>
-            <strong>
-              Towing needed?
-            </strong>{" "}
-            Towing bookings are coming in
-            the next phase. This request is
-            for garage service only.
-          </p>
+      </section>
+
+      <section hidden={step !== 4} className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#EDF3FA] text-[24px]">🚛</span>
+          <div>
+            <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">Step 4 of 4</p>
+            <h2 className="text-[21px] font-extrabold text-[#101828]">Do you need towing?</h2>
+          </div>
         </div>
-
+        <p className="mt-4 text-[13px] leading-6 text-[#667085]">
+          Your garage appointment is confirmed instantly. If you request towing, it stays pending until an approved towing provider accepts the job.
+        </p>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          {([{ value: false, label: "No, I'll drive", icon: "🚗" }, { value: true, label: "Yes, request towing", icon: "🚛" }] as const).map((option) => (
+            <button type="button" key={option.label}
+              onClick={() => { setWantsTowing(option.value); setStepError(""); }}
+              aria-pressed={wantsTowing === option.value}
+              className={"rounded-[15px] border p-4 text-left text-[13px] font-bold transition " +
+                (wantsTowing === option.value ? "border-[#4771A6] bg-[#EDF3FA] text-[#244F83]" : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-[#F8FAFC]")}
+            >
+              <span className="block text-[23px]" aria-hidden="true">{option.icon}</span>
+              <span className="mt-2 block">{option.label}</span>
+            </button>
+          ))}
+        </div>
+        {wantsTowing && (
+          <div className="mt-5 space-y-4 rounded-[16px] border border-[#BDD0E4] bg-[#F7FAFE] p-4">
+            <label className="block text-[13px] font-bold text-[#344054]">
+              Pickup address <span className="text-[#B42318]">*</span>
+              <input value={pickupAddress} maxLength={240} onChange={(event) => setPickupAddress(event.target.value)}
+                placeholder="Street address, city, province and postal code"
+                className="mt-2 w-full rounded-xl border border-[#BAC7D7] bg-white px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]"/>
+            </label>
+            <label className="block text-[13px] font-bold text-[#344054]">
+              Extra towing information (optional)
+              <textarea rows={2} value={towingNote} maxLength={500} onChange={(event) => setTowingNote(event.target.value)}
+                placeholder="Is the car accessible? Flat tire, won't start, underground garage..."
+                className="mt-2 w-full rounded-xl border border-[#BAC7D7] bg-white px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]"/>
+            </label>
+            <p className="text-[12px] leading-5 text-[#52647D]">
+              This is a request, not an accepted towing booking. Pickup time and towing price are not fixed yet; the provider will need to coordinate with you.
+            </p>
+          </div>
+        )}
+        <div className="mt-5 rounded-[15px] border border-[#D6E3EF] bg-[#F7FAFD] p-4 text-[13px]">
+          <p className="font-bold text-[#344054]">Your booking summary</p>
+          <p className="mt-2 text-[#101828]">{selectedService?.name} · {selectedService ? formatPriceCents(selectedService.price_cents) : "—"}</p>
+          <p className="mt-1 text-[#667085]">{day} · {slot ? formatHour(slot) : "No time selected"} · {selectedService?.duration_minutes} min</p>
+          <p className="mt-1 text-[#667085]">{vehicleDescription || "Vehicle not specified"}</p>
+        </div>
         <div className="mt-4 rounded-[14px] bg-[#ECFDF3] p-4 text-[13px] text-[#05603A]">
           No online payment today. Your
           fixed service price will be paid
@@ -816,7 +968,9 @@ export default function BookingForm({
             disabled={
               booking ||
               !slot ||
-              loading
+              loading ||
+              wantsTowing === null ||
+              (wantsTowing && pickupAddress.trim().length < 8)
             }
             onClick={submit}
             className="mt-5 w-full rounded-[15px] bg-[#4771A6] px-6 py-4 text-[17px] font-extrabold text-white shadow-[0_8px_20px_rgba(71,113,166,0.17)] hover:bg-[#315C91] disabled:cursor-not-allowed disabled:opacity-50"
@@ -825,10 +979,26 @@ export default function BookingForm({
               ? "Confirming your booking…"
               : !slot
                 ? "Choose a time to continue"
-                : "Confirm booking · Pay at garage"}
+                : wantsTowing === null
+                  ? "Choose a towing option to continue"
+                  : wantsTowing && pickupAddress.trim().length < 8
+                    ? "Enter the towing pickup address"
+                    : "Confirm garage booking"}
           </button>
         )}
       </section>
+      {stepError && <p role="alert" className="rounded-[13px] bg-[#FEF3F2] p-4 text-[13px] font-semibold text-[#B42318]">{stepError}</p>}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button type="button" onClick={goBack} disabled={step === 1 || booking}
+          className="rounded-[14px] border border-[#CBD5E1] bg-white px-5 py-3.5 text-[14px] font-bold text-[#344054] disabled:opacity-40">
+          ← Back
+        </button>
+        {step < 4 && <button type="button" onClick={goForward}
+          className="rounded-[14px] bg-[#4771A6] px-7 py-3.5 text-[14px] font-bold text-white shadow-sm transition hover:bg-[#315C91]">
+          Continue →
+        </button>}
+      </div>
+
     </div>
   );
 }
