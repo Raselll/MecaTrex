@@ -110,9 +110,12 @@ export default async function GarageBookingPage({
             )}
           </div>
 
-          <aside className="space-y-5">
-            <section className="rounded-[23px] border border-[#BAC7D7] bg-white p-6">
-              <h3 className="text-[20px] font-extrabold">🕒 Business hours</h3>
+          <aside className="space-y-4 lg:sticky lg:top-5">
+            <details className="group rounded-[23px] border border-[#BAC7D7] bg-white p-5">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[17px] font-extrabold text-[#101828]">
+                <span>🕒 Business hours</span>
+                <span aria-hidden="true" className="text-[19px] text-[#4771A6]">⌄</span>
+              </summary>
               <p className="mt-1 text-[12px] text-[#667085]">Montreal local time · changes appear automatically in availability</p>
               <div className="mt-4 space-y-2.5">
                 {WEEKDAYS.map((day, i) => {
@@ -126,10 +129,13 @@ export default async function GarageBookingPage({
                 })}
               </div>
               <p className="mt-3 text-[12px] text-[#667085]">Specific dates can also be blocked by the garage. Only available appointments appear in the booking form.</p>
-            </section>
+            </details>
 
-            <section className="rounded-[23px] border border-[#BAC7D7] bg-white p-6">
-              <h3 className="text-[20px] font-extrabold">⭐ Garage reviews</h3>
+            <details className="group rounded-[23px] border border-[#BAC7D7] bg-white p-5">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[17px] font-extrabold text-[#101828]">
+                <span>⭐ Garage reviews</span>
+                <span aria-hidden="true" className="text-[19px] text-[#4771A6]">⌄</span>
+              </summary>
               {reviews.length === 0 ? (
                 <p className="mt-3 text-[13px] text-[#667085]">No reviews yet. Only customers with a completed appointment can leave one.</p>
               ) : (
@@ -143,7 +149,7 @@ export default async function GarageBookingPage({
                   ))}
                 </div>
               )}
-            </section>
+            </details>
           </aside>
         </div>
       </div>
