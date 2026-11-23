@@ -7,6 +7,7 @@ import { cancelGarageBooking, reviewGarageBooking } from "@/app/book/actions";
 import { formatMontrealDateTime, formatPriceCents, type GarageBooking } from "@/lib/booking";
 
 type Review = { booking_id: string; stars: number; comment: string };
+type TowingStatus = { booking_id: string; status: "pending" | "accepted" | "cancelled" };
 
 function ReviewForm({ bookingId, onDone }: { bookingId: string; onDone: () => void }) {
   const [stars, setStars] = useState(5);
@@ -45,6 +46,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
   const supabase = useMemo(() => createClient(), []);
   const [bookings, setBookings] = useState<GarageBooking[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [towingStatuses, setTowingStatuses] = useState<TowingStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"upcoming" | "history">("upcoming");
   const [error, setError] = useState("");
@@ -53,14 +55,16 @@ export default function ClientBookings({ userId }: { userId: string }) {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const refresh = useCallback(async () => {
-    const [{ data: rows, error: bookingError }, { data: reviewRows }] = await Promise.all([
+    const [{ data: rows, error: bookingError }, { data: reviewRows }, towingResult] = await Promise.all([
       supabase.from("garage_bookings").select("*")
         .eq("client_id", userId).order("starts_at", { ascending: false }).limit(150),
       supabase.from("garage_reviews").select("booking_id,stars,comment").eq("client_id", userId),
+      supabase.from("towing_requests").select("booking_id,status").eq("client_id", userId),
     ]);
     if (bookingError) setError(bookingError.message);
     else { setBookings((rows ?? []) as GarageBooking[]); setError(""); }
     setReviews((reviewRows ?? []) as Review[]);
+    if (!towingResult.error) setTowingStatuses((towingResult.data ?? []) as TowingStatus[]);
     setLoading(false);
   }, [supabase, userId]);
 
@@ -110,6 +114,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
         {visible.map((booking) => {
           const review = reviews.find((r) => r.booking_id === booking.id);
           const ended = new Date(booking.ends_at).getTime() <= now;
+          const towing = towingStatuses.find((request) => request.booking_id === booking.id);
           return <article key={booking.id} className="rounded-[18px] border border-[#BAC7D7] p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div><p className="text-[12px] font-bold uppercase tracking-wide text-[#4771A6]">{booking.service_name}</p>
@@ -124,6 +129,20 @@ export default function ClientBookings({ userId }: { userId: string }) {
             </div>
             {booking.vehicle_description && <p className="mt-2 text-[12px] text-[#667085]">🚗 Vehicle: {booking.vehicle_description}</p>}
             {booking.note && <p className="mt-2 text-[12px] text-[#667085]">Your note: {booking.note}</p>}
+            {towing && (
+              <div className={"mt-3 rounded-[13px] border p-3 text-[12px] font-semibold " +
+                (towing.status === "accepted"
+                  ? "border-[#A6E0C0] bg-[#ECFDF3] text-[#05603A]"
+                  : towing.status === "cancelled"
+                    ? "border-[#F7D0CC] bg-[#FEF3F2] text-[#B42318]"
+                    : "border-[#F0D5A4] bg-[#FFF7E9] text-[#92400E]")}>
+                🚛 Towing: {towing.status === "pending"
+                  ? "Pending provider acceptance. Your garage appointment is confirmed."
+                  : towing.status === "accepted"
+                    ? "Accepted by a towing provider. Coordinate your pickup time and cost with the provider."
+                    : "Cancelled."}
+              </div>
+            )}
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#EEF2F6] pt-4">
               <p className="text-[15px] font-extrabold text-[#101828]">{formatPriceCents(booking.price_cents)} <span className="text-[11px] font-normal text-[#667085]">· Pay at garage</span></p>
               {booking.status === "confirmed" && !ended && <button type="button" disabled={pendingId === booking.id} onClick={() => void cancel(booking)} className="rounded-[12px] border border-[#FDA29B] px-4 py-2.5 text-[12px] font-bold text-[#B42318] hover:bg-[#FEF3F2] disabled:opacity-50">{pendingId === booking.id ? "Cancelling…" : "Cancel booking"}</button>}
