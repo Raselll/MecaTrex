@@ -227,7 +227,7 @@ export default function ClientPortalOverview({
 
       </div>
 
-      <div id="client-profile" hidden={mode !== "settings"} className="scroll-mt-24 rounded-[22px] border border-[#D5DFEA] bg-white p-5 sm:p-6">
+      <div id={mode === "settings" ? "client-profile" : undefined} hidden={mode !== "settings"} className="scroll-mt-24 rounded-[22px] border border-[#D5DFEA] bg-white p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">Your information</p>
