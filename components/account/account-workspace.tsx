@@ -179,7 +179,13 @@ export default function AccountWorkspace({
           box-shadow: none !important;
         }
         .provider-workspace-board #business-profile {
+          align-items: start !important;
           grid-template-columns: minmax(0, 1fr) !important;
+        }
+        @media (min-width: 1200px) {
+          .provider-workspace-board #business-profile {
+            grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
+          }
         }
         .provider-workspace-board #business-profile > section:first-child {
           min-height: 0 !important;
