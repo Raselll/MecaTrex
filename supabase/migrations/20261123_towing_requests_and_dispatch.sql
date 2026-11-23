@@ -1,0 +1,342 @@
+-- MECATREX: opt-in towing dispatch attached to confirmed garage appointments.
+-- Apply only after the existing garage booking migrations.
+-- Do not change existing garage_bookings or garage booking rules.
+
+create table if not exists public.towing_requests (
+  id uuid primary key default gen_random_uuid(),
+  booking_id uuid not null unique references public.garage_bookings(id) on delete cascade,
+  client_id uuid not null references public.profiles(id) on delete restrict,
+  garage_provider_id uuid not null references public.service_providers(id) on delete restrict,
+  pickup_address text not null check (char_length(trim(pickup_address)) between 8 and 240),
+  towing_note text not null default '' check (char_length(towing_note) <= 500),
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'cancelled')),
+  towing_provider_id uuid references public.service_providers(id) on delete restrict,
+  accepted_at timestamptz,
+  created_at timestamptz not null default now(),
+  constraint towing_accepted_consistent check (
+    (status = 'accepted' and towing_provider_id is not null and accepted_at is not null)
+    or (status <> 'accepted')
+  )
+);
+
+create index if not exists towing_requests_status_idx
+  on public.towing_requests(status, created_at desc);
+create index if not exists towing_requests_client_idx
+  on public.towing_requests(client_id, created_at desc);
+create index if not exists towing_requests_tow_provider_idx
+  on public.towing_requests(towing_provider_id, created_at desc);
+
+alter table public.towing_requests enable row level security;
+
+revoke all on table public.towing_requests from anon, authenticated;
+grant select on table public.towing_requests to authenticated;
+
+drop policy if exists "Towing requests visible to involved users" on public.towing_requests;
+create policy "Towing requests visible to involved users"
+on public.towing_requests for select to authenticated
+using (
+  client_id = (select auth.uid())
+  or exists (
+    select 1 from public.service_providers garage
+    where garage.id = garage_provider_id
+      and garage.owner_id = (select auth.uid())
+  )
+  or exists (
+    select 1 from public.service_providers tow
+    where tow.owner_id = (select auth.uid())
+      and tow.provider_type::text = 'towing'
+      and tow.status::text = 'approved'
+      and not tow.is_removed
+      and (
+        tow.id = towing_provider_id
+        or (
+          status = 'pending'
+          and tow.is_listing_active
+          and exists (
+            select 1 from public.service_providers garage2
+            where garage2.id = garage_provider_id
+              and lower(trim(garage2.city)) = lower(trim(tow.city))
+          )
+        )
+      )
+  )
+);
+
+-- Existing book_garage_service is preserved. For towing, this wrapper
+-- books the garage and creates a pending dispatch request in ONE transaction.
+create or replace function public.book_garage_service_with_towing(
+  p_provider_id uuid,
+  p_service_id uuid,
+  p_day date,
+  p_time text,
+  p_note text default '',
+  p_vehicle text default '',
+  p_wants_towing boolean default false,
+  p_pickup_address text default '',
+  p_towing_note text default ''
+) returns uuid
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_booking_id uuid;
+  v_request_id uuid;
+  v_client_name text;
+  v_service_name text;
+  v_garage_city text;
+  v_booking_time timestamptz;
+begin
+  if v_user is null then
+    raise exception 'Please sign in before making a booking.';
+  end if;
+
+  if p_wants_towing then
+    if char_length(trim(coalesce(p_pickup_address, ''))) not between 8 and 240 then
+      raise exception 'Provide a complete pickup address (8 to 240 characters).';
+    end if;
+    if char_length(coalesce(p_towing_note, '')) > 500 then
+      raise exception 'Towing note must be 500 characters or less.';
+    end if;
+  end if;
+
+  -- The existing RPC authenticates a client and checks available slots.
+  v_booking_id := public.book_garage_service(
+    p_provider_id, p_service_id, p_day, p_time, p_note, p_vehicle
+  );
+
+  if not p_wants_towing then
+    return v_booking_id;
+  end if;
+
+  select b.client_name, b.service_name, g.city, b.starts_at
+  into v_client_name, v_service_name, v_garage_city, v_booking_time
+  from public.garage_bookings b
+  join public.service_providers g on g.id = b.provider_id
+  where b.id = v_booking_id and b.client_id = v_user;
+
+  if not found then
+    raise exception 'Could not verify the confirmed garage booking.';
+  end if;
+
+  insert into public.towing_requests (
+    booking_id, client_id, garage_provider_id, pickup_address, towing_note
+  ) values (
+    v_booking_id, v_user, p_provider_id,
+    trim(p_pickup_address), trim(coalesce(p_towing_note, ''))
+  ) returning id into v_request_id;
+
+  insert into public.booking_notifications(recipient_id, booking_id, title, body)
+  select v_user, v_booking_id, 'Towing request pending',
+    'Your garage appointment is confirmed. Your towing request is waiting for an available towing provider.';
+
+  insert into public.booking_notifications(recipient_id, booking_id, title, body)
+  select g.owner_id, v_booking_id, 'Client requested towing',
+    v_client_name || ' requested towing for the confirmed ' || v_service_name || ' appointment.'
+  from public.service_providers g where g.id = p_provider_id;
+
+  -- Notify approved, published towing companies serving the garage's city.
+  insert into public.booking_notifications(recipient_id, booking_id, title, body)
+  select distinct tow.owner_id, v_booking_id, 'New towing opportunity',
+    'A new towing request is available for ' ||
+    to_char(v_booking_time at time zone 'America/Toronto', 'Mon DD, YYYY HH12:MI AM') ||
+    '. Open your MECATREX Towing jobs tab.'
+  from public.service_providers tow
+  where tow.provider_type::text = 'towing'
+    and tow.status::text = 'approved'
+    and tow.is_listing_active
+    and not tow.is_removed
+    and lower(trim(tow.city)) = lower(trim(v_garage_city));
+
+  return v_booking_id;
+end;
+$$;
+
+revoke all on function public.book_garage_service_with_towing(uuid,uuid,date,text,text,text,boolean,text,text)
+  from public, anon, authenticated;
+grant execute on function public.book_garage_service_with_towing(uuid,uuid,date,text,text,text,boolean,text,text)
+  to authenticated;
+
+-- A towing provider can only see pending opportunities in their city and
+-- their own accepted jobs. Private phone details are masked until acceptance.
+create or replace function public.list_my_towing_opportunities()
+returns table (
+  request_id uuid,
+  booking_id uuid,
+  appointment_at timestamptz,
+  garage_name text,
+  garage_address text,
+  service_name text,
+  pickup_address text,
+  client_name text,
+  client_phone text,
+  towing_note text,
+  request_status text,
+  accepted_by_me boolean
+)
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_provider_id uuid;
+  v_city text;
+begin
+  select sp.id, sp.city
+    into v_provider_id, v_city
+  from public.service_providers sp
+  where sp.owner_id = auth.uid()
+    and sp.provider_type::text = 'towing'
+    and sp.status::text = 'approved'
+    and sp.is_listing_active
+    and not sp.is_removed
+  limit 1;
+
+  if v_provider_id is null then
+    raise exception 'Only approved, published towing providers can view towing jobs.';
+  end if;
+
+  return query
+  select
+    r.id,
+    b.id,
+    b.starts_at,
+    b.garage_name,
+    b.garage_address,
+    b.service_name,
+    r.pickup_address,
+    case when r.towing_provider_id = v_provider_id then b.client_name else 'Shared after acceptance' end,
+    case when r.towing_provider_id = v_provider_id then b.client_phone else '' end,
+    r.towing_note,
+    r.status,
+    (r.towing_provider_id = v_provider_id)
+  from public.towing_requests r
+  join public.garage_bookings b on b.id = r.booking_id
+  join public.service_providers garage on garage.id = r.garage_provider_id
+  where b.status = 'confirmed'
+    and b.starts_at > now()
+    and (
+      (r.status = 'pending'
+        and lower(trim(garage.city)) = lower(trim(v_city)))
+      or (r.status = 'accepted' and r.towing_provider_id = v_provider_id)
+    )
+  order by b.starts_at asc;
+end;
+$$;
+
+revoke all on function public.list_my_towing_opportunities() from public, anon, authenticated;
+grant execute on function public.list_my_towing_opportunities() to authenticated;
+
+-- Row locking makes acceptance atomic. Two companies cannot accept one job.
+create or replace function public.accept_towing_request(p_request_id uuid)
+returns boolean
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_provider_id uuid;
+  v_owner uuid := auth.uid();
+  v_city text;
+  v_request public.towing_requests%rowtype;
+  v_booking public.garage_bookings%rowtype;
+  v_garage_owner uuid;
+  v_garage_city text;
+  v_company_name text;
+begin
+  if v_owner is null then raise exception 'Please sign in.'; end if;
+
+  select sp.id, sp.city, sp.business_name
+    into v_provider_id, v_city, v_company_name
+  from public.service_providers sp
+  where sp.owner_id = v_owner
+    and sp.provider_type::text = 'towing'
+    and sp.status::text = 'approved'
+    and sp.is_listing_active
+    and not sp.is_removed
+  for update;
+
+  if v_provider_id is null then
+    raise exception 'Only approved towing businesses can accept a request.';
+  end if;
+
+  select * into v_request
+  from public.towing_requests
+  where id = p_request_id for update;
+
+  if not found then raise exception 'Towing request was not found.'; end if;
+
+  select b.* into v_booking
+  from public.garage_bookings b where b.id = v_request.booking_id;
+
+  if v_booking.status <> 'confirmed' or v_booking.starts_at <= now() then
+    raise exception 'This appointment is no longer available for towing.';
+  end if;
+
+  select g.owner_id, g.city into v_garage_owner, v_garage_city
+  from public.service_providers g where g.id = v_request.garage_provider_id;
+
+  if lower(trim(v_city)) <> lower(trim(v_garage_city)) then
+    raise exception 'This request is outside your current service area.';
+  end if;
+
+  if v_request.status = 'accepted' and v_request.towing_provider_id = v_provider_id then
+    return true;
+  end if;
+
+  if v_request.status <> 'pending' then
+    raise exception 'This towing opportunity has already been taken or cancelled.';
+  end if;
+
+  update public.towing_requests
+  set status = 'accepted', towing_provider_id = v_provider_id, accepted_at = now()
+  where id = p_request_id;
+
+  insert into public.booking_notifications(recipient_id, booking_id, title, body)
+  values
+    (v_request.client_id, v_booking.id, 'Towing request accepted',
+      v_company_name || ' accepted your towing request. Your garage appointment remains confirmed. Coordinate pickup details with the towing company.'),
+    (v_garage_owner, v_booking.id, 'Towing confirmed for appointment',
+      v_company_name || ' accepted the towing request for ' || v_booking.client_name || '.'),
+    (v_owner, v_booking.id, 'Towing job accepted',
+      'Your towing job for ' || v_booking.garage_name || ' has been added to your assigned jobs.');
+
+  return true;
+end;
+$$;
+
+revoke all on function public.accept_towing_request(uuid) from public, anon, authenticated;
+grant execute on function public.accept_towing_request(uuid) to authenticated;
+
+-- When an existing garage booking is cancelled, its towing dispatch
+-- must no longer remain available or appear as an accepted active job.
+create or replace function public.cancel_towing_when_garage_booking_cancelled()
+returns trigger language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_towing_provider uuid;
+begin
+  if old.status = 'confirmed' and new.status <> 'confirmed' then
+    select t.towing_provider_id into v_towing_provider
+    from public.towing_requests t
+    where t.booking_id = new.id and t.status = 'accepted';
+
+    update public.towing_requests
+      set status = 'cancelled'
+      where booking_id = new.id and status in ('pending','accepted');
+
+    if v_towing_provider is not null then
+      insert into public.booking_notifications(recipient_id, booking_id, title, body)
+      select sp.owner_id, new.id, 'Towing job cancelled',
+        'The linked garage appointment has been cancelled. Do not dispatch a truck for this job.'
+      from public.service_providers sp where sp.id = v_towing_provider;
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function public.cancel_towing_when_garage_booking_cancelled()
+  from public, anon, authenticated;
+
+drop trigger if exists garage_booking_cancel_towing on public.garage_bookings;
+create trigger garage_booking_cancel_towing
+after update of status on public.garage_bookings
+for each row
+execute function public.cancel_towing_when_garage_booking_cancelled();
