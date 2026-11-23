@@ -2428,10 +2428,9 @@ export default function Home() {
             <div className="absolute left-1/2 top-[-230px] h-[600px] w-[600px] -translate-x-1/2 rounded-full border border-white/[0.07]" />
 
             <div className="relative z-10 flex min-h-[720px] flex-col items-center justify-center px-8 py-20 text-center">
-              <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-5 py-3 text-[17px] font-semibold text-white backdrop-blur-md">
-                <span className="h-3 w-3 rounded-full bg-[#83A7D3]" />
-
-                Vehicle service made simple
+              <div className="mb-8 inline-flex items-center gap-3 rounded-full border border-[#83A7D3]/40 bg-[#83A7D3]/10 px-6 py-3 text-[17px] font-bold tracking-[0.02em] text-white shadow-[0_0_40px_rgba(131,167,211,0.12)] backdrop-blur-md sm:text-[19px]">
+                <span className="h-3 w-3 rounded-full bg-[#83A7D3] shadow-[0_0_18px_rgba(131,167,211,0.9)]" />
+                Your car repair made easier
               </div>
 
               <h1 className="mx-auto max-w-[1100px] text-[58px] font-bold leading-[1.03] tracking-[-0.05em] text-white sm:text-[72px] lg:text-[84px]">
