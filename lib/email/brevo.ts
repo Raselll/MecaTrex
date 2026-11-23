@@ -349,3 +349,46 @@ export async function sendBookingEmailNotifications(
     failed,
   };
 }
+
+export type BookingReminderEmail = {
+  clientEmail: string;
+  clientName: string;
+  garageName: string;
+  garageAddress: string;
+  serviceName: string;
+  startsAt: string;
+};
+
+/** Called only by the authenticated server-side reminder scheduler. */
+export async function sendBookingReminderEmail(data: BookingReminderEmail) {
+  const when = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto",
+    dateStyle: "full",
+    timeStyle: "short",
+  }).format(new Date(data.startsAt));
+
+  return sendBrevoEmail({
+    toEmail: data.clientEmail,
+    toName: data.clientName,
+    subject: "MECATREX reminder: your appointment is tomorrow",
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:580px;margin:auto;padding:28px;color:#101828;line-height:1.6">
+        <p style="font-weight:800;letter-spacing:2px;color:#4771A6">MECATREX</p>
+        <p style="color:#4771A6;font-weight:700">Your car repair made easier</p>
+        <h1 style="font-size:26px;margin:18px 0">Your appointment is coming up!</h1>
+        <p>Hi ${escapeHtml(data.clientName)}, this is your reminder for your upcoming garage appointment.</p>
+        <div style="background:#EDF3FA;border-radius:16px;padding:20px;margin:22px 0">
+          <strong>When:</strong> ${escapeHtml(when)} (Montreal time)<br/>
+          <strong>Garage:</strong> ${escapeHtml(data.garageName)}<br/>
+          <strong>Service:</strong> ${escapeHtml(data.serviceName)}<br/>
+          <strong>Address:</strong> ${escapeHtml(data.garageAddress)}
+        </div>
+        <p>Please arrive on time. Payment is handled at the garage.</p>
+        <p style="margin-top:26px">
+          <a href="${escapeHtml(appUrl("/account"))}" style="display:inline-block;border-radius:11px;background:#4771A6;color:#fff;padding:13px 20px;text-decoration:none;font-weight:700">View my appointment</a>
+        </p>
+        <p style="font-size:12px;color:#667085;margin-top:25px">This is a transactional reminder for your confirmed MECATREX reservation.</p>
+      </div>
+    `,
+  });
+}
