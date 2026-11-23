@@ -16,6 +16,7 @@ export default function BookingNotifications({ userId }: { userId: string }) {
   const [alerts, setAlerts] = useState<AlertRow[]>([]);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
+  const [dismissedReminderIds, setDismissedReminderIds] = useState<string[]>([]);
 
   const refresh = useCallback(async () => {
     const { data, error: loadError } = await supabase
@@ -40,6 +41,16 @@ export default function BookingNotifications({ userId }: { userId: string }) {
   }, [refresh]);
 
   const unread = alerts.filter((alert) => !alert.read_at).length;
+  const dueReminder = alerts.find((alert) =>
+    !alert.read_at &&
+    alert.title === "Appointment reminder: tomorrow" &&
+    !dismissedReminderIds.includes(alert.id)
+  );
+
+  function dismissReminder(id: string) {
+    setDismissedReminderIds((current) => [...current, id]);
+    void markRead(id);
+  }
 
   async function markRead(id: string) {
     const { error: updateError } = await supabase
@@ -131,6 +142,42 @@ export default function BookingNotifications({ userId }: { userId: string }) {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {dueReminder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#101828]/55 p-4 backdrop-blur-[3px]">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mecatrex-reminder-title"
+            aria-describedby="mecatrex-reminder-description"
+            className="w-full max-w-[470px] rounded-[25px] border border-[#D5DFEA] bg-white p-6 shadow-[0_30px_90px_rgba(0,0,0,0.2)] sm:p-8"
+          >
+            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EDF3FA] text-[30px]">
+              📅
+            </div>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
+              MECATREX appointment reminder
+            </p>
+            <h2 id="mecatrex-reminder-title" className="mt-2 text-[24px] font-extrabold text-[#101828]">
+              Your appointment is coming up!
+            </h2>
+            <p id="mecatrex-reminder-description" className="mt-3 whitespace-pre-line text-[14px] leading-7 text-[#475467]">
+              {dueReminder.body}
+            </p>
+            <p className="mt-4 text-[12px] text-[#667085]">
+              You can review your booking under My appointments.
+            </p>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => dismissReminder(dueReminder.id)}
+              className="mt-6 w-full rounded-[13px] bg-[#4771A6] px-5 py-3.5 text-[14px] font-extrabold text-white hover:bg-[#315C91]"
+            >
+              Got it — thanks!
+            </button>
+          </section>
         </div>
       )}
     </div>
