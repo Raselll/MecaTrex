@@ -55,25 +55,50 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
   const time = formValue(formData, "time");
   const note = formValue(formData, "note");
   const vehicle = formValue(formData, "vehicle").slice(0, 120);
+  const wantsTowing = formValue(formData, "wants_towing") === "yes";
+  const pickupAddress = formValue(formData, "pickup_address");
+  const towingNote = formValue(formData, "towing_note");
   if (!providerId || !serviceId || !/^\d{4}-\d{2}-\d{2}$/.test(day)
       || !/^([01]\d|2[0-3]):(00|30)$/.test(time) || note.length > 500) {
     return { ok: false, error: "Choose a valid garage, service, date, time and a note shorter than 500 characters." };
+  }
+
+  if (wantsTowing && (pickupAddress.length < 8 || pickupAddress.length > 240 || towingNote.length > 500)) {
+    return { ok: false, error: "Enter a towing pickup address (8–240 characters) and keep the towing note under 500 characters." };
   }
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Please log in with a client account before confirming a booking." };
 
-  const { data, error } = await supabase.rpc("book_garage_service", {
-    p_provider_id: providerId,
-    p_service_id: serviceId,
-    p_day: day,
-    p_time: time,
-    p_note: note,
-    p_vehicle: vehicle,
-  });
+  // Ordinary garage bookings keep using the original proven RPC.
+  // A towing request uses a transaction-safe wrapper: either both records
+  // are saved, or neither is saved, avoiding a half-created request.
+  const { data, error } = wantsTowing
+    ? await supabase.rpc("book_garage_service_with_towing", {
+        p_provider_id: providerId,
+        p_service_id: serviceId,
+        p_day: day,
+        p_time: time,
+        p_note: note,
+        p_vehicle: vehicle,
+        p_wants_towing: true,
+        p_pickup_address: pickupAddress,
+        p_towing_note: towingNote,
+      })
+    : await supabase.rpc("book_garage_service", {
+        p_provider_id: providerId,
+        p_service_id: serviceId,
+        p_day: day,
+        p_time: time,
+        p_note: note,
+        p_vehicle: vehicle,
+      });
 
   if (error || typeof data !== "string") {
+    if (wantsTowing && error?.code === "PGRST202") {
+      return { ok: false, error: "The towing booking database migration has not been installed yet. Choose 'No towing' or contact MECATREX support." };
+    }
     return { ok: false, error: error?.message ?? "Could not book this time. Please select another." };
   }
 
@@ -83,7 +108,7 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
 
   revalidatePath("/account");
   revalidatePath("/");
-  return { ok: true, bookingId: data };
+  return { ok: true, bookingId: data, message: wantsTowing ? "Your garage booking is confirmed. Your towing request is pending acceptance." : undefined };
 }
 
 export async function cancelGarageBooking(bookingId: string):
