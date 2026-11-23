@@ -3,13 +3,15 @@
 import { useState, type ReactNode } from "react";
 import BookingNotifications from "@/components/booking/booking-notifications";
 
-type Section = "overview" | "appointments" | "calendar" | "business" | "services" | "settings" | "earnings" | "finances";
+type Section = "overview" | "appointments" | "calendar" | "business" | "services" | "settings" | "earnings" | "finances" | "towing";
 
 type Props = {
   kind: "client" | "provider";
   userId: string;
   firstName: string;
   approved?: boolean;
+  providerType?: "garage" | "towing";
+  towingRequests?: ReactNode;
   overview?: ReactNode;
   appointments?: ReactNode;
   calendar?: ReactNode;
@@ -24,6 +26,7 @@ const descriptions: Record<Section, string> = {
   calendar: "Your availability, bookings and opening hours.",
   earnings: "Understand past booking value and upcoming estimated revenue.",
   finances: "Explore monthly service costs and upcoming appointments.",
+  towing: "Claim available towing requests and track your assigned jobs.",
   business: "Your public listing, contact details and photo.",
   services: "Manage every service, duration and fixed price.",
   settings: "Your personal information and dashboard preferences.",
@@ -35,6 +38,7 @@ const titles: Record<Section, string> = {
   calendar: "Calendar & availability",
   earnings: "Business",
   finances: "Finances",
+  towing: "Towing jobs",
   business: "Business profile",
   services: "Services & prices",
   settings: "Settings",
@@ -46,6 +50,7 @@ const symbols: Record<Section, string> = {
   calendar: "▦",
   earnings: "▥",
   finances: "$",
+  towing: "🚛",
   business: "▣",
   services: "⚒",
   settings: "⚙",
@@ -56,6 +61,8 @@ export default function AccountWorkspace({
   userId,
   firstName,
   approved = false,
+  providerType = "garage",
+  towingRequests,
   overview,
   appointments,
   calendar,
@@ -68,7 +75,9 @@ export default function AccountWorkspace({
     kind === "client"
       ? ["overview", "appointments", "finances", "settings"]
       : approved
-        ? ["overview", "calendar", "earnings", "business", "services", "settings"]
+        ? (providerType === "towing"
+            ? ["overview", "calendar", "towing", "earnings", "business", "services", "settings"]
+            : ["overview", "calendar", "earnings", "business", "services", "settings"])
         : ["overview", "settings"];
 
   function goTo(next: Section) {
@@ -156,6 +165,12 @@ export default function AccountWorkspace({
               className="workspace-content"
             >
               {financials}
+            </div>
+          )}
+
+          {towingRequests && (
+            <div hidden={view !== "towing"} className="workspace-content">
+              {towingRequests}
             </div>
           )}
 
