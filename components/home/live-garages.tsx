@@ -83,7 +83,6 @@ const CATEGORY_ICONS: Record<string, string> = {
 const DEFAULT_OPEN_CATEGORIES = [
   "Popular",
   "Tires & wheels",
-  "Mechanical repairs",
 ];
 
 const SERVICE_GROUPS = Array.from(
