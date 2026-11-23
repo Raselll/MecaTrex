@@ -137,7 +137,7 @@ export default function TowingOpportunities({
           <p className="mt-2 text-[12px] text-[#667085]">
             {scheduleOnly || view === "accepted"
               ? "Once you accept a request, it will appear here."
-              : "Only future garage appointments in your company's city are offered."}
+              : "Only future garage appointments in your company's province are offered."}
           </p>
         </div>
       ) : (
