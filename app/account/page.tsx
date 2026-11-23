@@ -14,6 +14,7 @@ import AccountWorkspace from "@/components/account/account-workspace";
 import ClientBookings from "@/components/booking/client-bookings";
 import FinancialOverview from "@/components/account/financial-overview";
 import ProviderCalendar from "@/components/booking/provider-calendar";
+import TowingOpportunities from "@/components/booking/towing-opportunities";
 import {
   ACCENT_COLORS,
   type AccentColor,
@@ -421,18 +422,23 @@ export default async function AccountPage({
             userId={user.id}
             firstName={profile.first_name}
             approved={approved}
+            providerType={provider.provider_type}
+            towingRequests={approved && provider.provider_type === "towing" ? <TowingOpportunities /> : undefined}
             overview={
               <ProviderReadiness provider={provider} services={services} />
             }
             financials={approved ? <FinancialOverview ownerId={provider.id} kind="provider" /> : undefined}
             calendar={
               approved ? (
-                <ProviderCalendar
-                  providerId={provider.id}
-                  providerType={provider.provider_type}
-                  initialCancelled={provider.provider_cancellation_count ?? 0}
-                  initiallySuspended={Boolean(provider.booking_suspended)}
-                />
+                <div className="space-y-5">
+                  {provider.provider_type === "towing" && <TowingOpportunities scheduleOnly />}
+                  <ProviderCalendar
+                    providerId={provider.id}
+                    providerType={provider.provider_type}
+                    initialCancelled={provider.provider_cancellation_count ?? 0}
+                    initiallySuspended={Boolean(provider.booking_suspended)}
+                  />
+                </div>
               ) : undefined
             }
             providerDashboard={
