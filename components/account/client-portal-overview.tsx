@@ -239,6 +239,25 @@ export default function ClientPortalOverview({
           )}
         </div>
 
+        {!editing && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[13px] bg-[#F8FAFC] p-4">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[#98A2B3]">Name</p>
+              <p className="mt-1 text-[13px] font-bold text-[#101828]">{contact.first_name} {contact.last_name}</p>
+            </div>
+            <div className="rounded-[13px] bg-[#F8FAFC] p-4">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[#98A2B3]">Primary phone</p>
+              <p className="mt-1 text-[13px] font-bold text-[#101828]">{contact.primary_phone}</p>
+            </div>
+            {contact.secondary_phone && (
+              <div className="rounded-[13px] bg-[#F8FAFC] p-4">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-[#98A2B3]">Secondary phone</p>
+                <p className="mt-1 text-[13px] font-bold text-[#101828]">{contact.secondary_phone}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {saveNotice && <p role="status" className="mt-4 rounded-xl bg-[#ECFDF3] p-3 text-[12px] font-semibold text-[#027A48]">{saveNotice}</p>}
         {saveError && <p role="alert" className="mt-4 rounded-xl bg-[#FEF3F2] p-3 text-[12px] font-semibold text-[#B42318]">{saveError}</p>}
 
@@ -261,6 +280,7 @@ export default function ClientPortalOverview({
                   placeholder={field.includes("phone") ? "514-555-1234" : undefined}
                   className="w-full rounded-[11px] border border-[#BAC7D7] bg-white px-3 py-3 text-[13px] text-[#101828] outline-none focus:border-[#4771A6]"
                 />
+                {field.includes("phone") && <span className="mt-1 block text-[11px] text-[#667085]">Format: XXX-XXX-XXXX · automatically formatted as you type</span>}
               </label>
             ))}
             <div className="flex flex-wrap gap-2 sm:col-span-2">
