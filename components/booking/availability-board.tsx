@@ -25,6 +25,7 @@ import {
 type Props = {
   providerId: string;
   bookings: GarageBooking[];
+  jumpToBooking?: { date: string; token: number } | null;
   blocks: CalendarBlock[];
   hours: BusinessHour[];
   loading: boolean;
@@ -197,6 +198,7 @@ function isFullDayBlock(
 export default function AvailabilityBoard({
   providerId,
   bookings,
+  jumpToBooking,
   blocks,
   hours,
   loading,
@@ -244,6 +246,7 @@ export default function AvailabilityBoard({
 
   const [selectedDays, setSelectedDays] =
     useState<string[]>([]);
+  const [focusedBookingDay, setFocusedBookingDay] = useState<string | null>(null);
 
   const [mode, setMode] = useState<
     "all-day" | "hours"
@@ -288,6 +291,22 @@ export default function AvailabilityBoard({
 
   const suppressNextClickRef =
     useRef(false);
+
+  /* =======================================================
+     Jump to the first upcoming booking without selecting a day for blocking.
+  ======================================================= */
+  useEffect(() => {
+    if (!jumpToBooking) return;
+    const index = Math.round(
+      (utcDate(jumpToBooking.date).getTime() - utcDate(firstWeek).getTime()) / 86400000
+    );
+    if (index < 0 || index >= length) return;
+    setFocusedBookingDay(jumpToBooking.date);
+    calendarRef.current?.scrollTo({
+      left: Math.max(0, (index - 2) * DAY_WIDTH),
+      behavior: "smooth",
+    });
+  }, [jumpToBooking, firstWeek, length]);
 
   /* =======================================================
      READ EXISTING PRIVATE AND PUBLIC NOTES
@@ -767,6 +786,7 @@ export default function AvailabilityBoard({
 
   return (
     <section
+      id="garage-availability-board"
       aria-label="Garage availability calendar"
       className="overflow-hidden rounded-[26px] border border-[#BAC7D7] bg-white"
     >
@@ -921,6 +941,8 @@ export default function AvailabilityBoard({
                   const isToday =
                     day === today;
 
+                  const isFocusedBookingDay = day === focusedBookingDay;
+
                   const blocked =
                     dayIsBlocked(day);
 
@@ -979,6 +1001,8 @@ export default function AvailabilityBoard({
                       } ${
                         selectedDay
                           ? "ring-2 ring-inset ring-[#4771A6]"
+                          : isFocusedBookingDay
+                            ? "z-10 ring-[3px] ring-inset ring-[#4771A6] bg-[#E5F0FE]"
                           : isToday
                             ? "ring-2 ring-inset ring-[#087F74]"
                             : "hover:bg-[#EDF3FA]"
@@ -1013,6 +1037,12 @@ export default function AvailabilityBoard({
                       {isToday && (
                         <span className="mt-1 inline-flex rounded-full bg-[#087F74] px-2 py-1 text-[10px] font-extrabold text-white">
                           TODAY
+                        </span>
+                      )}
+
+                      {isFocusedBookingDay && !selectedDay && (
+                        <span className="mt-1 block rounded-full bg-[#315C91] px-1.5 py-1 text-center text-[9px] font-extrabold text-white">
+                          NEXT BOOKING
                         </span>
                       )}
 
