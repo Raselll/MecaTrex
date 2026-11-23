@@ -134,7 +134,7 @@ begin
     v_client_name || ' requested towing for the confirmed ' || v_service_name || ' appointment.'
   from public.service_providers g where g.id = p_provider_id;
 
-  -- Notify approved, published towing companies serving the garage's city.
+  -- Notify approved, published towing companies serving the garage's province.
   insert into public.booking_notifications(recipient_id, booking_id, title, body)
   select distinct tow.owner_id, v_booking_id, 'New towing opportunity',
     'A new towing request is available for ' ||
@@ -156,7 +156,7 @@ revoke all on function public.book_garage_service_with_towing(uuid,uuid,date,tex
 grant execute on function public.book_garage_service_with_towing(uuid,uuid,date,text,text,text,boolean,text,text)
   to authenticated;
 
--- A towing provider can only see pending opportunities in their city and
+-- A towing provider can only see pending opportunities in their province and
 -- their own accepted jobs. Private phone details are masked until acceptance.
 create or replace function public.list_my_towing_opportunities()
 returns table (
@@ -272,7 +272,7 @@ begin
   from public.service_providers g where g.id = v_request.garage_provider_id;
 
   if lower(trim(v_province)) <> lower(trim(v_garage_province)) then
-    raise exception 'This request is outside your current service area.';
+    raise exception 'This request is outside your current province.';
   end if;
 
   if v_request.status = 'accepted' and v_request.towing_provider_id = v_provider_id then
