@@ -354,7 +354,7 @@ export default function ProviderCalendar({
   function showNextBooking() {
     if (!nextBooking) return;
     const date = montrealDate(new Date(nextBooking.starts_at));
-    setBookingJump({ date, token: Date.now() });
+    setBookingJump((current) => ({ date, token: (current?.token ?? 0) + 1 }));
     window.requestAnimationFrame(() => {
       document.getElementById("garage-availability-board")?.scrollIntoView({
         behavior: "smooth",
