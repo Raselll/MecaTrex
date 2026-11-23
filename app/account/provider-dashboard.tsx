@@ -877,7 +877,7 @@ export default function ProviderDashboard({
         </div>
       </div>
 
-      <div className="sticky top-3 z-30 flex flex-col gap-3 rounded-[20px] border border-[#BAC7D7] bg-white/95 px-5 py-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <div className="provider-save-toolbar sticky top-3 z-30 flex flex-col gap-3 rounded-[20px] border border-[#BAC7D7] bg-white/95 px-5 py-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[15px] font-bold text-[#101828]">
             Business & service updates
