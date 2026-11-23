@@ -246,7 +246,7 @@ export default function AvailabilityBoard({
 
   const [selectedDays, setSelectedDays] =
     useState<string[]>([]);
-  const [focusedBookingDay, setFocusedBookingDay] = useState<string | null>(null);
+  const focusedBookingDay = jumpToBooking?.date ?? null;
 
   const [mode, setMode] = useState<
     "all-day" | "hours"
@@ -301,7 +301,6 @@ export default function AvailabilityBoard({
       (utcDate(jumpToBooking.date).getTime() - utcDate(firstWeek).getTime()) / 86400000
     );
     if (index < 0 || index >= length) return;
-    setFocusedBookingDay(jumpToBooking.date);
     calendarRef.current?.scrollTo({
       left: Math.max(0, (index - 2) * DAY_WIDTH),
       behavior: "smooth",
