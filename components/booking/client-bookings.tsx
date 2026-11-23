@@ -7,7 +7,8 @@ import { cancelGarageBooking, reviewGarageBooking } from "@/app/book/actions";
 import { formatMontrealDateTime, formatPriceCents, type GarageBooking } from "@/lib/booking";
 
 type Review = { booking_id: string; stars: number; comment: string };
-type TowingStatus = { booking_id: string; status: "pending" | "accepted" | "cancelled" };
+type TowingStatus = { booking_id: string; status: "pending" | "accepted" | "cancelled"; towing_provider_id: string | null };
+type TowingCompany = { id: string; business_name: string; public_phone: string | null };
 
 function ReviewForm({ bookingId, onDone }: { bookingId: string; onDone: () => void }) {
   const [stars, setStars] = useState(5);
@@ -47,6 +48,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
   const [bookings, setBookings] = useState<GarageBooking[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [towingStatuses, setTowingStatuses] = useState<TowingStatus[]>([]);
+  const [towingCompanies, setTowingCompanies] = useState<TowingCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"upcoming" | "history">("upcoming");
   const [error, setError] = useState("");
@@ -59,12 +61,21 @@ export default function ClientBookings({ userId }: { userId: string }) {
       supabase.from("garage_bookings").select("*")
         .eq("client_id", userId).order("starts_at", { ascending: false }).limit(150),
       supabase.from("garage_reviews").select("booking_id,stars,comment").eq("client_id", userId),
-      supabase.from("towing_requests").select("booking_id,status").eq("client_id", userId),
+      supabase.from("towing_requests").select("booking_id,status,towing_provider_id").eq("client_id", userId),
     ]);
     if (bookingError) setError(bookingError.message);
     else { setBookings((rows ?? []) as GarageBooking[]); setError(""); }
     setReviews((reviewRows ?? []) as Review[]);
-    if (!towingResult.error) setTowingStatuses((towingResult.data ?? []) as TowingStatus[]);
+    if (!towingResult.error) {
+      const requests = (towingResult.data ?? []) as TowingStatus[];
+      setTowingStatuses(requests);
+      const towingIds = Array.from(new Set(requests.map((r) => r.towing_provider_id).filter((id): id is string => Boolean(id))));
+      if (towingIds.length > 0) {
+        const { data: companies, error: companyError } = await supabase
+          .from("service_providers").select("id,business_name,public_phone").in("id", towingIds);
+        if (!companyError) setTowingCompanies((companies ?? []) as TowingCompany[]);
+      } else setTowingCompanies([]);
+    }
     setLoading(false);
   }, [supabase, userId]);
 
@@ -115,6 +126,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
           const review = reviews.find((r) => r.booking_id === booking.id);
           const ended = new Date(booking.ends_at).getTime() <= now;
           const towing = towingStatuses.find((request) => request.booking_id === booking.id);
+          const towingCompany = towingCompanies.find((company) => company.id === towing?.towing_provider_id);
           return <article key={booking.id} className="rounded-[18px] border border-[#BAC7D7] p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div><p className="text-[12px] font-bold uppercase tracking-wide text-[#4771A6]">{booking.service_name}</p>
@@ -141,6 +153,15 @@ export default function ClientBookings({ userId }: { userId: string }) {
                   : towing.status === "accepted"
                     ? "Accepted by a towing provider. Coordinate your pickup time and cost with the provider."
                     : "Cancelled."}
+                {towing.status === "accepted" && towingCompany && (
+                  <div className="mt-2 text-[12px]">
+                    <strong>{towingCompany.business_name}</strong>
+                    {towingCompany.public_phone && (
+                      <> · <a href={"tel:" + towingCompany.public_phone.replace(/[^\d+]/g, "")}
+                        className="font-bold underline">{towingCompany.public_phone}</a></>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#EEF2F6] pt-4">
