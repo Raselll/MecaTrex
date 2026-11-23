@@ -428,17 +428,15 @@ export default function SignupReadiness() {
     form.addEventListener("click", onClick);
     form.addEventListener("focusout", onFocusOut);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          showAll = true;
-          scheduleValidation();
-        }
-      },
-      { threshold: 0.1 }
-    );
+    // Validate only fields the visitor has interacted with.
+    // Do not mark the entire provider form red just because the submit
+    // button enters the viewport while switching account types.
+    function onSubmitAttempt() {
+      showAll = true;
+      scheduleValidation();
+    }
 
-    observer.observe(submitButton);
+    form.addEventListener("submit", onSubmitAttempt);
 
     scheduleValidation();
 
@@ -447,7 +445,7 @@ export default function SignupReadiness() {
         window.cancelAnimationFrame(frame);
       }
 
-      observer.disconnect();
+      form.removeEventListener("submit", onSubmitAttempt);
 
       form.removeEventListener("input", onInput);
       form.removeEventListener("change", onInput);
