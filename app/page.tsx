@@ -4,6 +4,7 @@ import Image from "next/image";
 import Script from "next/script";
 import Link from "next/link";
 import LiveGarages from "@/components/home/live-garages";
+import HomeAuthActions from "@/components/home/home-auth-actions";
 import WhenPicker from "@/components/home/when-picker";
 import { SERVICE_CATALOGUE } from "@/lib/service-listing";
 import {
@@ -2409,15 +2410,7 @@ export default function Home() {
               </span>
             </nav>
 
-            <div className="flex items-center gap-4">
-              <Link href="/login" className="hidden rounded-xl px-6 py-3.5 text-[17px] font-semibold text-[#344054] transition hover:bg-[#F2F4F7] sm:block">
-                Log in
-              </Link>
-
-              <Link href="/signup" className="rounded-xl bg-[#101828] px-7 py-3.5 text-[17px] font-semibold text-white transition hover:bg-[#4771A6]">
-                Sign up
-              </Link>
-            </div>
+            <HomeAuthActions />
           </div>
         </header>
 
