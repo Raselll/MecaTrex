@@ -209,5 +209,5 @@ export async function GET(request: NextRequest) {
     notifications,
     emails,
     failures,
-  }, failures > 0 ? 207 : 200);
+  }, failures > 0 ? 500 : 200);
 }
