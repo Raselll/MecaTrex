@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import BookingNotifications from "@/components/booking/booking-notifications";
 
-type Section = "overview" | "appointments" | "calendar" | "business" | "services" | "settings";
+type Section = "overview" | "appointments" | "calendar" | "business" | "services" | "settings" | "earnings" | "finances";
 
 type Props = {
   kind: "client" | "provider";
@@ -13,6 +13,7 @@ type Props = {
   overview?: ReactNode;
   appointments?: ReactNode;
   calendar?: ReactNode;
+  financials?: ReactNode;
   providerDashboard?: ReactNode;
   settings: ReactNode;
 };
@@ -21,6 +22,8 @@ const descriptions: Record<Section, string> = {
   overview: "Everything important, at a glance.",
   appointments: "Your upcoming and previous appointments.",
   calendar: "Your availability, bookings and opening hours.",
+  earnings: "Understand past booking value and upcoming estimated revenue.",
+  finances: "Explore monthly service costs and upcoming appointments.",
   business: "Your public listing, contact details and photo.",
   services: "Manage every service, duration and fixed price.",
   settings: "Your personal information and dashboard preferences.",
@@ -30,6 +33,8 @@ const titles: Record<Section, string> = {
   overview: "Overview",
   appointments: "My appointments",
   calendar: "Calendar & availability",
+  earnings: "Business",
+  finances: "Finances",
   business: "Business profile",
   services: "Services & prices",
   settings: "Settings",
@@ -39,6 +44,8 @@ const symbols: Record<Section, string> = {
   overview: "⌂",
   appointments: "▦",
   calendar: "▦",
+  earnings: "▥",
+  finances: "$",
   business: "▣",
   services: "⚒",
   settings: "⚙",
@@ -52,15 +59,16 @@ export default function AccountWorkspace({
   overview,
   appointments,
   calendar,
+  financials,
   providerDashboard,
   settings,
 }: Props) {
   const [view, setView] = useState<Section>("overview");
   const sections: Section[] =
     kind === "client"
-      ? ["overview", "appointments", "settings"]
+      ? ["overview", "appointments", "finances", "settings"]
       : approved
-        ? ["overview", "calendar", "business", "services", "settings"]
+        ? ["overview", "calendar", "earnings", "business", "services", "settings"]
         : ["overview", "settings"];
 
   function goTo(next: Section) {
@@ -141,6 +149,15 @@ export default function AccountWorkspace({
           <div hidden={view !== "calendar"} className="workspace-content">
             {calendar}
           </div>
+
+          {financials && (
+            <div
+              hidden={view !== (kind === "provider" ? "earnings" : "finances")}
+              className="workspace-content"
+            >
+              {financials}
+            </div>
+          )}
 
           {providerDashboard && (
             <div
