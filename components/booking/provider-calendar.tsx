@@ -13,6 +13,8 @@ import AvailabilityBoard from "./availability-board";
 import {
   BOOKING_CANCEL_LIMIT,
   WEEKDAYS,
+  montrealDate,
+  formatMontrealDateTime,
   type BusinessHour,
   type GarageBooking,
   type CalendarBlock,
@@ -65,6 +67,7 @@ export default function ProviderCalendar({
   const [busy, setBusy] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [message, setMessage] = useState("");
+  const [bookingJump, setBookingJump] = useState<{ date: string; token: number } | null>(null);
   const [error, setError] = useState("");
 
   const [remaining, setRemaining] = useState(
@@ -344,6 +347,22 @@ export default function ProviderCalendar({
       new Date(booking.ends_at).getTime() > nowMs
   );
 
+  const nextBooking = [...upcoming].sort((a, b) =>
+    a.starts_at.localeCompare(b.starts_at)
+  )[0];
+
+  function showNextBooking() {
+    if (!nextBooking) return;
+    const date = montrealDate(new Date(nextBooking.starts_at));
+    setBookingJump({ date, token: Date.now() });
+    window.requestAnimationFrame(() => {
+      document.getElementById("garage-availability-board")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+  }
+
   return (
     <section
       id="garage-calendar"
@@ -380,14 +399,27 @@ export default function ProviderCalendar({
 
         {providerType === "garage" && (
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[15px] bg-[#EDF3FA] p-5">
+            <button
+              type="button"
+              onClick={showNextBooking}
+              disabled={!nextBooking}
+              aria-label={nextBooking
+                ? `Show next reservation on ${formatMontrealDateTime(nextBooking.starts_at)} in the calendar`
+                : "No upcoming reservations"}
+              className="group rounded-[15px] bg-[#EDF3FA] p-5 text-left transition hover:bg-[#DCEBFA] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#4771A6] disabled:cursor-default disabled:opacity-70"
+            >
               <p className="text-[12px] font-bold text-[#667085]">
                 Upcoming bookings
               </p>
               <p className="mt-1 text-[28px] font-extrabold">
                 {upcoming.length}
               </p>
-            </div>
+              <p className="mt-2 text-[12px] font-bold text-[#315C91]">
+                {nextBooking
+                  ? `Next: ${formatMontrealDateTime(nextBooking.starts_at)} →`
+                  : "No upcoming reservations"}
+              </p>
+            </button>
 
             <div className="rounded-[15px] bg-[#F2F4F7] p-5">
               <p className="text-[12px] font-bold text-[#667085]">
@@ -547,6 +579,7 @@ export default function ProviderCalendar({
         <AvailabilityBoard
           providerId={providerId}
           bookings={bookings}
+          jumpToBooking={bookingJump}
           blocks={blocks}
           hours={hours}
           loading={loading}
