@@ -39,7 +39,7 @@ type Props = {
   secondaryPhone: string | null;
 };
 
-const phonePattern = /^\\d{3}-\\d{3}-\\d{4}$/;
+const phonePattern = /^\d{3}-\d{3}-\d{4}$/;
 
 export default function ClientPortalOverview({
   userId,
