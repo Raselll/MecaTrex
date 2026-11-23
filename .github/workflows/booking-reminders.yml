@@ -19,8 +19,8 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${MECATREX_REMINDER_URL:-}" || -z "${MECATREX_CRON_SECRET:-}" ]]; then
-            echo "Configure MECATREX_REMINDER_URL and MECATREX_CRON_SECRET in GitHub Actions secrets."
-            exit 1
+            echo "Booking reminders are not configured yet; skipping scheduled invocation."
+            exit 0
           fi
           if [[ "$MECATREX_REMINDER_URL" != https://* ]]; then
             echo "MECATREX_REMINDER_URL must be an HTTPS production site."
