@@ -97,6 +97,15 @@ export default function BookingForm({
 
   const [booking, setBooking] =
     useState(false);
+  const [completedBooking, setCompletedBooking] = useState<{
+    id: string;
+    day: string;
+    time: string;
+    serviceNames: string[];
+    priceCents: number;
+    durationMinutes: number;
+    towingPending: boolean;
+  } | null>(null);
 
   const [error, setError] = useState("");
   const [availabilityError, setAvailabilityError] = useState("");
@@ -426,6 +435,7 @@ export default function BookingForm({
       !selectedService ||
       !slot ||
       booking ||
+      completedBooking ||
       !canConfirm ||
       !validVehicle ||
       wantsTowing === null ||
@@ -436,13 +446,10 @@ export default function BookingForm({
 
     setBooking(true);
     setError("");
+    setStepError("");
 
     const form = new FormData();
-
-    form.set(
-      "provider_id",
-      providerId
-    );
+    form.set("provider_id", providerId);
     form.set("service_ids", JSON.stringify(serviceIds));
     form.set("day", day);
     form.set("time", slot);
@@ -452,35 +459,37 @@ export default function BookingForm({
     form.set("pickup_address", wantsTowing ? pickupAddress.trim() : "");
     form.set("towing_note", wantsTowing ? towingNote.trim() : "");
 
-    const result =
-      await createGarageBooking(form);
+    try {
+      const result = await createGarageBooking(form);
+      if (!result.ok) {
+        // Never navigate away from the confirmation step when a write fails.
+        // Previously the UI jumped back to step 2 and hid the error inside
+        // the now-hidden step 4, making failed bookings look successful.
+        setError(result.error || "The booking was not saved. Please try again.");
+        return;
+      }
 
-    setBooking(false);
-
-    if (!result.ok) {
-      setError(result.error);
-
-      const { data } =
-        await (serviceIds.length === 1
-          ? supabase.rpc("garage_available_slots", {
-              p_provider_id: providerId,
-              p_service_id: serviceIds[0],
-              p_day: day,
-            })
-          : supabase.rpc("garage_available_slots_multi", {
-              p_provider_id: providerId,
-              p_service_ids: serviceIds,
-              p_day: day,
-            }));
-
-      setSlots((data ?? []) as Slot[]);
-      setSlot("");
-      setStep(2);
-      return;
+      // A success screen is shown only after the database RPC returned
+      // a committed booking identifier; clicking the button is not enough.
+      setCompletedBooking({
+        id: result.bookingId,
+        day,
+        time: slot,
+        serviceNames: selectedServices.map((service) => service.name),
+        priceCents: totalPriceCents,
+        durationMinutes: totalDurationMinutes,
+        towingPending: wantsTowing,
+      });
+      router.refresh();
+    } catch (submissionError) {
+      console.error("MECATREX booking submission failed:", submissionError);
+      setError(
+        "Could not verify your reservation because of a connection or server error. " +
+        "Please check My appointments before retrying to avoid a duplicate booking."
+      );
+    } finally {
+      setBooking(false);
     }
-
-    router.push("/account?booked=1");
-    router.refresh();
   }
 
   const nextPath =
@@ -998,9 +1007,22 @@ export default function BookingForm({
         {error && (
           <div
             role="alert"
-            className="mt-4 rounded-[14px] bg-[#FEF3F2] p-4 text-[13px] font-semibold text-[#B42318]"
+            className="mt-4 rounded-[14px] border border-[#FDA29B] bg-[#FEF3F2] p-4 text-[13px] font-semibold text-[#B42318]"
           >
-            {error}
+            <p className="text-[14px] font-extrabold">Booking not confirmed</p>
+            <p className="mt-2 break-words">{error}</p>
+            <p className="mt-2 text-[12px] font-normal">
+              Nothing has been confirmed on this screen. Keep your selections, or choose a new time if the garage is unavailable.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <button type="button" onClick={() => { setStep(2); setError(""); }}
+                className="rounded-lg border border-[#FDA29B] bg-white px-3 py-2 text-[12px] font-bold text-[#B42318]">
+                Change date or time
+              </button>
+              <Link href="/account" className="rounded-lg border border-[#FDA29B] bg-white px-3 py-2 text-[12px] font-bold text-[#B42318]">
+                Check my appointments
+              </Link>
+            </div>
           </div>
         )}
 
@@ -1042,6 +1064,7 @@ export default function BookingForm({
             type="button"
             disabled={
               booking ||
+              Boolean(completedBooking) ||
               !slot ||
               loading ||
               wantsTowing === null ||
@@ -1074,6 +1097,68 @@ export default function BookingForm({
         </button>}
       </div>
 
+      {completedBooking && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#101828]/70 px-4 py-8"
+          role="presentation">
+          <section role="dialog" aria-modal="true" aria-labelledby="mecatrex-booking-complete-title"
+            aria-describedby="mecatrex-booking-complete-description"
+            className="w-full max-w-[510px] rounded-[26px] border border-[#D4E0EA] bg-white p-6 shadow-[0_32px_90px_rgba(16,24,40,0.25)] sm:p-8">
+            <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full text-[30px] ${
+              completedBooking.towingPending
+                ? "bg-[#FFFAE7] text-[#9B6D00]"
+                : "bg-[#ECFDF3] text-[#027A48]"
+            }`}>
+              {completedBooking.towingPending ? "🚛" : "✓"}
+            </div>
+            <p className={`mt-5 text-center text-[11px] font-extrabold uppercase tracking-[0.15em] ${
+              completedBooking.towingPending ? "text-[#946600]" : "text-[#027A48]"
+            }`}>
+              {completedBooking.towingPending ? "Garage reserved · towing pending" : "Reservation confirmed"}
+            </p>
+            <h2 id="mecatrex-booking-complete-title"
+              className="mt-2 text-center text-[25px] font-extrabold tracking-tight text-[#101828]">
+              {completedBooking.towingPending
+                ? "Your garage time is reserved!"
+                : "Your appointment is confirmed!"}
+            </h2>
+            <p id="mecatrex-booking-complete-description"
+              className="mx-auto mt-3 max-w-[390px] text-center text-[13px] leading-6 text-[#475467]">
+              {completedBooking.towingPending
+                ? "We have sent your towing request to eligible companies. The complete booking will be confirmed after a towing provider accepts. Your garage time is already held."
+                : "The garage received your booking. You can find this appointment in your client account."}
+            </p>
+            <div className="mt-6 rounded-[17px] border border-[#DCE5EE] bg-[#F8FAFC] p-4">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#667085]">Appointment summary</p>
+              <div className="mt-3 space-y-2 text-[13px]">
+                <p className="font-bold text-[#101828]">{completedBooking.serviceNames.join(" + ")}</p>
+                <div className="flex justify-between gap-4 text-[#344054]">
+                  <span>{completedBooking.day} · {formatHour(completedBooking.time)}</span>
+                  <span>{completedBooking.durationMinutes} min</span>
+                </div>
+                <div className="flex justify-between gap-4 border-t border-[#DCE5EE] pt-3 font-extrabold text-[#101828]">
+                  <span>Garage service total</span>
+                  <span>{formatPriceCents(completedBooking.priceCents)}</span>
+                </div>
+                {completedBooking.towingPending && (
+                  <p className="text-[11px] leading-5 text-[#946600]">
+                    Towing charges and pickup arrangements are separate and still need coordination.
+                  </p>
+                )}
+                <p className="break-all text-[10px] text-[#667085]">Booking reference: {completedBooking.id}</p>
+              </div>
+            </div>
+            <button type="button" autoFocus
+              onClick={() => router.push("/account?booked=1")}
+              className="mt-6 w-full rounded-[14px] bg-[#4771A6] px-5 py-3.5 text-[14px] font-extrabold text-white hover:bg-[#315C91]">
+              View my appointments →
+            </button>
+            <button type="button" onClick={() => router.push("/")}
+              className="mt-3 w-full rounded-[14px] border border-[#D5DFE9] bg-white px-5 py-3 text-[13px] font-bold text-[#475467] hover:bg-[#F8FAFC]">
+              Back to garages
+            </button>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
