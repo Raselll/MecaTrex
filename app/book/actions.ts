@@ -136,17 +136,30 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
 
   // Atomically reserve the combined duration and snapshot every item.
   // When towing is requested, the same transaction also creates its pending dispatch.
-  const { data, error } = await supabase.rpc("book_garage_services", {
-    p_provider_id: providerId,
-    p_service_ids: serviceIds,
-    p_day: day,
-    p_time: time,
-    p_note: note,
-    p_vehicle: vehicle,
-    p_wants_towing: wantsTowing,
-    p_pickup_address: wantsTowing ? pickupAddress : "",
-    p_towing_note: wantsTowing ? towingNote : "",
-  });
+  const { data, error } = serviceIds.length === 1
+    ? wantsTowing
+      ? await supabase.rpc("book_garage_service_with_towing", {
+          p_provider_id: providerId,
+          p_service_id: serviceIds[0],
+          p_day: day, p_time: time, p_note: note, p_vehicle: vehicle,
+          p_wants_towing: true, p_pickup_address: pickupAddress, p_towing_note: towingNote,
+        })
+      : await supabase.rpc("book_garage_service", {
+          p_provider_id: providerId,
+          p_service_id: serviceIds[0],
+          p_day: day, p_time: time, p_note: note, p_vehicle: vehicle,
+        })
+    : await supabase.rpc("book_garage_services", {
+        p_provider_id: providerId,
+        p_service_ids: serviceIds,
+        p_day: day,
+        p_time: time,
+        p_note: note,
+        p_vehicle: vehicle,
+        p_wants_towing: wantsTowing,
+        p_pickup_address: wantsTowing ? pickupAddress : "",
+        p_towing_note: wantsTowing ? towingNote : "",
+      });
 
   if (error || typeof data !== "string") {
     if (error?.code === "PGRST202") {
