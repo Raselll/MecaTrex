@@ -2388,7 +2388,7 @@ export default function Home() {
                 href="#garage-results"
                 className="text-[18px] font-semibold text-[#344054] transition hover:text-[#4771A6]"
               >
-                Find a garage
+                Find garages & towing
               </a>
 
               <a
@@ -2753,7 +2753,7 @@ export default function Home() {
 
             <div className="mt-10 text-center">
               <a href="#garage-results" className="text-[18px] font-semibold text-[#475467] transition hover:text-[#4771A6]">
-                Browse available garages →
+                Browse garages & towing →
               </a>
             </div>
           </div>
@@ -2768,7 +2768,7 @@ export default function Home() {
             </p>
 
             <h2 className="mx-auto mt-3 max-w-[950px] text-[46px] font-bold tracking-[-0.04em] sm:text-[56px]">
-              Garages ready to help.
+              Garages and towing ready to help.
             </h2>
           </div>
 
