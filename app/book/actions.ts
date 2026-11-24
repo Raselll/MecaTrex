@@ -168,6 +168,16 @@ export async function cancelGarageBooking(bookingId: string):
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Please log in again." };
+  // Capture the accepted tow company's contact before the cancellation
+  // trigger closes the towing request and hides the original assignment.
+  const { data: linkedTowing } = await supabase
+    .from("towing_requests").select("id,status").eq("booking_id",bookingId).maybeSingle();
+  const { data: towingDetails } = linkedTowing?.status === "accepted"
+    ? await supabase.rpc("towing_party_email_details", {
+        p_request_id: linkedTowing.id,
+      }).maybeSingle()
+    : { data: null };
+
   const { data, error } = await supabase.rpc("cancel_garage_booking", { p_booking_id: bookingId });
   if (error) return { ok: false, message: error.message };
 
@@ -183,6 +193,16 @@ export async function cancelGarageBooking(bookingId: string):
     await notifyParticipants(bookingId,
       actualProviderCancellation ? "provider_cancelled" : "client_cancelled",
       { cancellationRemaining: remaining, freeCancellation });
+    if (towingDetails) {
+      const tow = towingDetails as { towing_email: string; towing_name: string; garage_name: string;
+        client_name: string; service_name: string; appointment_at: string };
+      await sendMecatrexNotice({
+        email: tow.towing_email,
+        name: tow.towing_name,
+        subject: "MECATREX · Accepted towing trip cancelled",
+        message: `The ${tow.service_name} garage appointment at ${tow.garage_name} for ${tow.client_name} was cancelled. Your towing assignment is also cancelled and will disappear from your calendar. No towing cancellation penalty applies because the garage or client cancelled.`,
+      });
+    }
   } catch (mailError) {
     console.error("Cancellation saved, email notification unavailable:", mailError);
   }
