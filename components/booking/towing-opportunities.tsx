@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMontrealDateTime } from "@/lib/booking";
+import { acceptTowingJob, declineTowingJob, cancelAcceptedTowingJob } from "@/app/towing/actions";
 
 type Job = {
   request_id: string;
@@ -57,22 +58,42 @@ export default function TowingOpportunities({
 
   async function accept(job: Job) {
     if (!window.confirm(
-      "Accept this towing job? Other towing providers will no longer be able to claim it. You must coordinate pickup details with the client."
+      "Accept this towing trip? The garage time is reserved. You must coordinate pickup time and towing charges with the client."
     )) return;
     setBusyId(job.request_id);
     setError("");
     setNotice("");
-    const { error: claimError } = await supabase.rpc("accept_towing_request", {
-      p_request_id: job.request_id,
-    });
+    const result = await acceptTowingJob(job.request_id);
     setBusyId("");
-    if (claimError) {
-      setError(claimError.message);
-      await load();
-      return;
-    }
-    setNotice("Job accepted. You can now view the client's contact details below.");
+    if (!result.ok) { setError(result.message); await load(); return; }
+    setNotice(result.message);
     setView("accepted");
+    await load();
+  }
+
+  async function decline(job: Job) {
+    if (!window.confirm("Decline this towing opportunity? It will disappear from your available jobs without a penalty.")) return;
+    setBusyId(job.request_id);
+    setError("");
+    setNotice("");
+    const result = await declineTowingJob(job.request_id);
+    setBusyId("");
+    if (!result.ok) setError(result.message);
+    else setNotice(result.message);
+    await load();
+  }
+
+  async function cancelAccepted(job: Job) {
+    if (!window.confirm(
+      "WARNING: cancelling an ACCEPTED towing trip counts against your company. After three cancellations, towing access is suspended. The garage appointment stays reserved while we find another towing company. Cancel this trip?"
+    )) return;
+    setBusyId(job.request_id);
+    setError("");
+    setNotice("");
+    const result = await cancelAcceptedTowingJob(job.request_id);
+    setBusyId("");
+    if (!result.ok) setError(result.message);
+    else setNotice(result.message);
     await load();
   }
 
@@ -95,7 +116,7 @@ export default function TowingOpportunities({
           <p className="mt-2 text-[13px] leading-5 text-[#667085]">
             {scheduleOnly
               ? "Accepted jobs appear here by garage appointment date. Coordinate a separate pickup time with each client."
-              : "View nearby requests and claim an available towing job. Garage appointments remain confirmed while towing is pending."}
+              : "See available towing trips in your service province. The garage reserves its time; full confirmation follows the first towing acceptance."}
           </p>
         </div>
         <button
@@ -190,13 +211,27 @@ export default function TowingOpportunities({
                   <p className="mt-2 text-[12px]">
                     Contact the client to confirm pickup time and towing cost. Towing payments are not yet processed by MECATREX.
                   </p>
+                  {!scheduleOnly && (
+                    <button type="button" disabled={busyId === job.request_id}
+                      onClick={() => void cancelAccepted(job)}
+                      className="mt-3 rounded-xl border border-[#FDA29B] bg-white px-4 py-2.5 text-[12px] font-extrabold text-[#B42318] disabled:opacity-50">
+                      {busyId === job.request_id ? "Updating…" : "Cancel accepted towing · warning"}
+                    </button>
+                  )}
                 </div>
               ) : (
-                <button type="button" disabled={busyId === job.request_id}
-                  onClick={() => void accept(job)}
-                  className="mt-4 rounded-[13px] bg-[#4771A6] px-5 py-3 text-[13px] font-bold text-white hover:bg-[#315C91] disabled:opacity-50">
-                  {busyId === job.request_id ? "Accepting…" : "✓ Accept this towing job"}
-                </button>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button type="button" disabled={busyId === job.request_id}
+                    onClick={() => void accept(job)}
+                    className="rounded-[13px] bg-[#F3C547] px-5 py-3 text-[13px] font-extrabold text-[#35290D] hover:bg-[#E9B42E] disabled:opacity-50">
+                    {busyId === job.request_id ? "Updating…" : "✓ Accept towing"}
+                  </button>
+                  <button type="button" disabled={busyId === job.request_id}
+                    onClick={() => void decline(job)}
+                    className="rounded-[13px] border border-[#CCD6E2] bg-white px-5 py-3 text-[13px] font-bold text-[#475467] hover:bg-[#F4F6F9] disabled:opacity-50">
+                    Decline opportunity
+                  </button>
+                </div>
               )}
             </article>
           ))}
