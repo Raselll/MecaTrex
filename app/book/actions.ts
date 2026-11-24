@@ -163,9 +163,14 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
       });
 
   if (error || typeof data !== "string") {
+    const rpcName = serviceIds.length > 1
+      ? "book_garage_services"
+      : wantsTowing ? "book_garage_service_with_towing" : "book_garage_service";
     console.error("MECATREX booking creation was rejected", {
+      rpcName,
       code: error?.code ?? "UNKNOWN",
       message: error?.message ?? "No booking ID returned",
+      details: error?.details ?? null,
       hint: error?.hint ?? null,
       providerId,
       serviceCount: serviceIds.length,
@@ -173,15 +178,25 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
       time,
       wantsTowing,
     });
-    if (error?.code === "PGRST202" || error?.code === "42883") {
-      return { ok: false, error: serviceIds.length > 1
-        ? "Supabase cannot find the multi-service booking function. Make sure z01 is installed and reload the Supabase API schema cache."
-        : wantsTowing
-          ? "Supabase cannot find the garage + towing booking function. Install the towing database migration."
-          : "Supabase cannot find the garage booking function. Check the booking database migration." };
+
+    // IMPORTANT: PGRST202 is a PostgREST API/schema-cache lookup error.
+    // 42883 is a PostgreSQL undefined-function error that can be raised
+    // INSIDE a valid booking function (e.g. a missing towing dependency).
+    // Never tell the user to reinstall the top-level booking RPC for 42883.
+    if (error?.code === "PGRST202") {
+      return {
+        ok: false,
+        error: `Supabase API error PGRST202: the RPC ${rpcName} could not be resolved. ${error.message ?? "Check the PostgREST cache and the connected project."}`,
+      };
+    }
+    if (error?.code === "42883") {
+      return {
+        ok: false,
+        error: `PostgreSQL error 42883 while running ${rpcName}: ${error.message ?? "A required database function is missing or has a mismatched signature."} Check nested booking/towing dependencies; the reservation was not saved.`,
+      };
     }
     return { ok: false, error: error?.message
-      ? `Supabase did not save this appointment: ${error.message}`
+      ? `Supabase did not save this appointment [${error.code ?? "unknown"}]: ${error.message}`
       : "Supabase did not return a booking identifier. Check My appointments before retrying." };
   }
 
