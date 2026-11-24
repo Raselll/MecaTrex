@@ -15,6 +15,7 @@ type BookingPreview = {
   ends_at: string;
   price_cents: number;
   status: "confirmed" | "client_cancelled" | "provider_cancelled";
+  towing_status?: "pending" | "accepted" | "cancelled" | null;
 };
 
 type BookingSummary = {
@@ -97,11 +98,19 @@ export default function ClientPortalOverview({
         .filter((booking) => booking.status === "confirmed" && new Date(booking.ends_at).getTime() > now)
         .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
 
+      const next = upcoming[0] ?? null;
+      let nextWithTowing = next;
+      if (next) {
+        const { data: towing } = await supabase.from("towing_requests")
+          .select("status").eq("booking_id", next.id).maybeSingle();
+        nextWithTowing = { ...next, towing_status: (towing?.status ?? null) as BookingPreview["towing_status"] };
+      }
+      if (!active) return;
       setSummary({
         upcoming: upcoming.length,
         completed: bookings.filter((booking) => booking.status === "confirmed" && new Date(booking.ends_at).getTime() <= now).length,
         cancelled: bookings.filter((booking) => booking.status !== "confirmed").length,
-        next: upcoming[0] ?? null,
+        next: nextWithTowing,
       });
       setBookingError("");
     }
@@ -215,6 +224,16 @@ export default function ClientPortalOverview({
               <div>
                 <p className="text-[17px] font-extrabold text-[#101828]">{summary.next.garage_name}</p>
                 <p className="mt-1 text-[13px] font-semibold text-[#315C91]">{summary.next.service_name}</p>
+                {summary.next.towing_status === "pending" && (
+                  <p className="mt-2 rounded-lg bg-[#FFFAE7] px-3 py-2 text-[12px] font-extrabold text-[#795700]">
+                    🚛 Garage reserved · awaiting towing acceptance
+                  </p>
+                )}
+                {summary.next.towing_status === "accepted" && (
+                  <p className="mt-2 rounded-lg bg-[#ECFDF3] px-3 py-2 text-[12px] font-extrabold text-[#05603A]">
+                    ✓ Garage and towing confirmed
+                  </p>
+                )}
                 <p className="mt-2 text-[12px] text-[#475467]">📅 {formatMontrealDateTime(summary.next.starts_at)}</p>
                 <p className="mt-1 text-[12px] text-[#667085]">📍 {summary.next.garage_address}</p>
               </div>
