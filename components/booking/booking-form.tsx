@@ -480,7 +480,6 @@ export default function BookingForm({
         durationMinutes: totalDurationMinutes,
         towingPending: wantsTowing,
       });
-      router.refresh();
     } catch (submissionError) {
       console.error("MECATREX booking submission failed:", submissionError);
       setError(
