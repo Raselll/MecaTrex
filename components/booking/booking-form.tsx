@@ -317,6 +317,41 @@ export default function BookingForm({
         setAvailabilityDebug("");
         setSlots(available);
 
+        // Diagnose an unexpectedly empty multi-service result against the
+        // original, working one-service schedule. Never fabricate bookable
+        // slots: only the database may authorize a multi-service reservation.
+        if (available.length === 0 && serviceIds.length > 1) {
+          const { data: original, error: originalError } = await supabase.rpc(
+            "garage_available_slots",
+            { p_provider_id: providerId, p_service_id: serviceIds[0], p_day: day }
+          );
+          if (!active) return;
+          if (!originalError && original?.length) {
+            const singleSlots = original as Slot[];
+            const startTimes = new Set(singleSlots.map((item) => Date.parse(item.starts_at)));
+            const extraMinutes = Math.max(
+              0,
+              totalDurationMinutes - (selectedServices[0]?.duration_minutes ?? 0)
+            );
+            const additionalStarts = Math.ceil(extraMinutes / 30);
+            const contiguousStarts = singleSlots.filter((base) => {
+              const firstStart = Date.parse(base.starts_at);
+              return Array.from(
+                { length: additionalStarts + 1 },
+                (_, index) => firstStart + index * 30 * 60_000
+              ).every((timestamp) => startTimes.has(timestamp));
+            });
+            if (contiguousStarts.length > 0) {
+              setAvailabilityError(
+                "The garage has consecutive free times for these services, but the multi-service database function returned no slots. This appears to be a database availability mismatch, not a full garage schedule. Check that the z04 SQL hotfix was applied in Supabase."
+              );
+              setAvailabilityDebug(
+                `Single-service starts: ${singleSlots.length}; consecutive ${totalDurationMinutes}-minute candidates: ${contiguousStarts.length}; multi-service starts: 0.`
+              );
+            }
+          }
+        }
+
         if (
           preferredTime &&
           available.some(
@@ -356,6 +391,7 @@ export default function BookingForm({
     today,
     maxDay,
     preferredTime,
+    totalDurationMinutes,
     supabase,
   ]);
 
