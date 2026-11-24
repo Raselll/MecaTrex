@@ -46,7 +46,7 @@ join public.service_providers g on g.id=b.provider_id
 order by b.created_at desc limit 10;
 ```
 
-If towing_request_id is NULL, that booking does not have a towing request. A past booking with no request is **not** backfilled automatically. Create a new test booking with Yes, request towing.
+If towing_request_id is NULL, that booking does not have a towing request. The original pending towing RLS also had a `status` name collision with the provider's approval status; z03 explicitly fixes the request-status reference. A past booking with no request is **not** backfilled automatically. Create a new test booking with Yes, request towing.
 
 ## Status interpretation
 - No towing: the garage reservation is fully confirmed instantly.
@@ -59,7 +59,7 @@ If towing_request_id is NULL, that booking does not have a towing request. A pas
 - Towing company cancellation: two accepted-job cancellations are allowed; on the third, the towing listing is suspended.
 
 ## Email
-Booking, towing dispatch and cancellation warnings use the existing Brevo API integration. Ensure `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` and `NEXT_PUBLIC_SITE_URL` are configured. Outbound email failures are logged and do not roll back a booking or towing acceptance. In-app notifications are written transactionally to `booking_notifications`.
+Booking, towing dispatch and cancellation warnings use the existing Brevo API integration. Ensure `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `NEXT_PUBLIC_SITE_URL` and the **server-only** `SUPABASE_SERVICE_ROLE_KEY` are configured. The service-role key is required exclusively for retrieving the list of towing-company email recipients; it must never be named `NEXT_PUBLIC_` or exposed to browser code. If missing, garage confirmations and in-app towing alerts still work, but towing broadcast emails cannot be sent. Outbound email failures are logged and do not roll back a booking or towing acceptance. In-app notifications are written transactionally to `booking_notifications`.
 
 ## Test sequence
 1. Select two or more garage services, verify the displayed total price and duration, and reserve an available combined slot.
