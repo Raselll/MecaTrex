@@ -60,15 +60,23 @@ export default function BookingForm({
     () => montrealDate()
   );
 
-  const [serviceId, setServiceId] =
-    useState(
-      initialService &&
-        services.some(
-          (s) => s.id === initialService
-        )
-        ? initialService
-        : services[0]?.id ?? ""
+  const [serviceIds, setServiceIds] = useState<string[]>(() => {
+    const first = initialService && services.some((service) => service.id === initialService)
+      ? initialService : services[0]?.id;
+    return first ? [first] : [];
+  });
+  const serviceId = serviceIds[0] ?? "";
+  const selectedServices = serviceIds
+    .map((id) => services.find((service) => service.id === id))
+    .filter((service): service is Service => Boolean(service));
+  const totalPriceCents = selectedServices.reduce((total, service) => total + service.price_cents, 0);
+  const totalDurationMinutes = selectedServices.reduce((total, service) => total + service.duration_minutes, 0);
+
+  function toggleService(id: string) {
+    setServiceIds((current) =>
+      current.includes(id) ? current.filter((selected) => selected !== id) : [...current, id]
     );
+  }
 
   const [day, setDay] = useState(today);
   const [slot, setSlot] = useState("");
@@ -105,9 +113,7 @@ export default function BookingForm({
     setPreferredTime,
   ] = useState("");
 
-  const selectedService = services.find(
-    (service) => service.id === serviceId
-  );
+  const selectedService = selectedServices[0];
 
   const maxDay = plusCalendarMonths(
     today,
@@ -248,10 +254,10 @@ export default function BookingForm({
         notesResult,
       ] = await Promise.all([
         supabase.rpc(
-          "garage_available_slots",
+          "garage_available_slots_multi",
           {
             p_provider_id: providerId,
-            p_service_id: serviceId,
+            p_service_ids: serviceIds,
             p_day: day,
           }
         ),
@@ -316,7 +322,7 @@ export default function BookingForm({
     };
   }, [
     providerId,
-    serviceId,
+    serviceIds,
     day,
     today,
     maxDay,
@@ -372,10 +378,7 @@ export default function BookingForm({
       "provider_id",
       providerId
     );
-    form.set(
-      "service_id",
-      serviceId
-    );
+    form.set("service_ids", JSON.stringify(serviceIds));
     form.set("day", day);
     form.set("time", slot);
     form.set("note", note);
@@ -394,10 +397,10 @@ export default function BookingForm({
 
       const { data } =
         await supabase.rpc(
-          "garage_available_slots",
+          "garage_available_slots_multi",
           {
             p_provider_id: providerId,
-            p_service_id: serviceId,
+            p_service_ids: serviceIds,
             p_day: day,
           }
         );
@@ -449,7 +452,7 @@ export default function BookingForm({
 
   function goForward() {
     setStepError("");
-    if (step === 1 && !selectedService) {
+    if (step === 1 && selectedServices.length === 0) {
       setStepError("Please select a service first.");
       return;
     }
@@ -525,63 +528,52 @@ export default function BookingForm({
           </div>
         </div>
 
-        <label className="mt-5 block">
-          <span className="mb-2 block text-[13px] font-bold text-[#344054]">
-            What does your vehicle need?
-          </span>
-
-          <select
-            value={serviceId}
-            onChange={(event) =>
-              setServiceId(
-                event.target.value
-              )
-            }
-            className="w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 py-4 text-[16px] font-bold text-[#101828] focus:border-[#4771A6]"
-          >
-            {services.map((service) => (
-              <option
-                key={service.id}
-                value={service.id}
-              >
-                {service.name} ·{" "}
-                {formatPriceCents(
-                  service.price_cents
-                )}{" "}
-                ·{" "}
-                {service.duration_minutes}{" "}
-                min
-              </option>
-            ))}
-          </select>
-        </label>
-
-        {selectedService && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[15px] bg-[#F4F8FC] px-5 py-4">
-            <div>
-              <p className="text-[13px] font-semibold text-[#667085]">
-                Fixed service price
+        <div className="mt-5">
+          <p className="mb-3 text-[13px] font-bold text-[#344054]">
+            Select all services you need. Each service adds its fixed price and time to this visit.
+          </p>
+          <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-[14px] border border-[#D5DFEA] bg-[#F8FAFC] p-2">
+            {services.map((service) => {
+              const checked = serviceIds.includes(service.id);
+              return (
+                <label key={service.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3.5 transition ${checked ? "border-[#4771A6] bg-[#EDF3FA]" : "border-transparent bg-white hover:border-[#CAD8E8]"}`}>
+                  <input type="checkbox" checked={checked} onChange={() => toggleService(service.id)}
+                    className="h-5 w-5 shrink-0 accent-[#4771A6]" aria-label={`Add ${service.name}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-extrabold text-[#101828]">{service.name}</p>
+                    <p className="mt-1 text-[11px] text-[#667085]">{service.duration_minutes} min{service.description ? ` · ${service.description}` : ""}</p>
+                  </div>
+                  <span className="shrink-0 text-[13px] font-extrabold text-[#315C91]">{formatPriceCents(service.price_cents)}</span>
+                </label>
+              );
+            })}
+          </div>
+          <div className="mt-4 rounded-[16px] border border-[#BDD0E4] bg-[#EDF3FA] p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[13px] font-extrabold text-[#101828]">
+                {selectedServices.length} selected {selectedServices.length === 1 ? "service" : "services"}
               </p>
-
-              <p className="text-[25px] font-extrabold text-[#101828]">
-                {formatPriceCents(
-                  selectedService.price_cents
-                )}
-              </p>
+              {selectedServices.length > 1 && (
+                <button type="button" onClick={() => setServiceIds([])}
+                  className="text-[12px] font-bold text-[#315C91] underline">Clear selection</button>
+              )}
             </div>
-
-            <div className="text-right">
-              <p className="text-[13px] font-semibold text-[#667085]">
-                Time reserved
-              </p>
-
-              <p className="text-[20px] font-extrabold text-[#344054]">
-                {selectedService.duration_minutes}{" "}
-                minutes
-              </p>
+            <div className="space-y-1">
+              {selectedServices.map((service) => (
+                <div key={service.id} className="flex justify-between gap-3 text-[12px] text-[#344054]">
+                  <span>✓ {service.name}</span>
+                  <span className="font-bold">{formatPriceCents(service.price_cents)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap justify-between gap-3 border-t border-[#BDD0E4] pt-3">
+              <div><p className="text-[11px] text-[#667085]">Total fixed price</p>
+                <p className="text-[23px] font-extrabold text-[#101828]">{formatPriceCents(totalPriceCents)}</p></div>
+              <div className="text-right"><p className="text-[11px] text-[#667085]">Total time reserved</p>
+                <p className="text-[20px] font-extrabold text-[#344054]">{totalDurationMinutes} min</p></div>
             </div>
           </div>
-        )}
+        </div>
       </section>
 
       {/* ================================================
@@ -878,7 +870,7 @@ export default function BookingForm({
           </div>
         </div>
         <p className="mt-4 text-[13px] leading-6 text-[#667085]">
-          Your garage appointment is confirmed instantly. If you request towing, it stays pending until an approved towing provider accepts the job.
+          If you drive yourself, your garage appointment is confirmed immediately. If you request towing, the garage time is reserved but the full booking stays pending until a towing company accepts.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           {([{ value: false, label: "No, I'll drive", icon: "🚗" }, { value: true, label: "Yes, request towing", icon: "🚛" }] as const).map((option) => (
@@ -914,8 +906,8 @@ export default function BookingForm({
         )}
         <div className="mt-5 rounded-[15px] border border-[#D6E3EF] bg-[#F7FAFD] p-4 text-[13px]">
           <p className="font-bold text-[#344054]">Your booking summary</p>
-          <p className="mt-2 text-[#101828]">{selectedService?.name} · {selectedService ? formatPriceCents(selectedService.price_cents) : "—"}</p>
-          <p className="mt-1 text-[#667085]">{day} · {slot ? formatHour(slot) : "No time selected"} · {selectedService?.duration_minutes} min</p>
+          <p className="mt-2 text-[#101828]">{selectedServices.map((service) => service.name).join(" + ")} · {formatPriceCents(totalPriceCents)}</p>
+          <p className="mt-1 text-[#667085]">{day} · {slot ? formatHour(slot) : "No time selected"} · {totalDurationMinutes} min</p>
           <p className="mt-1 text-[#667085]">{vehicleDescription || "Vehicle not specified"}</p>
         </div>
         <div className="mt-4 rounded-[14px] bg-[#ECFDF3] p-4 text-[13px] text-[#05603A]">
@@ -983,7 +975,7 @@ export default function BookingForm({
                   ? "Choose a towing option to continue"
                   : wantsTowing && pickupAddress.trim().length < 8
                     ? "Enter the towing pickup address"
-                    : "Confirm garage booking"}
+                    : wantsTowing ? "Reserve garage · request towing" : "Confirm garage booking"}
           </button>
         )}
       </section>
