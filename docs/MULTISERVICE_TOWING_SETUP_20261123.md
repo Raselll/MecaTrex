@@ -9,6 +9,7 @@ Apply these scripts to the MECATREX Supabase project in SQL Editor, in order:
 3. Apply `supabase/migrations/20261123_z01_multi_service_bookings.sql`
 4. Apply `supabase/migrations/20261123_z02_booking_cancellation_limits.sql`
 5. Apply `supabase/migrations/20261123_z03_towing_dispatch_confirmation.sql`
+6. Apply `supabase/migrations/20261123_z04_restore_multi_availability.sql` (hotfix for empty slots)
 
 Only run step 1 or 2 if the environment does not already have them. Review deployment changes in a development environment before production. Keep existing bookings intact; do not reset the Supabase database.
 
@@ -71,3 +72,27 @@ Booking, towing dispatch and cancellation warnings use the existing Brevo API in
 7. Test garage cancellation counter and suspension using test accounts only.
 
 Existing bookings are not retroactively grouped into booking-items rows; their original single-service snapshots remain valid.
+
+## November 23 availability hotfix
+
+If the provider calendar says a day is open but `No free slots` appears after the first multi-service release, the newer SQL function is not necessarily returning the same slots as the original. The web application now uses `garage_available_slots` for **one** service (both preview and submission), restoring the old working path. For two or more services, apply the z04 hotfix above. It builds extended-duration slots from the original database function, then validates the full booked interval.
+
+To inspect an existing service on November 24, 2026, replace the provider and service UUIDs with those visible in your booking URL, and run:
+
+```sql
+select 'original_single' as source, count(*) as free_slots
+from public.garage_available_slots(
+  'f7224272-af80-4a6a-9ccf-d7b9a217375a'::uuid,
+  'ca5b6d84-410d-4997-8ae2-78df5be83cea'::uuid,
+  '2026-11-24'::date
+)
+union all
+select 'multi_single' as source, count(*) as free_slots
+from public.garage_available_slots_multi(
+  'f7224272-af80-4a6a-9ccf-d7b9a217375a'::uuid,
+  array['ca5b6d84-410d-4997-8ae2-78df5be83cea'::uuid],
+  '2026-11-24'::date
+);
+```
+
+After z04 the original and multi-single functions should yield identical slot counts. Opening hours on the garage calendar are not by themselves proof that a specific service-duration interval is bookable; the business-hour range and other blocks still apply.
