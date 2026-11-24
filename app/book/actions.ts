@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createDispatchAdminClient } from "@/lib/supabase/dispatch-admin";
 import { sendBookingEmailNotifications, sendMecatrexNotice } from "@/lib/email/brevo";
@@ -162,19 +163,40 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
       });
 
   if (error || typeof data !== "string") {
-    if (error?.code === "PGRST202") {
-      return { ok: false, error: "Multi-service bookings require the latest MECATREX Supabase migrations. Apply them before booking." };
+    console.error("MECATREX booking creation was rejected", {
+      code: error?.code ?? "UNKNOWN",
+      message: error?.message ?? "No booking ID returned",
+      hint: error?.hint ?? null,
+      providerId,
+      serviceCount: serviceIds.length,
+      day,
+      time,
+      wantsTowing,
+    });
+    if (error?.code === "PGRST202" || error?.code === "42883") {
+      return { ok: false, error: serviceIds.length > 1
+        ? "Supabase cannot find the multi-service booking function. Make sure z01 is installed and reload the Supabase API schema cache."
+        : wantsTowing
+          ? "Supabase cannot find the garage + towing booking function. Install the towing database migration."
+          : "Supabase cannot find the garage booking function. Check the booking database migration." };
     }
-    return { ok: false, error: error?.message ?? "Could not book this time. Please select another." };
+    return { ok: false, error: error?.message
+      ? `Supabase did not save this appointment: ${error.message}`
+      : "Supabase did not return a booking identifier. Check My appointments before retrying." };
   }
 
-  // The booking is already committed. Email delivery must never undo a real reservation.
-  try {
-    await notifyParticipants(data, "confirmed", { towingPending: wantsTowing });
-    if (wantsTowing) await notifyAvailableTowingProviders(data);
-  } catch (error) {
-    console.error("Booking saved, email delivery unavailable:", error);
-  }
+  // The database has returned a booking ID: the transaction is committed.
+  // Transactional notification rows exist immediately. Outbound Brevo emails
+  // are handled after the response so a slow mail service cannot delay the
+  // confirmation or make a saved booking appear to have failed.
+  after(async () => {
+    try {
+      await notifyParticipants(data, "confirmed", { towingPending: wantsTowing });
+      if (wantsTowing) await notifyAvailableTowingProviders(data);
+    } catch (notificationError) {
+      console.error("Booking saved, email delivery unavailable:", notificationError);
+    }
+  });
 
   revalidatePath("/account");
   revalidatePath("/");
