@@ -484,13 +484,13 @@ export default function ProviderCalendar({
                       </div>
                       <span className={"rounded-full px-3 py-1.5 font-bold " +
                         (request.status === "accepted" ? "bg-[#ECFDF3] text-[#027A48]" : "bg-[#FFF7E9] text-[#92400E]")}>
-                        {request.status === "accepted" ? "✓ Towing accepted" : "⏳ Towing pending"}
+                        {request.status === "accepted" ? "✓ Fully confirmed · towing accepted" : "⏳ Garage reserved · towing pending"}
                       </span>
                     </div>
                   );
                 })}
             </div>
-            <p className="mt-2 text-[11px] text-[#667085]">The garage appointment remains confirmed regardless of towing status.</p>
+            <p className="mt-2 text-[11px] text-[#667085]">The garage time remains reserved. With towing selected, the complete booking is only confirmed when a towing company accepts.</p>
           </div>
         )}
 
