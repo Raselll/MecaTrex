@@ -49,6 +49,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [towingStatuses, setTowingStatuses] = useState<TowingStatus[]>([]);
   const [towingCompanies, setTowingCompanies] = useState<TowingCompany[]>([]);
+  const [clientPenalty, setClientPenalty] = useState({ charged_cancellations: 0, booking_banned: false });
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"upcoming" | "history">("upcoming");
   const [error, setError] = useState("");
@@ -57,15 +58,17 @@ export default function ClientBookings({ userId }: { userId: string }) {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const refresh = useCallback(async () => {
-    const [{ data: rows, error: bookingError }, { data: reviewRows }, towingResult] = await Promise.all([
+    const [{ data: rows, error: bookingError }, { data: reviewRows }, towingResult, { data: penalty }] = await Promise.all([
       supabase.from("garage_bookings").select("*")
         .eq("client_id", userId).order("starts_at", { ascending: false }).limit(150),
       supabase.from("garage_reviews").select("booking_id,stars,comment").eq("client_id", userId),
       supabase.from("towing_requests").select("booking_id,status,towing_provider_id").eq("client_id", userId),
+      supabase.from("client_booking_penalties").select("charged_cancellations,booking_banned").eq("client_id", userId).maybeSingle(),
     ]);
     if (bookingError) setError(bookingError.message);
     else { setBookings((rows ?? []) as GarageBooking[]); setError(""); }
     setReviews((reviewRows ?? []) as Review[]);
+    if (penalty) setClientPenalty(penalty as { charged_cancellations: number; booking_banned: boolean });
     if (!towingResult.error) {
       const requests = (towingResult.data ?? []) as TowingStatus[];
       setTowingStatuses(requests);
@@ -91,7 +94,11 @@ export default function ClientBookings({ userId }: { userId: string }) {
   const visible = tab === "upcoming" ? [...upcoming].sort((a,b) => a.starts_at.localeCompare(b.starts_at)) : history;
 
   async function cancel(booking: GarageBooking) {
-    if (!window.confirm("Cancel this confirmed appointment? The garage will be notified and the time will become available.")) return;
+    const free = Date.now() <= new Date(booking.created_at).getTime() + 24 * 60 * 60 * 1000;
+    const warning = free
+      ? "This booking was created less than 24 hours ago. You can cancel without a warning strike."
+      : `WARNING: This cancellation counts against your client account. You already have ${clientPenalty.charged_cancellations} of 3 strikes. On your third late cancellation, new bookings are suspended.`;
+    if (!window.confirm(`${warning}\n\nCancel this appointment and release the garage time?`)) return;
     setPendingId(booking.id);
     setNotice("");
     const result = await cancelGarageBooking(booking.id);
@@ -114,6 +121,11 @@ export default function ClientBookings({ userId }: { userId: string }) {
         <button type="button" onClick={() => setTab("upcoming")} className={`rounded-xl px-4 py-2.5 text-[13px] font-bold ${tab === "upcoming" ? "bg-[#101828] text-white" : "bg-[#F2F4F7] text-[#344054]"}`}>Upcoming ({upcoming.length})</button>
         <button type="button" onClick={() => setTab("history")} className={`rounded-xl px-4 py-2.5 text-[13px] font-bold ${tab === "history" ? "bg-[#101828] text-white" : "bg-[#F2F4F7] text-[#344054]"}`}>History ({history.length})</button>
       </div>
+      <div className={`mt-4 rounded-xl border px-4 py-3 text-[12px] font-semibold ${clientPenalty.booking_banned ? "border-[#FDA29B] bg-[#FEF3F2] text-[#B42318]" : "border-[#E7C66B] bg-[#FFFAE7] text-[#7A5600]"}`}>
+        {clientPenalty.booking_banned
+          ? "Your booking account is suspended after three late cancellations. Contact MECATREX."
+          : `Cancellation standing: ${clientPenalty.charged_cancellations}/3 late warnings. Cancellations within 24 hours after booking are penalty-free.`}
+      </div>
       {notice && <p role="status" className="mt-4 rounded-[12px] bg-[#ECFDF3] p-4 text-[13px] font-bold text-[#027A48]">{notice}</p>}
       {error && <p role="alert" className="mt-4 rounded-[12px] bg-[#FEF3F2] p-4 text-[13px] text-[#B42318]">{error}</p>}
       {loading ? <p className="mt-6 text-[14px] text-[#667085]">Loading bookings…</p> : visible.length === 0 ? (
@@ -132,7 +144,13 @@ export default function ClientBookings({ userId }: { userId: string }) {
               <div><p className="text-[12px] font-bold uppercase tracking-wide text-[#4771A6]">{booking.service_name}</p>
                 <h3 className="mt-1 text-[20px] font-extrabold text-[#101828]">{booking.garage_name}</h3>
                 <p className="mt-2 text-[14px] font-bold text-[#344054]">📅 {formatMontrealDateTime(booking.starts_at)} · {booking.duration_minutes} min</p></div>
-              <span className={`rounded-full px-3 py-2 text-[12px] font-bold ${booking.status === "confirmed" ? "bg-[#ECFDF3] text-[#027A48]" : "bg-[#FEF3F2] text-[#B42318]"}`}>{booking.status.replaceAll("_", " ")}</span>
+              <span className={`rounded-full px-3 py-2 text-[12px] font-bold ${booking.status !== "confirmed"
+                  ? "bg-[#FEF3F2] text-[#B42318]"
+                  : towing?.status === "pending" ? "bg-[#FFFAE7] text-[#835900]" : "bg-[#ECFDF3] text-[#027A48]"}`}>
+                {booking.status !== "confirmed" ? booking.status.replaceAll("_", " ")
+                  : towing?.status === "pending" ? "Garage reserved · Towing pending"
+                  : towing?.status === "accepted" ? "Fully confirmed ✓" : "Confirmed ✓"}
+              </span>
             </div>
             <p className="mt-3 text-[13px] text-[#667085]">📍 {booking.garage_address}</p>
             <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
@@ -149,9 +167,9 @@ export default function ClientBookings({ userId }: { userId: string }) {
                     ? "border-[#F7D0CC] bg-[#FEF3F2] text-[#B42318]"
                     : "border-[#F0D5A4] bg-[#FFF7E9] text-[#92400E]")}>
                 🚛 Towing: {towing.status === "pending"
-                  ? "Pending provider acceptance. Your garage appointment is confirmed."
+                  ? "Awaiting towing company acceptance. Your garage time is held, but the complete booking is not yet confirmed."
                   : towing.status === "accepted"
-                    ? "Accepted by a towing provider. Coordinate your pickup time and cost with the provider."
+                    ? "Towing accepted. The three-party booking is now confirmed. Coordinate pickup time and towing charges with the company."
                     : "Cancelled."}
                 {towing.status === "accepted" && towingCompany && (
                   <div className="mt-2 text-[12px]">
