@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import BookingNotifications from "@/components/booking/booking-notifications";
 
 type Section = "overview" | "appointments" | "calendar" | "business" | "services" | "settings" | "earnings" | "finances" | "towing";
@@ -71,6 +71,18 @@ export default function AccountWorkspace({
   settings,
 }: Props) {
   const [view, setView] = useState<Section>("overview");
+
+  // Directly open the appointment tab after a successful booking.
+  // Keep the server and client initial state consistent, then read the URL
+  // only after hydration to prevent mismatches.
+  useEffect(() => {
+    if (kind !== "client") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("view") === "appointments" || params.has("booked")) {
+      setView("appointments");
+    }
+  }, [kind]);
+
   const sections: Section[] =
     kind === "client"
       ? ["overview", "appointments", "finances", "settings"]
