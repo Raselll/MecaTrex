@@ -425,17 +425,13 @@ returns table(email text, company_name text, garage_name text, service_name text
 language plpgsql stable security definer set search_path = '' as $$
 declare v_request public.towing_requests%rowtype;
 begin
+  -- Dispatch bulk emails are internal server work. Do not expose every
+  -- towing provider's email address to clients or other providers.
+  if coalesce(auth.jwt()->>'role','') <> 'service_role' then
+    raise exception 'Only the MECATREX email dispatcher may access recipient addresses.';
+  end if;
   select * into v_request from public.towing_requests where booking_id=p_booking_id;
-  if not found or auth.uid() is null then return; end if;
-  if not (
-    v_request.client_id=auth.uid()
-    or exists(select 1 from public.service_providers garage
-      where garage.id=v_request.garage_provider_id and garage.owner_id=auth.uid())
-    or exists(select 1 from public.towing_opportunity_declines d
-      join public.service_providers previous on previous.id=d.towing_provider_id
-      where d.request_id=v_request.id and previous.owner_id=auth.uid())
-    or private.is_admin()
-  ) then return; end if;
+  if not found then return; end if;
 
   return query
     select coalesce(nullif(p.email,''),tow.public_email),tow.business_name,
@@ -454,7 +450,7 @@ begin
 end;
 $$;
 revoke all on function public.towing_dispatch_email_recipients(uuid) from public,anon,authenticated;
-grant execute on function public.towing_dispatch_email_recipients(uuid) to authenticated;
+grant execute on function public.towing_dispatch_email_recipients(uuid) to service_role;
 
 -- Email addresses are available only to one of the three booking parties;
 -- the server action uses this after an accepted towing claim.
