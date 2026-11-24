@@ -53,6 +53,11 @@ export default async function GarageBookingPage({
       : Promise.resolve({ data: null }),
   ]);
 
+  const { data: clientPenalty } = user && profile?.account_type === "client"
+    ? await supabase.from("client_booking_penalties")
+        .select("booking_banned").eq("client_id", user.id).maybeSingle()
+    : { data: null };
+
   const services = ((rawServices ?? []) as PublicService[])
     .filter((s) => s.price_cents !== null && s.duration_minutes !== null && s.duration_minutes > 0)
     .map((s) => ({ id: s.id, name: s.name, description: s.description, price_cents: s.price_cents, duration_minutes: s.duration_minutes }));
@@ -104,7 +109,9 @@ export default async function GarageBookingPage({
             </div>
             {services.length > 0 ? (
               <BookingForm providerId={providerId} services={services} hours={hours}
-                initialService={query.service} initialServices={query.services?.split(",")} canConfirm={profile?.account_type === "client"} />
+                initialService={query.service} initialServices={query.services?.split(",")}
+                canConfirm={profile?.account_type === "client" && !clientPenalty?.booking_banned}
+                bookingSuspended={Boolean(clientPenalty?.booking_banned)} />
             ) : (
               <div className="rounded-[23px] border border-[#FEC84B] bg-white p-6 text-[#92400E]">This garage has no active fixed-price services yet.</div>
             )}
