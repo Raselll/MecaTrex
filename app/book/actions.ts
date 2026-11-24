@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createDispatchAdminClient } from "@/lib/supabase/dispatch-admin";
 import { sendBookingEmailNotifications, sendMecatrexNotice } from "@/lib/email/brevo";
 
 type BookingResult = { ok: true; bookingId: string; message?: string } | { ok: false; error: string };
@@ -63,8 +64,12 @@ type TowingDispatchRecipient = {
 };
 
 async function notifyAvailableTowingProviders(bookingId: string) {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("towing_dispatch_email_recipients", {
+  const dispatchAdmin = createDispatchAdminClient();
+  if (!dispatchAdmin) {
+    console.warn("SUPABASE_SERVICE_ROLE_KEY is missing; towing in-app notices remain available, but bulk towing emails are disabled.");
+    return;
+  }
+  const { data, error } = await dispatchAdmin.rpc("towing_dispatch_email_recipients", {
     p_booking_id: bookingId,
   });
   if (error) {
