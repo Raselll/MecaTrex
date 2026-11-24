@@ -589,6 +589,7 @@ export default function LiveGarages() {
         .from("service_providers")
         .select(`
           id,
+          provider_type,
           business_name,
           business_description,
           address_line1,
@@ -879,7 +880,7 @@ export default function LiveGarages() {
               }
             }}
             placeholder={isTowing ? "Search local towing, flatbed, roadside assistance..." : "Search oil change, battery, tire storage..."}
-            className="h-[52px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 pr-14 text-[14px] font-semibold text-[#101828] outline-none transition focus:border-[#4771A6] focus:ring-2 focus:ring-[#4771A6]/10"
+            className={`h-[52px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 pr-14 text-[14px] font-semibold text-[#101828] outline-none transition ${isTowing ? "focus:border-[#D6A72A] focus:ring-2 focus:ring-[#F3C547]/20" : "focus:border-[#4771A6] focus:ring-2 focus:ring-[#4771A6]/10"}`}
           />
 
           <datalist id="service-options">
@@ -911,7 +912,7 @@ export default function LiveGarages() {
           <button
             type="button"
             onClick={addSearchAsService}
-            className="mt-3 rounded-full border border-[#BAC7D7] bg-[#EDF3FA] px-4 py-2.5 text-[12px] font-bold text-[#315C91] hover:bg-[#DDE9F6]"
+            className={isTowing ? "mt-3 rounded-full border border-[#E7C66B] bg-[#FFF3C7] px-4 py-2.5 text-[12px] font-bold text-[#725100] hover:bg-[#FBE8A1]" : "mt-3 rounded-full border border-[#BAC7D7] bg-[#EDF3FA] px-4 py-2.5 text-[12px] font-bold text-[#315C91] hover:bg-[#DDE9F6]"}
           >
             + Add {exactSearchMatch.icon}{" "}
             {exactSearchMatch.name}
@@ -921,7 +922,7 @@ export default function LiveGarages() {
         {/* SELECTED SERVICES SUMMARY */}
 
         {selectedServices.length > 0 && (
-          <div className="mt-5 rounded-[16px] border border-[#B6CEE9] bg-[#EDF3FA] p-4">
+          <div className={isTowing ? "mt-5 rounded-[16px] border border-[#E9C66A] bg-[#FFFAE7] p-4" : "mt-5 rounded-[16px] border border-[#B6CEE9] bg-[#EDF3FA] p-4"}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-[13px] font-extrabold text-[#101828]">
@@ -1217,7 +1218,7 @@ export default function LiveGarages() {
                           />
                         ) : (
                           <div className="flex h-full items-center justify-center text-[55px]">
-                            🔧
+                            {isTowing ? "🚛" : "🔧"}
                           </div>
                         )}
 
