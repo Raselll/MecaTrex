@@ -261,14 +261,17 @@ export default function BookingForm({
         slotsResult,
         notesResult,
       ] = await Promise.all([
-        supabase.rpc(
-          "garage_available_slots_multi",
-          {
-            p_provider_id: providerId,
-            p_service_ids: serviceIds,
-            p_day: day,
-          }
-        ),
+        serviceIds.length === 1
+          ? supabase.rpc("garage_available_slots", {
+              p_provider_id: providerId,
+              p_service_id: serviceIds[0],
+              p_day: day,
+            })
+          : supabase.rpc("garage_available_slots_multi", {
+              p_provider_id: providerId,
+              p_service_ids: serviceIds,
+              p_day: day,
+            }),
 
         supabase.rpc(
           "get_garage_public_block_notes",
@@ -404,14 +407,17 @@ export default function BookingForm({
       setError(result.error);
 
       const { data } =
-        await supabase.rpc(
-          "garage_available_slots_multi",
-          {
-            p_provider_id: providerId,
-            p_service_ids: serviceIds,
-            p_day: day,
-          }
-        );
+        await (serviceIds.length === 1
+          ? supabase.rpc("garage_available_slots", {
+              p_provider_id: providerId,
+              p_service_id: serviceIds[0],
+              p_day: day,
+            })
+          : supabase.rpc("garage_available_slots_multi", {
+              p_provider_id: providerId,
+              p_service_ids: serviceIds,
+              p_day: day,
+            }));
 
       setSlots((data ?? []) as Slot[]);
       setSlot("");
