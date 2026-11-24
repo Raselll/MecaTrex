@@ -54,7 +54,7 @@ using (
       and (
         tow.id = towing_provider_id
         or (
-          status = 'pending'
+          public.towing_requests.status = 'pending'
           and tow.is_listing_active
           and exists (
             select 1 from public.service_providers garage2
