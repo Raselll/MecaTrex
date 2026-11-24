@@ -1018,7 +1018,7 @@ export default function BookingForm({
                 className="rounded-lg border border-[#FDA29B] bg-white px-3 py-2 text-[12px] font-bold text-[#B42318]">
                 Change date or time
               </button>
-              <Link href="/account" className="rounded-lg border border-[#FDA29B] bg-white px-3 py-2 text-[12px] font-bold text-[#B42318]">
+              <Link href="/account?view=appointments" className="rounded-lg border border-[#FDA29B] bg-white px-3 py-2 text-[12px] font-bold text-[#B42318]">
                 Check my appointments
               </Link>
             </div>
@@ -1147,7 +1147,7 @@ export default function BookingForm({
               </div>
             </div>
             <button type="button" autoFocus
-              onClick={() => router.push("/account?booked=1")}
+              onClick={() => router.push("/account?view=appointments&booked=1")}
               className="mt-6 w-full rounded-[14px] bg-[#4771A6] px-5 py-3.5 text-[14px] font-extrabold text-white hover:bg-[#315C91]">
               View my appointments →
             </button>
