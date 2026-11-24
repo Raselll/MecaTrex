@@ -137,3 +137,28 @@ from chosen;
 Expected: `service_count=2`, `total_minutes=120` and, when operating hours and other bookings allow two continuous hours, `combined_free_starts > 0`. An SQL error or a count of zero is **not** automatically evidence that the garage is full. The date-and-time UI now shows the underlying PostgREST/SQL error and checks contiguous baseline slots to distinguish a database mismatch from a genuine lack of available time.
 
 This Supabase project was not accessible through the connected account, so live SQL results have not been verified.
+
+## Booking save verification and success popup
+
+After completing step 4, the client now stays on that step when PostgreSQL rejects the write. A red **Booking not confirmed** message shows the server-returned reason and offers links to change the time or inspect appointments. The previous version incorrectly reset to step 2 and hid the error message. **No success popup is shown on failure**.
+
+On successful server-action response with a UUID, MECATREX displays a confirmation dialog with the booking reference, selected services, fixed total price, duration, date and start time. **No towing** means confirmed immediately. **With towing** means the garage time is reserved but full confirmation is pending an accepted towing provider. The dialog directs the client to My appointments.
+
+If the client or garage does not see a recently submitted booking, run this read-only query on the **same Supabase project** as `NEXT_PUBLIC_SUPABASE_URL`:
+
+```sql
+select id, client_name, garage_name, service_name, status,
+       starts_at at time zone 'America/Toronto' as montreal_start,
+       ends_at at time zone 'America/Toronto' as montreal_end,
+       price_cents, created_at
+from public.garage_bookings
+where provider_id = 'f7224272-af80-4a6a-9ccf-d7b9a217375a'::uuid
+order by created_at desc
+limit 15;
+```
+
+If the row is absent, the reservation did not commit. The detailed error is now visible at step 4, and the server terminal logs the SQLSTATE, error message and request metadata. If the row exists but neither dashboard displays it, inspect RLS and dashboard data-loading errors instead. Do not keep resubmitting a booking while its result is uncertain; check My appointments first.
+
+Outbound Brevo notifications now run via Next.js `after()` after the response, so an email delay cannot prevent the client from seeing a committed booking. Transactional in-app notifications remain part of the database write.
+
+**Note:** The connected Supabase accounts available to the assistant do not include the MECATREX project shown in the user's screenshots, so this cannot be certified against live records here.
