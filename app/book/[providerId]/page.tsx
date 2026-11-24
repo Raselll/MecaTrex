@@ -22,7 +22,7 @@ export default async function GarageBookingPage({
   params, searchParams,
 }: {
   params: Promise<{ providerId: string }>;
-  searchParams: Promise<{ service?: string }>;
+  searchParams: Promise<{ service?: string; services?: string }>;
 }) {
   const [{ providerId }, query] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
@@ -104,7 +104,7 @@ export default async function GarageBookingPage({
             </div>
             {services.length > 0 ? (
               <BookingForm providerId={providerId} services={services} hours={hours}
-                initialService={query.service} canConfirm={profile?.account_type === "client"} />
+                initialService={query.service} initialServices={query.services?.split(",")} canConfirm={profile?.account_type === "client"} />
             ) : (
               <div className="rounded-[23px] border border-[#FEC84B] bg-white p-6 text-[#92400E]">This garage has no active fixed-price services yet.</div>
             )}
