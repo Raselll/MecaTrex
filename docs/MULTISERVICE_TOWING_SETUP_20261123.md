@@ -96,3 +96,44 @@ from public.garage_available_slots_multi(
 ```
 
 After z04 the original and multi-single functions should yield identical slot counts. Opening hours on the garage calendar are not by themselves proof that a specific service-duration interval is bookable; the business-hour range and other blocks still apply.
+
+## Diagnose the two-service November 24 example
+
+Use this if **Tire service (60 min)** produces slots but **Tire service + Wheel alignment (120 min)** does not.
+
+First run the signature check separately:
+
+```sql
+select to_regprocedure('public.garage_available_slots_multi(uuid,uuid[],date)') as installed;
+```
+
+If this returns NULL, the multi-service SQL is not installed: apply `z01` then `z04` (after the other prerequisite migrations).
+
+If installed, run this read-only query to compare the original single-service schedule with two-service results:
+
+```sql
+with chosen as (
+  select
+    array_agg(id order by case when name = 'Tire service' then 0 else 1 end) as ids,
+    count(*) as service_count,
+    sum(duration_minutes) as total_minutes
+  from public.provider_services
+  where provider_id = 'f7224272-af80-4a6a-9ccf-d7b9a217375a'::uuid
+    and name in ('Tire service', 'Wheel alignment')
+    and is_active and pricing_type = 'fixed'
+)
+select chosen.service_count,chosen.total_minutes,
+  (select count(*) from public.garage_available_slots(
+    'f7224272-af80-4a6a-9ccf-d7b9a217375a'::uuid,
+    chosen.ids[1], '2026-11-24'::date
+  )) as first_service_free_starts,
+  (select count(*) from public.garage_available_slots_multi(
+    'f7224272-af80-4a6a-9ccf-d7b9a217375a'::uuid,
+    chosen.ids, '2026-11-24'::date
+  )) as combined_free_starts
+from chosen;
+```
+
+Expected: `service_count=2`, `total_minutes=120` and, when operating hours and other bookings allow two continuous hours, `combined_free_starts > 0`. An SQL error or a count of zero is **not** automatically evidence that the garage is full. The date-and-time UI now shows the underlying PostgREST/SQL error and checks contiguous baseline slots to distinguish a database mismatch from a genuine lack of available time.
+
+This Supabase project was not accessible through the connected account, so live SQL results have not been verified.
