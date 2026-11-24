@@ -8,6 +8,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { TOWING_SERVICE_CATALOGUE } from "@/lib/towing-service-listing";
 import {
   normalizeBusinessWebsite,
   ALL_SERVICE_CATALOGUE,
@@ -32,7 +33,10 @@ type Service = {
   is_active: boolean;
 };
 
+type ProviderType = "garage" | "towing";
+
 type Garage = {
+  provider_type: ProviderType;
   id: string;
   business_name: string;
   business_description: string | null;
@@ -78,26 +82,31 @@ const CATEGORY_ICONS: Record<string, string> = {
   Maintenance: "🧰",
   Inspections: "📋",
   "Specialty services": "🔑",
+  "Transport & towing": "🚛",
+  "Recovery & emergencies": "🚨",
+  "Roadside support": "🛟",
 };
 
-const DEFAULT_OPEN_CATEGORIES = [
-  "Popular",
-  "Tires & wheels",
-];
-
-const SERVICE_GROUPS = Array.from(
-  new Set(
-    ALL_SERVICE_CATALOGUE.map(
-      (service) => service.category
-    )
-  )
-).map((category) => ({
-  name: category,
-  icon: CATEGORY_ICONS[category] ?? "🔧",
-  services: ALL_SERVICE_CATALOGUE.filter(
-    (service) => service.category === category
-  ),
-}));
+type CatalogueItem = { name: string; icon: string; category: string };
+const DEFAULT_OPEN_CATEGORIES: Record<ProviderType, string[]> = {
+  garage: ["Popular", "Tires & wheels"],
+  towing: ["Popular", "Transport & towing"],
+};
+const SERVICE_ITEMS = {
+  garage: ALL_SERVICE_CATALOGUE,
+  towing: TOWING_SERVICE_CATALOGUE,
+};
+function buildServiceGroups(items: readonly CatalogueItem[]) {
+  return [...new Set(items.map((item) => item.category))].map((category) => ({
+    name: category,
+    icon: CATEGORY_ICONS[category] ?? "🔧",
+    services: items.filter((item) => item.category === category),
+  }));
+}
+const SERVICE_GROUPS = {
+  garage: buildServiceGroups(ALL_SERVICE_CATALOGUE),
+  towing: buildServiceGroups(TOWING_SERVICE_CATALOGUE),
+};
 
 /* =========================================================
    HELPERS
@@ -266,18 +275,19 @@ function BusinessHours({
 ========================================================= */
 
 function ServiceCategoryAccordion({
+  providerType,
   selectedServices,
   search,
   onToggle,
 }: {
+  providerType: ProviderType;
   selectedServices: string[];
   search: string;
   onToggle: (service: string) => void;
 }) {
+  const serviceGroups = SERVICE_GROUPS[providerType];
   const [openCategories, setOpenCategories] =
-    useState<string[]>(
-      DEFAULT_OPEN_CATEGORIES
-    );
+    useState<string[]>(DEFAULT_OPEN_CATEGORIES[providerType]);
 
   function toggleCategory(category: string) {
     setOpenCategories((current) =>
@@ -289,7 +299,7 @@ function ServiceCategoryAccordion({
     );
   }
 
-  const allExpanded = SERVICE_GROUPS.every(
+  const allExpanded = serviceGroups.every(
     (group) =>
       openCategories.includes(group.name)
   );
@@ -309,7 +319,7 @@ function ServiceCategoryAccordion({
           </p>
 
           <p className="mt-1 text-[11px] text-[#667085]">
-            Select all the services your vehicle needs.
+            Select services offered by this provider type.
           </p>
         </div>
 
@@ -319,7 +329,7 @@ function ServiceCategoryAccordion({
             setOpenCategories(
               allExpanded
                 ? []
-                : SERVICE_GROUPS.map(
+                : serviceGroups.map(
                     (group) => group.name
                   )
             )
@@ -333,7 +343,7 @@ function ServiceCategoryAccordion({
       </div>
 
       <div className="space-y-2">
-        {SERVICE_GROUPS.map((group, index) => {
+        {serviceGroups.map((group, index) => {
           const isOpen =
             openCategories.includes(group.name);
 
@@ -480,6 +490,9 @@ export default function LiveGarages() {
 
   const [garages, setGarages] =
     useState<Garage[]>([]);
+  const [providerType, setProviderType] = useState<ProviderType>("garage");
+  const serviceCatalogue = SERVICE_ITEMS[providerType];
+  const isTowing = providerType === "towing";
 
   const [hours, setHours] =
     useState<BusinessHour[]>([]);
@@ -521,6 +534,9 @@ export default function LiveGarages() {
       window.location.search
     );
 
+    const type: ProviderType = params.get("type") === "towing" ? "towing" : "garage";
+    setProviderType(type);
+    const catalogue = SERVICE_ITEMS[type];
     const requested = params.getAll("service");
 
     if (requested.length === 0) return;
@@ -530,7 +546,7 @@ export default function LiveGarages() {
 
     for (const name of requested) {
       const catalogueEntry =
-        ALL_SERVICE_CATALOGUE.find(
+        catalogue.find(
           (service) =>
             normalizeName(service.name) ===
             normalizeName(name)
@@ -595,7 +611,7 @@ export default function LiveGarages() {
             is_active
           )
         `)
-        .eq("provider_type", "garage")
+        .in("provider_type", ["garage", "towing"])
         .eq("status", "approved")
         .eq("is_listing_active", true)
         .eq("booking_suspended", false)
@@ -607,12 +623,12 @@ export default function LiveGarages() {
 
       if (queryError) {
         console.error(
-          "Could not load MECATREX garages:",
+          "Could not load MECATREX providers:",
           queryError
         );
 
         setError(
-          "Garage listings are temporarily unavailable."
+          "Provider listings are temporarily unavailable."
         );
 
         setGarages([]);
@@ -714,6 +730,17 @@ export default function LiveGarages() {
      MULTI-SELECT ACTIONS
   ======================================================= */
 
+  function changeProviderType(type: ProviderType) {
+    if (providerType === type) return;
+    setProviderType(type);
+    setSelectedServices([]);
+    setSearch("");
+    const url = new URL(window.location.href);
+    url.searchParams.set("type", type);
+    url.searchParams.delete("service");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }
+
   function toggleService(serviceName: string) {
     const normalized = normalizeName(serviceName);
 
@@ -744,7 +771,7 @@ export default function LiveGarages() {
   }
 
   function addSearchAsService() {
-    const match = ALL_SERVICE_CATALOGUE.find(
+    const match = serviceCatalogue.find(
       (service) =>
         normalizeName(service.name) ===
         normalizeName(search)
@@ -769,7 +796,8 @@ export default function LiveGarages() {
 
   const query = normalizeName(search);
 
-  const filtered = garages.filter((garage) => {
+  const listedProviders = garages.filter((garage) => garage.provider_type === providerType);
+  const filtered = listedProviders.filter((garage) => {
     const services = activeFixedServices(garage);
 
     if (selectedServices.length > 0) {
@@ -792,7 +820,7 @@ export default function LiveGarages() {
   });
 
   const exactSearchMatch =
-    ALL_SERVICE_CATALOGUE.find(
+    serviceCatalogue.find(
       (service) =>
         normalizeName(service.name) === query
     );
@@ -808,16 +836,25 @@ export default function LiveGarages() {
       ================================================= */}
 
       <div className="mb-7 rounded-[24px] border border-[#BAC7D7] bg-white p-5 shadow-[0_5px_18px_rgba(16,24,40,0.045)] sm:p-6">
+        <div role="group" aria-label="Choose provider type" className="mb-5 grid grid-cols-2 gap-2 rounded-[16px] bg-[#F2F4F7] p-1.5">
+          <button type="button" aria-pressed={!isTowing} onClick={() => changeProviderType("garage")}
+            className={`rounded-xl px-4 py-3.5 text-[14px] font-extrabold transition ${!isTowing ? "bg-[#14263A] text-white shadow-sm" : "bg-white text-[#344054] hover:bg-[#E6EDF5]"}`}>
+            🔧 Garage
+          </button>
+          <button type="button" aria-pressed={isTowing} onClick={() => changeProviderType("towing")}
+            className={`rounded-xl px-4 py-3.5 text-[14px] font-extrabold transition ${isTowing ? "bg-[#F3C547] text-[#35290D] shadow-sm" : "bg-white text-[#344054] hover:bg-[#FFF3C7]"}`}>
+            🚛 Towing
+          </button>
+        </div>
         <label
           htmlFor="service-search"
           className="block text-[21px] font-extrabold text-[#101828]"
         >
-          🔎 What does your vehicle need?
+          {isTowing ? "🚛 Which towing service do you need?" : "🔎 What does your vehicle need?"}
         </label>
 
         <p className="mt-1 text-[13px] leading-6 text-[#667085]">
-          Select one or multiple services and find
-          garages that can handle all your needs.
+          {isTowing ? "Browse approved towing companies and compare their fixed-price services." : "Select one or multiple services and find garages that can handle all your needs."}
         </p>
 
         {/* SEARCH INPUT */}
@@ -840,12 +877,12 @@ export default function LiveGarages() {
                 addSearchAsService();
               }
             }}
-            placeholder="Search oil change, battery, tire storage..."
+            placeholder={isTowing ? "Search local towing, flatbed, roadside assistance..." : "Search oil change, battery, tire storage..."}
             className="h-[52px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 pr-14 text-[14px] font-semibold text-[#101828] outline-none transition focus:border-[#4771A6] focus:ring-2 focus:ring-[#4771A6]/10"
           />
 
           <datalist id="service-options">
-            {ALL_SERVICE_CATALOGUE.map(
+            {serviceCatalogue.map(
               (service) => (
                 <option
                   key={service.name}
@@ -913,7 +950,7 @@ export default function LiveGarages() {
             <div className="mt-3 flex flex-wrap gap-2">
               {selectedServices.map((name) => {
                 const catalogue =
-                  ALL_SERVICE_CATALOGUE.find(
+                  serviceCatalogue.find(
                     (service) =>
                       normalizeName(service.name) ===
                       normalizeName(name)
@@ -952,6 +989,8 @@ export default function LiveGarages() {
         {/* ACCORDION */}
 
         <ServiceCategoryAccordion
+          key={providerType}
+          providerType={providerType}
           selectedServices={selectedServices}
           search={search}
           onToggle={toggleService}
@@ -1006,14 +1045,14 @@ export default function LiveGarages() {
 
       {!loading && !error && (
         <>
-          {garages.length === 0 ? (
+          {listedProviders.length === 0 ? (
             <div className="rounded-[22px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-8 text-center">
               <h3 className="text-[21px] font-bold text-[#101828]">
-                Approved garages will appear here.
+                {isTowing ? "Approved towing companies will appear here." : "Approved garages will appear here."}
               </h3>
 
               <p className="mt-2 text-[13px] text-[#667085]">
-                Garages appear after approval
+                {isTowing ? "Towing companies" : "Garages"} appear after approval
                 and publishing at least one
                 fixed-price service.
               </p>
