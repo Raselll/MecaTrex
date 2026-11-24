@@ -1143,7 +1143,7 @@ export default function ProviderDashboard({
         </p>
 
         <h2 className="mt-2 text-[28px] font-bold">
-          List your services and prices
+          {provider.provider_type === "towing" ? "List your towing services and prices" : "List your services and prices"}
         </h2>
 
         <p className="mt-2 text-[14px] text-[#667085]">
@@ -1157,6 +1157,7 @@ export default function ProviderDashboard({
         >
           <div className="grid gap-4 lg:grid-cols-2">
             <ServiceNamePicker
+              providerType={provider.provider_type}
               key={newServiceFormKey}
               label="Service name *"
               value={newService.name}
@@ -1249,6 +1250,7 @@ export default function ProviderDashboard({
           ) : (
             services.map((service) => (
               <ServiceEditor
+                providerType={provider.provider_type}
                 key={service.id}
                 service={service}
                 onChange={(updated) =>
@@ -1322,11 +1324,13 @@ function ProviderField({
 }
 
 function ServiceEditor({
+  providerType,
   service,
   onChange,
   onSave,
   onDelete,
 }: {
+  providerType: ProviderRecord["provider_type"];
   service: ProviderService;
   onChange: (
     service: ProviderService
@@ -1338,6 +1342,7 @@ function ServiceEditor({
     <div className="rounded-[20px] border border-[#BAC7D7] bg-white p-5">
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.7fr_auto] lg:items-end">
         <ServiceNamePicker
+          providerType={providerType}
           label="Service *"
           value={service.name}
           onChange={(value) =>
