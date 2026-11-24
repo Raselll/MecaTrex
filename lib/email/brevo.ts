@@ -242,6 +242,9 @@ type BookingEmailEvent = {
   vehicleDescription: string;
   startsAt: string;
   endsAt: string;
+  towingPending?: boolean;
+  cancellationRemaining?: number;
+  freeCancellation?: boolean;
 };
 
 export async function sendBookingEmailNotifications(
@@ -263,14 +266,20 @@ export async function sendBookingEmailNotifications(
   const clientMessage = cancelled
     ? data.event === "provider_cancelled"
       ? `${data.providerName} cancelled your appointment. You can book another garage on MECATREX.`
-      : "Your appointment was cancelled as requested."
-    : `Your ${data.serviceName} appointment at ${data.providerName} is confirmed.`;
+      : data.freeCancellation
+        ? "You cancelled within 24 hours of booking. No cancellation warning was counted."
+        : `Cancellation warning: the booking was cancelled. You have ${data.cancellationRemaining ?? 0} of 3 chargeable cancellations remaining. ${data.cancellationRemaining === 0 ? "Your account is suspended from making new bookings. Contact support." : ""}`
+    : data.towingPending
+      ? `Your garage time at ${data.providerName} is reserved, but the complete booking is waiting for a towing company to accept.`
+      : `Your ${data.serviceName} appointment at ${data.providerName} is confirmed.`;
 
   const providerMessage = cancelled
     ? data.event === "provider_cancelled"
-      ? "You cancelled a confirmed booking. Your cancellation count has been updated."
+      ? `Cancellation warning: you cancelled a booking. ${data.cancellationRemaining ?? 0} out of 3 cancellations remain. ${data.cancellationRemaining === 0 ? "Your listing is suspended." : ""}`
       : `${data.clientName} cancelled their appointment.`
-    : `New booking from ${data.clientName} for ${data.serviceName}.`;
+    : data.towingPending
+      ? `Garage slot reserved for ${data.clientName} and ${data.serviceName}; towing confirmation is still pending.`
+      : `New booking from ${data.clientName} for ${data.serviceName}.`;
 
   const mail = (
     title: string,
@@ -294,7 +303,9 @@ export async function sendBookingEmailNotifications(
       <p>${
         cancelled
           ? "This appointment has been cancelled."
-          : "Payment is handled at the garage. No online charge was made."
+          : data.towingPending
+            ? "The garage slot is reserved, but full confirmation requires a towing company. No online charge was made."
+            : "Payment is handled at the garage. No online charge was made."
       }</p>
       <p style="margin-top:24px">
         <a href="${escapeHtml(appUrl(link))}" style="background:#4771A6;padding:14px 20px;border-radius:12px;color:white;text-decoration:none;font-weight:bold">
@@ -309,9 +320,9 @@ export async function sendBookingEmailNotifications(
       toName: data.clientName,
       subject: cancelled
         ? "MECATREX appointment cancelled"
-        : "MECATREX booking confirmed",
+        : data.towingPending ? "MECATREX garage reserved · towing pending" : "MECATREX booking confirmed",
       html: mail(
-        cancelled ? "Appointment update" : "Your booking is confirmed",
+        cancelled ? "Appointment update" : data.towingPending ? "Awaiting towing acceptance" : "Your booking is confirmed",
         clientMessage,
         "/account"
       ),
@@ -323,7 +334,7 @@ export async function sendBookingEmailNotifications(
         ? "MECATREX booking cancelled"
         : "New MECATREX garage booking",
       html: mail(
-        cancelled ? "Appointment cancelled" : "You have a new appointment",
+        cancelled ? "Appointment cancelled" : data.towingPending ? "Garage reserved · towing pending" : "You have a new appointment",
         providerMessage,
         "/account#garage-calendar"
       ),
@@ -390,5 +401,25 @@ export async function sendBookingReminderEmail(data: BookingReminderEmail) {
         <p style="font-size:12px;color:#667085;margin-top:25px">This is a transactional reminder for your confirmed MECATREX reservation.</p>
       </div>
     `,
+  });
+}
+
+/** Send a verified server-side dispatch, cancellation, or confirmation notice. */
+export async function sendMecatrexNotice({
+  email, name, subject, message, accountPath = "/account",
+}: {
+  email: string; name: string; subject: string; message: string; accountPath?: string;
+}) {
+  if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return;
+  await sendBrevoEmail({
+    toEmail: email,
+    toName: name,
+    subject,
+    html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#101828;line-height:1.6">
+      <p style="color:#4771A6;font-weight:bold;letter-spacing:2px">MECATREX</p>
+      <h1 style="font-size:23px">${escapeHtml(subject)}</h1>
+      <p>${escapeHtml(message)}</p>
+      <p><a href="${escapeHtml(appUrl(accountPath))}" style="display:inline-block;background:#14263A;color:white;padding:12px 20px;border-radius:10px;text-decoration:none">Open MECATREX</a></p>
+    </div>`,
   });
 }
