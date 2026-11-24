@@ -1202,14 +1202,17 @@ export default function LiveGarages() {
                       key={garage.id}
                       className="min-w-0 overflow-hidden rounded-[23px] border border-[#E4E7EC] bg-white shadow-[0_8px_28px_rgba(16,24,40,0.045)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(16,24,40,0.10)]"
                     >
-                      {/* GARAGE IMAGE */}
+                      <div className={`px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider ${isTowing ? "bg-[#F3C547] text-[#35290D]" : "bg-[#14263A] text-white"}`}>
+                        {isTowing ? "🚛 Towing company" : "🔧 Garage"}
+                      </div>
+                      {/* PROVIDER IMAGE */}
 
-                      <div className="relative h-[175px] overflow-hidden bg-gradient-to-br from-[#14263A] to-[#4771A6]">
+                      <div className={`relative h-[175px] overflow-hidden bg-gradient-to-br ${isTowing ? "from-[#85621A] to-[#F3C547]" : "from-[#14263A] to-[#4771A6]"}`}>
                         {imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={imageUrl}
-                            alt={`${garage.business_name} garage`}
+                            alt={`${garage.business_name} ${isTowing ? "towing provider" : "garage"}`}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -1219,7 +1222,7 @@ export default function LiveGarages() {
                         )}
 
                         <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold text-[#101828] shadow-sm">
-                          ✓ Approved MECATREX garage
+                          ✓ Approved MECATREX {isTowing ? "towing company" : "garage"}
                         </span>
                       </div>
 
@@ -1270,7 +1273,7 @@ export default function LiveGarages() {
                             {displayed.map(
                               (service) => {
                                 const catalogue =
-                                  ALL_SERVICE_CATALOGUE.find(
+                                  serviceCatalogue.find(
                                     (item) =>
                                       normalizeName(
                                         item.name
@@ -1337,7 +1340,7 @@ export default function LiveGarages() {
                               </summary>
                               <div className="max-h-[390px] space-y-1 overflow-y-auto border-t border-[#E4E7EC] p-2">
                                 {services.map((service) => {
-                                  const catalogue = ALL_SERVICE_CATALOGUE.find(
+                                  const catalogue = serviceCatalogue.find(
                                     (item) => normalizeName(item.name) === normalizeName(service.name)
                                   );
                                   return (
@@ -1390,21 +1393,29 @@ export default function LiveGarages() {
                           </p>
                         )}
 
-                        {/* BOOK BUTTON */}
+                        {/* BOOKING / TOWING REQUEST */}
 
-                        <Link
-                          href={`/book/${garage.id}?service=${encodeURIComponent(
-                            chosen.id
-                          )}`}
-                          className="mt-4 flex w-full items-center justify-center rounded-[13px] bg-[#4771A6] px-4 py-3.5 text-[14px] font-extrabold text-white transition hover:bg-[#315C91]"
-                        >
-                          📅 Book this garage →
-                        </Link>
+                        {isTowing ? (
+                          <button
+                            type="button"
+                            onClick={() => changeProviderType("garage")}
+                            className="mt-4 flex w-full items-center justify-center rounded-[13px] bg-[#F3C547] px-4 py-3.5 text-center text-[13px] font-extrabold text-[#35290D] transition hover:bg-[#E9B42E]"
+                          >
+                            🚛 Request towing with a garage booking →
+                          </button>
+                        ) : (
+                          <Link
+                            href={`/book/${garage.id}?service=${encodeURIComponent(chosen.id)}`}
+                            className="mt-4 flex w-full items-center justify-center rounded-[13px] bg-[#4771A6] px-4 py-3.5 text-[14px] font-extrabold text-white transition hover:bg-[#315C91]"
+                          >
+                            📅 Book this garage →
+                          </Link>
+                        )}
 
                         <p className="mt-2 text-center text-[10px] text-[#98A2B3]">
-                          Live availability · fixed CAD price
-                          {selectedServices.length > 1 &&
-                            " · Book services individually"}
+                          {isTowing
+                            ? "Towing requests currently accompany garage bookings. Pickup time and final price are confirmed separately."
+                            : <>Live availability · fixed CAD price{selectedServices.length > 1 && " · Book services individually"}</>}
                         </p>
 
                         {/* EXPANDABLE BUSINESS DETAILS */}
