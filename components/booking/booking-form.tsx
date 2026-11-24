@@ -40,6 +40,7 @@ type Props = {
   services: Service[];
   hours: BusinessHour[];
   initialService?: string;
+  initialServices?: string[];
   canConfirm: boolean;
 };
 
@@ -48,6 +49,7 @@ export default function BookingForm({
   services,
   hours,
   initialService,
+  initialServices,
   canConfirm,
 }: Props) {
   const router = useRouter();
@@ -61,6 +63,10 @@ export default function BookingForm({
   );
 
   const [serviceIds, setServiceIds] = useState<string[]>(() => {
+    const fromUrl = [...new Set((initialServices ?? []).filter((id) =>
+      services.some((service) => service.id === id)
+    ))];
+    if (fromUrl.length > 0) return fromUrl;
     const first = initialService && services.some((service) => service.id === initialService)
       ? initialService : services[0]?.id;
     return first ? [first] : [];
@@ -416,8 +422,7 @@ export default function BookingForm({
   }
 
   const nextPath =
-    `/book/${providerId}?service=` +
-    encodeURIComponent(serviceId);
+    `/book/${providerId}?service=${encodeURIComponent(serviceId)}&services=${encodeURIComponent(serviceIds.join(","))}`;
 
   const morning = slots.filter(
     (x) =>
