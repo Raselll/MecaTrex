@@ -42,6 +42,7 @@ type Props = {
   initialService?: string;
   initialServices?: string[];
   canConfirm: boolean;
+  bookingSuspended?: boolean;
 };
 
 export default function BookingForm({
@@ -51,6 +52,7 @@ export default function BookingForm({
   initialService,
   initialServices,
   canConfirm,
+  bookingSuspended = false,
 }: Props) {
   const router = useRouter();
   const supabase = useMemo(
@@ -931,7 +933,12 @@ export default function BookingForm({
           </div>
         )}
 
-        {!canConfirm ? (
+        {!canConfirm ? bookingSuspended ? (
+          <div role="alert" className="mt-5 rounded-[15px] border border-[#FDA29B] bg-[#FEF3F2] p-5 text-[13px] font-bold text-[#B42318]">
+            Your MECATREX booking account is suspended after three late cancellation warnings.
+            Existing bookings remain visible in your account. Contact support to request a review.
+          </div>
+        ) : (
           <div className="mt-5 space-y-3">
             <p className="text-[14px] font-semibold text-[#344054]">
               Log in or create a client
