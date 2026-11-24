@@ -9,7 +9,7 @@ alter table public.service_providers
 alter table public.service_providers
   add constraint towing_cancellation_count_valid check (towing_cancellation_count between 0 and 3);
 
-create or replace function private.normalized_province(p_name text)
+create or replace function public.normalize_province(p_name text)
 returns text language sql immutable set search_path = '' as $$
   select case
     when regexp_replace(translate(lower(trim(coalesce(p_name,''))),
@@ -21,7 +21,8 @@ returns text language sql immutable set search_path = '' as $$
     else upper(trim(coalesce(p_name,'')))
   end;
 $$;
-revoke all on function private.normalized_province(text) from public, anon, authenticated;
+revoke all on function public.normalize_province(text) from public, anon, authenticated;
+grant execute on function public.normalize_province(text) to authenticated;
 
 create table if not exists public.towing_opportunity_declines (
   request_id uuid not null references public.towing_requests(id) on delete cascade,
@@ -58,7 +59,7 @@ using (
           and exists (
             select 1 from public.service_providers garage2
             where garage2.id = garage_provider_id
-              and private.normalized_province(garage2.province) = private.normalized_province(tow.province)
+              and public.normalize_province(garage2.province) = public.normalize_province(tow.province)
           )
         )
       )
@@ -150,7 +151,7 @@ begin
     and tow.is_listing_active
     and not tow.is_removed
     and not tow.booking_suspended
-    and private.normalized_province(tow.province) = private.normalized_province(v_garage_province);
+    and public.normalize_province(tow.province) = public.normalize_province(v_garage_province);
 
   return v_booking_id;
 end;
@@ -218,7 +219,7 @@ begin
     and b.starts_at > now()
     and (
       (r.status = 'pending'
-        and private.normalized_province(garage.province) = private.normalized_province(v_province))
+        and public.normalize_province(garage.province) = public.normalize_province(v_province))
       or (r.status = 'accepted' and r.towing_provider_id = v_provider_id)
     )
     and not exists (
@@ -280,7 +281,7 @@ begin
   select g.owner_id, g.province into v_garage_owner, v_garage_province
   from public.service_providers g where g.id = v_request.garage_provider_id;
 
-  if private.normalized_province(v_province) <> private.normalized_province(v_garage_province) then
+  if public.normalize_province(v_province) <> public.normalize_province(v_garage_province) then
     raise exception 'This request is outside your current province.';
   end if;
 
@@ -337,7 +338,7 @@ begin
   if not exists (
     select 1 from public.service_providers garage
     where garage.id = v_request.garage_provider_id
-      and private.normalized_province(garage.province) = private.normalized_province(v_provider.province)
+      and public.normalize_province(garage.province) = public.normalize_province(v_provider.province)
   ) then raise exception 'This request is outside your operating province.'; end if;
   insert into public.towing_opportunity_declines(request_id,towing_provider_id)
     values (p_request_id,v_provider.id)
@@ -406,8 +407,8 @@ begin
   where other.provider_type::text='towing' and other.status::text='approved'
     and other.is_listing_active and not other.is_removed and not other.booking_suspended
     and other.id<>v_provider.id
-    and private.normalized_province(other.province) =
-      (select private.normalized_province(garage.province)
+    and public.normalize_province(other.province) =
+      (select public.normalize_province(garage.province)
          from public.service_providers garage where garage.id=v_request.garage_provider_id)
     and not exists(select 1 from public.towing_opportunity_declines d
       where d.request_id=v_request.id and d.towing_provider_id=other.id);
@@ -445,8 +446,8 @@ begin
     where tow.provider_type::text='towing' and tow.status::text='approved'
       and tow.is_listing_active and not tow.is_removed and not tow.booking_suspended
       and v_request.status='pending' and b.status='confirmed' and b.starts_at>now()
-      and private.normalized_province(tow.province)=
-        (select private.normalized_province(garage.province)
+      and public.normalize_province(tow.province)=
+        (select public.normalize_province(garage.province)
          from public.service_providers garage where garage.id=v_request.garage_provider_id)
       and not exists(select 1 from public.towing_opportunity_declines d
         where d.request_id=v_request.id and d.towing_provider_id=tow.id);
