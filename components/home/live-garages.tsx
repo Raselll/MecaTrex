@@ -286,6 +286,7 @@ function ServiceCategoryAccordion({
   onToggle: (service: string) => void;
 }) {
   const serviceGroups = SERVICE_GROUPS[providerType];
+  const isTowing = providerType === "towing";
   const [openCategories, setOpenCategories] =
     useState<string[]>(DEFAULT_OPEN_CATEGORIES[providerType]);
 
@@ -390,7 +391,7 @@ function ServiceCategoryAccordion({
                 className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] bg-[#EDF3FA] text-[20px]">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] text-[20px] ${isTowing ? "bg-[#FFF3C7]" : "bg-[#EDF3FA]"}`}>
                     {group.icon}
                   </span>
 
@@ -419,8 +420,8 @@ function ServiceCategoryAccordion({
                   aria-hidden="true"
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[17px] font-bold transition-all duration-200 ${
                     showPanel
-                      ? "border-[#4771A6] bg-[#4771A6] text-white"
-                      : "border-[#C7D7E9] bg-white text-[#4771A6]"
+                      ? isTowing ? "border-[#F3C547] bg-[#F3C547] text-[#35290D]" : "border-[#4771A6] bg-[#4771A6] text-white"
+                      : isTowing ? "border-[#E5C267] bg-white text-[#876100]" : "border-[#C7D7E9] bg-white text-[#4771A6]"
                   }`}
                 >
                   {showPanel ? "−" : "+"}
@@ -933,7 +934,7 @@ export default function LiveGarages() {
                     ? "service selected"
                     : "services selected"}
                   {" · "}
-                  Showing garages offering all
+                  Showing {isTowing ? "towing companies" : "garages"} offering all
                   selected services.
                 </p>
               </div>
@@ -997,9 +998,8 @@ export default function LiveGarages() {
         />
 
         <p className="mt-4 text-[11px] leading-5 text-[#98A2B3]">
-          Select multiple services to find garages
-          that offer all of them. Click a selected
-          service again to remove it.
+          Select multiple services to find {isTowing ? "towing companies" : "garages"} that offer them all.
+          Click a selected service again to remove it.
         </p>
       </div>
 
@@ -1062,9 +1062,7 @@ export default function LiveGarages() {
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <p className="text-[13px] font-semibold text-[#475467]">
                   <strong>{filtered.length}</strong>{" "}
-                  {filtered.length === 1
-                    ? "garage"
-                    : "garages"}{" "}
+                  {isTowing ? (filtered.length === 1 ? "towing company" : "towing companies") : (filtered.length === 1 ? "garage" : "garages")}{" "}
                   matching your needs
                 </p>
 
@@ -1084,12 +1082,12 @@ export default function LiveGarages() {
                   </span>
 
                   <h3 className="mt-3 text-[18px] font-extrabold text-[#101828]">
-                    No garages match all your needs yet
+                    {isTowing ? "No towing companies match all your needs yet" : "No garages match all your needs yet"}
                   </h3>
 
                   <p className="mx-auto mt-2 max-w-[450px] text-[13px] leading-6 text-[#667085]">
                     {selectedServices.length > 1
-                      ? "No single garage currently lists every selected service. Try removing one service to see more options."
+                      ? isTowing ? "No single towing company lists every selected service. Try removing one service to see more options." : "No single garage currently lists every selected service. Try removing one service to see more options."
                       : "Try selecting another service or clearing your search."}
                   </p>
 
