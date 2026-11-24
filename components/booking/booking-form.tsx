@@ -99,6 +99,8 @@ export default function BookingForm({
     useState(false);
 
   const [error, setError] = useState("");
+  const [availabilityError, setAvailabilityError] = useState("");
+  const [availabilityDebug, setAvailabilityDebug] = useState("");
   const [note, setNote] = useState("");
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [vehicleYear, setVehicleYear] = useState("");
@@ -246,13 +248,16 @@ export default function BookingForm({
       setSlots([]);
       setSlot("");
       setPublicNotes([]);
+      setAvailabilityError("");
+      setAvailabilityDebug("");
       return;
     }
 
     let active = true;
 
     setLoading(true);
-    setError("");
+    setAvailabilityError("");
+    setAvailabilityDebug("");
     setSlot("");
     setPublicNotes([]);
 
@@ -288,15 +293,28 @@ export default function BookingForm({
 
       if (slotsResult.error) {
         setSlots([]);
-
-        setError(
-          "Live availability is not ready. Make sure the booking migration is installed in Supabase."
+        const isMulti = serviceIds.length > 1;
+        const technicalMessage = slotsResult.error.message || "Database availability request failed.";
+        const migrationMissing = slotsResult.error.code === "PGRST202" ||
+          slotsResult.error.code === "42883";
+        setAvailabilityError(
+          migrationMissing && isMulti
+            ? "Multi-service availability is not installed in Supabase. Apply the z04 availability migration after z01–z03."
+            : isMulti
+              ? "Could not calculate availability for the combined services. The database returned an error; the calendar has NOT been checked."
+              : "Could not load the garage availability. The database returned an error; the calendar has NOT been checked."
         );
+        setAvailabilityDebug(
+          `Database error ${slotsResult.error.code ?? "unknown"}: ${technicalMessage}`
+        );
+        console.error("MECATREX availability request failed", slotsResult.error);
       } else {
         const available = (
           slotsResult.data ?? []
         ) as Slot[];
 
+        setAvailabilityError("");
+        setAvailabilityDebug("");
         setSlots(available);
 
         if (
@@ -469,8 +487,8 @@ export default function BookingForm({
       setStepError("Please select a service first.");
       return;
     }
-    if (step === 2 && (!slot || loading)) {
-      setStepError("Choose an available date and time before continuing.");
+    if (step === 2 && (availabilityError || !slot || loading)) {
+      setStepError(availabilityError || "Choose an available date and time before continuing.");
       return;
     }
     if (step === 3 && !validVehicle) {
@@ -651,6 +669,16 @@ export default function BookingForm({
 
         {/* PUBLIC NOTE DISPLAY */}
 
+        {availabilityError && (
+          <div role="alert" className="mt-5 rounded-[15px] border border-[#FDA29B] bg-[#FEF3F2] p-4 text-[13px] text-[#B42318]">
+            <p className="font-extrabold">⚠️ Availability could not be checked</p>
+            <p className="mt-2 leading-5">{availabilityError}</p>
+            {availabilityDebug && (
+              <p className="mt-2 break-words rounded-lg bg-white/70 p-2 font-mono text-[11px]">{availabilityDebug}</p>
+            )}
+          </div>
+        )}
+
         {!loading &&
           publicNotes.length > 0 && (
             <div
@@ -695,6 +723,7 @@ export default function BookingForm({
           )}
 
           {!loading &&
+            !availabilityError &&
             hoursConfigured &&
             slots.length === 0 && (
               <div className="rounded-[15px] border border-[#D5DFEA] bg-[#F8FAFC] p-5 text-center">
