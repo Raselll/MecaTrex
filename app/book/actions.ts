@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { sendBookingEmailNotifications } from "@/lib/email/brevo";
+import { sendBookingEmailNotifications, sendMecatrexNotice } from "@/lib/email/brevo";
 
 type BookingResult = { ok: true; bookingId: string; message?: string } | { ok: false; error: string };
 type BookingMailRecipients = {
@@ -21,7 +21,11 @@ function formValue(formData: FormData, name: string) {
   return String(formData.get(name) ?? "").trim();
 }
 
-async function notifyParticipants(bookingId: string, event: "confirmed" | "provider_cancelled" | "client_cancelled") {
+async function notifyParticipants(
+  bookingId: string,
+  event: "confirmed" | "provider_cancelled" | "client_cancelled",
+  extra: { towingPending?: boolean; cancellationRemaining?: number; freeCancellation?: boolean } = {}
+) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .rpc("booking_email_recipients", { p_booking_id: bookingId })
@@ -45,12 +49,66 @@ async function notifyParticipants(bookingId: string, event: "confirmed" | "provi
     vehicleDescription: recipients.vehicle_description,
     startsAt: recipients.starts_at,
     endsAt: recipients.ends_at,
+    ...extra,
   });
+}
+
+type TowingDispatchRecipient = {
+  email: string;
+  company_name: string;
+  garage_name: string;
+  service_name: string;
+  appointment_at: string;
+  pickup_address: string;
+};
+
+async function notifyAvailableTowingProviders(bookingId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("towing_dispatch_email_recipients", {
+    p_booking_id: bookingId,
+  });
+  if (error) {
+    console.error("Cannot find eligible towing emails:", error.message);
+    return;
+  }
+  const recipients = (data ?? []) as TowingDispatchRecipient[];
+  const appointment = (value: string) => new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Toronto", dateStyle: "full", timeStyle: "short",
+  }).format(new Date(value));
+
+  for (let i = 0; i < recipients.length; i += 10) {
+    const batch = recipients.slice(i, i + 10);
+    const result = await Promise.allSettled(batch.map((recipient) =>
+      sendMecatrexNotice({
+        email: recipient.email,
+        name: recipient.company_name,
+        subject: "MECATREX · New towing opportunity",
+        message: `A client needs towing for ${recipient.service_name} at ${recipient.garage_name} on ${appointment(recipient.appointment_at)}. Pickup address: ${recipient.pickup_address}. Open Towing jobs to accept or decline. The first eligible company to accept gets the job.`,
+        accountPath: "/account",
+      })
+    ));
+    if (result.some((item) => item.status === "rejected")) {
+      console.error("One or more towing opportunity emails failed; in-app notices remain available.");
+    }
+  }
 }
 
 export async function createGarageBooking(formData: FormData): Promise<BookingResult> {
   const providerId = formValue(formData, "provider_id");
-  const serviceId = formValue(formData, "service_id");
+  let serviceIds: string[];
+  try {
+    const parsed: unknown = JSON.parse(formValue(formData, "service_ids"));
+    if (!Array.isArray(parsed) || parsed.length < 1 || parsed.length > 50 ||
+        !parsed.every((value) => typeof value === "string" && /^[0-9a-f-]{36}$/i.test(value))) {
+      return { ok: false, error: "Select at least one valid service." };
+    }
+    serviceIds = parsed as string[];
+    if (new Set(serviceIds).size !== serviceIds.length) {
+      return { ok: false, error: "Each service can only be selected once." };
+    }
+  } catch {
+    return { ok: false, error: "Select at least one service." };
+  }
   const day = formValue(formData, "day");
   const time = formValue(formData, "time");
   const note = formValue(formData, "note");
@@ -58,7 +116,7 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
   const wantsTowing = formValue(formData, "wants_towing") === "yes";
   const pickupAddress = formValue(formData, "pickup_address");
   const towingNote = formValue(formData, "towing_note");
-  if (!providerId || !serviceId || !/^\d{4}-\d{2}-\d{2}$/.test(day)
+  if (!providerId || serviceIds.length === 0 || !/^\d{4}-\d{2}-\d{2}$/.test(day)
       || !/^([01]\d|2[0-3]):(00|30)$/.test(time) || note.length > 500) {
     return { ok: false, error: "Choose a valid garage, service, date, time and a note shorter than 500 characters." };
   }
@@ -71,44 +129,38 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Please log in with a client account before confirming a booking." };
 
-  // Ordinary garage bookings keep using the original proven RPC.
-  // A towing request uses a transaction-safe wrapper: either both records
-  // are saved, or neither is saved, avoiding a half-created request.
-  const { data, error } = wantsTowing
-    ? await supabase.rpc("book_garage_service_with_towing", {
-        p_provider_id: providerId,
-        p_service_id: serviceId,
-        p_day: day,
-        p_time: time,
-        p_note: note,
-        p_vehicle: vehicle,
-        p_wants_towing: true,
-        p_pickup_address: pickupAddress,
-        p_towing_note: towingNote,
-      })
-    : await supabase.rpc("book_garage_service", {
-        p_provider_id: providerId,
-        p_service_id: serviceId,
-        p_day: day,
-        p_time: time,
-        p_note: note,
-        p_vehicle: vehicle,
-      });
+  // Atomically reserve the combined duration and snapshot every item.
+  // When towing is requested, the same transaction also creates its pending dispatch.
+  const { data, error } = await supabase.rpc("book_garage_services", {
+    p_provider_id: providerId,
+    p_service_ids: serviceIds,
+    p_day: day,
+    p_time: time,
+    p_note: note,
+    p_vehicle: vehicle,
+    p_wants_towing: wantsTowing,
+    p_pickup_address: wantsTowing ? pickupAddress : "",
+    p_towing_note: wantsTowing ? towingNote : "",
+  });
 
   if (error || typeof data !== "string") {
-    if (wantsTowing && error?.code === "PGRST202") {
-      return { ok: false, error: "The towing booking database migration has not been installed yet. Choose 'No towing' or contact MECATREX support." };
+    if (error?.code === "PGRST202") {
+      return { ok: false, error: "Multi-service bookings require the latest MECATREX Supabase migrations. Apply them before booking." };
     }
     return { ok: false, error: error?.message ?? "Could not book this time. Please select another." };
   }
 
   // The booking is already committed. Email delivery must never undo a real reservation.
-  try { await notifyParticipants(data, "confirmed"); }
-  catch (error) { console.error("Booking confirmed, email delivery unavailable:", error); }
+  try {
+    await notifyParticipants(data, "confirmed", { towingPending: wantsTowing });
+    if (wantsTowing) await notifyAvailableTowingProviders(data);
+  } catch (error) {
+    console.error("Booking saved, email delivery unavailable:", error);
+  }
 
   revalidatePath("/account");
   revalidatePath("/");
-  return { ok: true, bookingId: data, message: wantsTowing ? "Your garage booking is confirmed. Your towing request is pending acceptance." : undefined };
+  return { ok: true, bookingId: data, message: wantsTowing ? "Garage time reserved. Full confirmation is pending towing acceptance." : undefined };
 }
 
 export async function cancelGarageBooking(bookingId: string):
@@ -121,10 +173,16 @@ export async function cancelGarageBooking(bookingId: string):
 
   // Derive the cancellation actor from the database, not an untrusted client argument.
   const { data: updatedBooking } = await supabase
-    .from("garage_bookings").select("status").eq("id", bookingId).single();
+    .from("garage_bookings").select("status,created_at,cancelled_at").eq("id", bookingId).single();
   const actualProviderCancellation = updatedBooking?.status === "provider_cancelled";
+  const freeCancellation = !actualProviderCancellation &&
+    !!updatedBooking?.created_at && !!updatedBooking?.cancelled_at &&
+    new Date(updatedBooking.cancelled_at).getTime() <= new Date(updatedBooking.created_at).getTime() + 24 * 60 * 60 * 1000;
+  const remaining = typeof data === "number" ? data : 0;
   try {
-    await notifyParticipants(bookingId, actualProviderCancellation ? "provider_cancelled" : "client_cancelled");
+    await notifyParticipants(bookingId,
+      actualProviderCancellation ? "provider_cancelled" : "client_cancelled",
+      { cancellationRemaining: remaining, freeCancellation });
   } catch (mailError) {
     console.error("Cancellation saved, email notification unavailable:", mailError);
   }
@@ -132,8 +190,11 @@ export async function cancelGarageBooking(bookingId: string):
   revalidatePath("/account");
   revalidatePath("/");
   return { ok: true, message: actualProviderCancellation
-    ? `Appointment cancelled. ${data} garage cancellations remaining before suspension.`
-    : "Appointment cancelled. The garage was notified.", remaining: typeof data === "number" ? data : undefined };
+    ? remaining === 0 ? "Third garage cancellation: your listing is suspended. Contact MECATREX." : `Garage cancellation warning. ${remaining} of 3 cancellations remaining.`
+    : freeCancellation ? "Booking cancelled within the 24-hour grace period. No strike was counted."
+    : remaining === 0 ? "Cancellation warning 3/3. Your account is now suspended from making new bookings."
+    : `Cancellation warning. ${remaining} of 3 late cancellations remain.`,
+    remaining };
 }
 
 export async function reviewGarageBooking(
