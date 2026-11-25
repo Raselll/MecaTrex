@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { cancelGarageBooking, reviewGarageBooking } from "@/app/book/actions";
+import VehicleVisitCard from "./vehicle-visit-card";
 import { formatMontrealDateTime, formatPriceCents, type GarageBooking } from "@/lib/booking";
 
 type Review = { booking_id: string; stars: number; comment: string };
@@ -182,6 +183,10 @@ export default function ClientBookings({ userId }: { userId: string }) {
                 )}
               </div>
             )}
+            {booking.status === "confirmed" &&
+              new Date(booking.starts_at).getTime() >= now - 14 * 24 * 60 * 60_000 && (
+                <VehicleVisitCard booking={booking} mode="client" />
+              )}
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#EEF2F6] pt-4">
               <p className="text-[15px] font-extrabold text-[#101828]">{formatPriceCents(booking.price_cents)} <span className="text-[11px] font-normal text-[#667085]">· Pay at garage</span></p>
               {booking.status === "confirmed" && !ended && <button type="button" disabled={pendingId === booking.id} onClick={() => void cancel(booking)} className="rounded-[12px] border border-[#FDA29B] px-4 py-2.5 text-[12px] font-bold text-[#B42318] hover:bg-[#FEF3F2] disabled:opacity-50">{pendingId === booking.id ? "Cancelling…" : "Cancel booking"}</button>}
