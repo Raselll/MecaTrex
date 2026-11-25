@@ -74,6 +74,10 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
   const checkedIn = Boolean(visit?.garage_received_at);
   const ready = Boolean(visit?.vehicle_ready_at);
   const pickedUp = Boolean(visit?.client_picked_up_at);
+  const photoWindowOpen = Boolean(
+    checkedIn && !ready && visit?.garage_received_at &&
+    now <= new Date(visit.garage_received_at).getTime() + 60 * 60_000
+  );
   const phone = booking.client_phone?.replace(/[^\d+]/g, "") || "";
   const stage = pickedUp ? "Visit closed · Vehicle picked up"
     : ready ? "Service completed · Ready for pickup"
@@ -96,7 +100,10 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
   }
 
   async function uploadPhotos() {
-    if (!checkedIn || mode !== "client") return;
+    if (!photoWindowOpen || mode !== "client") {
+      setError("Drop-off evidence can only be uploaded during the first hour after handoff, before the service is completed.");
+      return;
+    }
     if (files.length === 0 || files.length + photos.length > MAX_PHOTOS) {
       setError("Choose up to six photos in total."); return;
     }
@@ -261,8 +268,9 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
           <p className="mt-1 text-[11px] leading-5 text-[#667085]">
             Photos can document the condition of the vehicle and the garage storefront at drop-off.
             MECATREX does not verify where an image was taken, provide insurance or handle damage claims.
+            Add photos within one hour after the handoff code is accepted, before the garage marks the service complete.
           </p>
-          {mode === "client" && !pickedUp && photos.length < MAX_PHOTOS && (
+          {mode === "client" && photoWindowOpen && photos.length < MAX_PHOTOS && (
             <div className="mt-3">
               <input type="file" accept="image/jpeg,image/png,image/webp" multiple
                 onChange={(event) => setFiles(Array.from(event.currentTarget.files ?? []))}
