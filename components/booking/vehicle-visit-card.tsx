@@ -31,7 +31,6 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
   const [visit, setVisit] = useState<Visit | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(() => Date.now());
-  const [code, setCode] = useState("");
   const [enteredCode, setEnteredCode] = useState("");
   const [confirmedDropoff, setConfirmedDropoff] = useState(false);
   const [secretVisible, setSecretVisible] = useState("");
@@ -247,6 +246,11 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
         </div>
       )}
 
+      {mode === "garage" && Boolean(visit?.pickup_not_received_at) && !pickedUp && (
+        <p role="status" className="mt-3 rounded-xl border border-[#FDA29B] bg-[#FEF3F2] p-3 text-[12px] font-bold text-[#B42318]">
+          ⚠️ The customer reported that they have not collected the car. Contact them before closing the visit.
+        </p>
+      )}
       {pickedUp && <p className="mt-3 rounded-xl bg-[#ECFDF3] p-3 text-[12px] font-extrabold text-[#05603A]">
         ✓ Client confirmed pickup. Vehicle visit closed.
       </p>}
