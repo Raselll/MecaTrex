@@ -368,6 +368,7 @@ export type BookingReminderEmail = {
   garageAddress: string;
   serviceName: string;
   startsAt: string;
+  towingPending?: boolean;
 };
 
 /** Called only by the authenticated server-side reminder scheduler. */
@@ -381,7 +382,7 @@ export async function sendBookingReminderEmail(data: BookingReminderEmail) {
   return sendBrevoEmail({
     toEmail: data.clientEmail,
     toName: data.clientName,
-    subject: "MECATREX reminder: your appointment is tomorrow",
+    subject: "MECATREX reminder: upcoming garage appointment",
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:580px;margin:auto;padding:28px;color:#101828;line-height:1.6">
         <p style="font-weight:800;letter-spacing:2px;color:#4771A6">MECATREX</p>
@@ -395,6 +396,10 @@ export async function sendBookingReminderEmail(data: BookingReminderEmail) {
           <strong>Address:</strong> ${escapeHtml(data.garageAddress)}
         </div>
         <p>Please arrive on time. Payment is handled at the garage.</p>
+        ${data.towingPending
+          ? '<p style="background:#FFFAE7;padding:12px;border-radius:10px">Your garage slot is held, but a towing company has not accepted the trip yet. Please check your account for updates.</p>'
+          : ""}
+        <p style="background:#F4F7FB;padding:12px;border-radius:10px">Two hours before the appointment, your drop-off checklist will appear in MECATREX. At the garage, ask the staff for the one-time handoff code. Photos are optional.</p>
         <p style="margin-top:26px">
           <a href="${escapeHtml(appUrl("/account"))}" style="display:inline-block;border-radius:11px;background:#4771A6;color:#fff;padding:13px 20px;text-decoration:none;font-weight:700">View my appointment</a>
         </p>
