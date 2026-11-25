@@ -241,7 +241,10 @@ for insert to authenticated with check (
    where (storage.foldername(name))[1]=b.id::text
      and (storage.foldername(name))[2]=b.client_id::text
      and b.client_id=auth.uid() and b.status='confirmed'
-     and v.garage_received_at is not null and v.client_picked_up_at is null
+     and v.garage_received_at is not null
+     and v.garage_received_at >= now() - interval '1 hour'
+     and v.vehicle_ready_at is null
+     and v.client_picked_up_at is null
  )
 );
 
