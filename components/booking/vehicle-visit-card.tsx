@@ -193,7 +193,7 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
 
       {checkedIn && !ready && (
         <div className="mt-3 rounded-xl border border-[#A6E0C0] bg-[#ECFDF3] p-3 text-[12px] text-[#05603A]">
-          ✓ Vehicle drop-off verified using the garage-issued code. The garage is responsible for the vehicle while the service is underway, subject to applicable law and the garage's service agreement.
+          ✓ Vehicle drop-off recorded with the garage-issued code. This records the handoff only; it does not determine legal responsibility for damage.
           {mode === "garage" && (
             <div className="mt-3">
               <p className="mb-2 font-semibold">Is the maintenance or repair completed?</p>
