@@ -7,6 +7,7 @@ create table if not exists public.booking_visits (
   garage_received_at timestamptz,
   vehicle_ready_at timestamptz,
   ready_email_sent_at timestamptz,
+  ready_email_claimed_at timestamptz,
   client_picked_up_at timestamptz,
   pickup_not_received_at timestamptz,
   created_at timestamptz not null default now(),
@@ -166,6 +167,47 @@ begin
 end; $$;
 revoke all on function public.confirm_vehicle_pickup(uuid,boolean) from public,anon,authenticated;
 grant execute on function public.confirm_vehicle_pickup(uuid,boolean) to authenticated;
+
+-- The garage sends a ready-for-pickup email on demand. Claims prevent
+-- duplicate button clicks; failed sends release the claim for another try.
+create or replace function public.claim_vehicle_ready_email(p_booking_id uuid)
+returns boolean language plpgsql security definer set search_path='' as $
+declare v_count integer;
+begin
+  if auth.uid() is null or not exists (
+    select 1 from public.garage_bookings b
+    join public.service_providers sp on sp.id=b.provider_id
+    where b.id=p_booking_id and b.status='confirmed' and sp.owner_id=auth.uid()
+  ) then raise exception 'Only the booked garage can notify this client.'; end if;
+  update public.booking_visits
+    set ready_email_claimed_at=now()
+  where booking_id=p_booking_id and vehicle_ready_at is not null
+    and ready_email_sent_at is null
+    and (ready_email_claimed_at is null or ready_email_claimed_at < now()-interval '5 minutes');
+  get diagnostics v_count=row_count;
+  return v_count=1;
+end; $;
+revoke all on function public.claim_vehicle_ready_email(uuid) from public,anon,authenticated;
+grant execute on function public.claim_vehicle_ready_email(uuid) to authenticated;
+
+create or replace function public.complete_vehicle_ready_email(
+  p_booking_id uuid,p_success boolean
+)
+returns void language plpgsql security definer set search_path='' as $
+begin
+  if auth.uid() is null or not exists (
+    select 1 from public.garage_bookings b
+    join public.service_providers sp on sp.id=b.provider_id
+    where b.id=p_booking_id and sp.owner_id=auth.uid()
+  ) then raise exception 'Only the booked garage can finalize email delivery.'; end if;
+  update public.booking_visits set
+    ready_email_sent_at=case when p_success then coalesce(ready_email_sent_at,now()) else ready_email_sent_at end,
+    ready_email_claimed_at=null
+  where booking_id=p_booking_id and ready_email_claimed_at is not null
+    and ready_email_sent_at is null;
+end; $;
+revoke all on function public.complete_vehicle_ready_email(uuid,boolean) from public,anon,authenticated;
+grant execute on function public.complete_vehicle_ready_email(uuid,boolean) to authenticated;
 
 -- Photos are optional, private and append-only. Garage and client may view them.
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
