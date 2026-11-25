@@ -55,7 +55,7 @@ begin
   if now() > v_booking.ends_at + interval '24 hours' then
     raise exception 'The handoff window is closed. Contact MECATREX support.'; end if;
   insert into private.booking_handoff_codes(booking_id,code)
-    values (p_booking_id,upper(encode(gen_random_bytes(4),'hex')))
+    values (p_booking_id,upper(substr(replace(gen_random_uuid()::text,'-',''),1,8)))
     on conflict (booking_id) do nothing;
   select code into v_code from private.booking_handoff_codes where booking_id=p_booking_id;
   return v_code;
@@ -180,8 +180,8 @@ for select to authenticated using (
  exists (
    select 1 from public.garage_bookings b
    join public.service_providers g on g.id=b.provider_id
-   where storage.foldername(name)[1]=b.id::text
-     and storage.foldername(name)[2]=b.client_id::text
+   where (storage.foldername(name))[1]=b.id::text
+     and (storage.foldername(name))[2]=b.client_id::text
      and (b.client_id=auth.uid() or g.owner_id=auth.uid())
  )
 );
@@ -192,8 +192,8 @@ for insert to authenticated with check (
  exists (
    select 1 from public.garage_bookings b
    join public.booking_visits v on v.booking_id=b.id
-   where storage.foldername(name)[1]=b.id::text
-     and storage.foldername(name)[2]=b.client_id::text
+   where (storage.foldername(name))[1]=b.id::text
+     and (storage.foldername(name))[2]=b.client_id::text
      and b.client_id=auth.uid() and b.status='confirmed'
      and v.garage_received_at is not null and v.client_picked_up_at is null
  )
