@@ -40,7 +40,7 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (includePhotos = true) => {
     const { data, error: queryError } = await supabase
       .from("booking_visits").select("*").eq("booking_id", booking.id).maybeSingle();
     if (queryError) {
@@ -48,7 +48,9 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
     } else {
       setVisit((data as Visit | null) ?? null);
       const dir = `${booking.id}/${booking.client_id}`;
-      const listing = await supabase.storage.from(PHOTO_BUCKET).list(dir, { limit: 30 });
+      const listing = includePhotos
+        ? await supabase.storage.from(PHOTO_BUCKET).list(dir, { limit: 30 })
+        : { data: null, error: null };
       if (!listing.error && listing.data) {
         const photosWithLinks = await Promise.all(
           listing.data.filter((item) => item.name && !item.name.startsWith("."))
@@ -66,7 +68,10 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
 
   useEffect(() => {
     void refresh();
-    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    const timer = window.setInterval(() => {
+      setNow(Date.now());
+      void refresh(false);
+    }, 30_000);
     return () => window.clearInterval(timer);
   }, [refresh]);
 
