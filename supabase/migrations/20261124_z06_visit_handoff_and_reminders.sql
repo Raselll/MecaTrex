@@ -1,6 +1,8 @@
 -- MECATREX: client-to-garage vehicle handoff, return and 24-hour reminder jobs.
 -- Requires the existing garage_bookings, service_providers, profiles,
 -- booking_notifications and Supabase storage schema. Does not rewrite bookings.
+-- All schema changes roll back together if any statement fails.
+begin;
 
 create table if not exists public.booking_visits (
   booking_id uuid primary key references public.garage_bookings(id) on delete cascade,
@@ -213,7 +215,9 @@ grant execute on function public.complete_vehicle_ready_email(uuid,boolean) to a
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values ('mecatrex-handoff-photos','mecatrex-handoff-photos',false,5242880,
         array['image/jpeg','image/png','image/webp'])
-on conflict (id) do nothing;
+on conflict (id) do update set public=false,
+  file_size_limit=excluded.file_size_limit,
+  allowed_mime_types=excluded.allowed_mime_types;
 
 drop policy if exists "Handoff participant reads photos" on storage.objects;
 create policy "Handoff participant reads photos" on storage.objects
@@ -278,7 +282,7 @@ begin
   loop
     insert into public.booking_reminder_jobs(booking_id,state,attempts,locked_until)
       values (r.id,'sending',1,now()+interval '4 minutes')
-    on conflict (booking_id) do update
+    on conflict on constraint booking_reminder_jobs_pkey do update
       set state='sending',
           attempts=public.booking_reminder_jobs.attempts+1,
           locked_until=now()+interval '4 minutes',
@@ -329,3 +333,4 @@ revoke all on function public.complete_booking_reminder(uuid,boolean,text) from 
 grant execute on function public.complete_booking_reminder(uuid,boolean,text) to service_role;
 
 notify pgrst,'reload schema';
+commit;
