@@ -1,3 +1,37 @@
+## Fix: PostgreSQL 42883 missing towing booking function (2026-11-24)
+
+Symptom at step 4 after selecting multiple garage services **with towing**:
+
+```
+PostgreSQL error 42883 while running book_garage_services:
+function public.book_garage_service_with_towing(uuid, uuid, date,
+  text, text, text, boolean, text, text) does not exist
+```
+
+This means `book_garage_services` is installed, but its *nested towing function*
+is missing. Re-running z01 does not fix the dependency. Booking, notification and
+towing dispatch should stay in one database transaction.
+
+**Recovery:** open `supabase/migrations/20261124_z05_repair_missing_towing_booking_and_dispatch.sql`
+in the MECATREX GitHub repository; copy the entire contents into a new Supabase
+SQL Editor query for the correct MECATREX project; run the full script.
+It replays the original towing schema and the latest z03 definitions in the
+correct order within a transaction, does not delete data, reloads the API schema
+and checks that the essential RPCs are present.
+
+Stop on a SQL error and inspect the complete error before retrying. Never run
+the function directly with fabricated auth IDs in SQL Editor: booking requires
+a real authenticated client via the application.
+
+After successful SQL execution, test one **new** multi-service booking with
+towing and verify: popup says *Garage reserved · towing pending*, client + garage
+see the booking, towing providers in the matching province see a pending job,
+and an accepted tow transitions the booking to *Fully confirmed*.
+
+**Access:** The connected Supabase accounts do not have direct access to this
+MECATREX project; execution and smoke tests must be done in its SQL Editor
+or with project-authorized credentials.
+
 # MECATREX — Multi-service booking, cancellation policy, towing dispatch
 
 ## Database deployment (required before using the updated website)
