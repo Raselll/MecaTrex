@@ -10,6 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { cancelGarageBooking } from "@/app/book/actions";
 import AvailabilityBoard from "./availability-board";
+import VehicleVisitCard from "./vehicle-visit-card";
 import {
   BOOKING_CANCEL_LIMIT,
   WEEKDAYS,
@@ -612,6 +613,32 @@ export default function ProviderCalendar({
           existing confirmed appointments.
         </p>
       </div>
+
+      {providerType === "garage" && (
+        <div className="mb-6 rounded-[20px] border border-[#BDD0E4] bg-white p-4 sm:p-5">
+          <h3 className="text-[17px] font-extrabold text-[#101828]">🚗 Vehicle drop-off and collection</h3>
+          <p className="mt-2 text-[12px] leading-5 text-[#667085]">
+            Two hours before an appointment, reveal the unique garage handoff code.
+            Share it only after receiving the car. Once verified, mark the service
+            completed, email or call the client, and wait for their pickup confirmation.
+          </p>
+          {bookings
+            .filter((booking) => booking.status === "confirmed" &&
+              new Date(booking.starts_at).getTime() >= nowMs - 48 * 60 * 60_000 &&
+              new Date(booking.starts_at).getTime() < nowMs + 7 * 24 * 60 * 60_000)
+            .sort((a,b) => a.starts_at.localeCompare(b.starts_at))
+            .slice(0, 15)
+            .map((booking) => (
+              <div key={booking.id} className="mt-4 rounded-xl border border-[#E1E8F1] p-3">
+                <p className="text-[12px] font-extrabold text-[#101828]">
+                  {booking.client_name} · {booking.service_name}
+                </p>
+                <p className="mt-1 text-[11px] text-[#667085]">{formatMontrealDateTime(booking.starts_at)}</p>
+                <VehicleVisitCard booking={booking} mode="garage" />
+              </div>
+            ))}
+        </div>
+      )}
 
       {providerType === "garage" && (
         <AvailabilityBoard
