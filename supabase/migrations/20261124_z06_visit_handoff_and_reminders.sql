@@ -173,7 +173,7 @@ grant execute on function public.confirm_vehicle_pickup(uuid,boolean) to authent
 -- The garage sends a ready-for-pickup email on demand. Claims prevent
 -- duplicate button clicks; failed sends release the claim for another try.
 create or replace function public.claim_vehicle_ready_email(p_booking_id uuid)
-returns boolean language plpgsql security definer set search_path='' as $
+returns boolean language plpgsql security definer set search_path='' as $$
 declare v_count integer;
 begin
   if auth.uid() is null or not exists (
@@ -188,14 +188,14 @@ begin
     and (ready_email_claimed_at is null or ready_email_claimed_at < now()-interval '5 minutes');
   get diagnostics v_count=row_count;
   return v_count=1;
-end; $;
+end; $$;
 revoke all on function public.claim_vehicle_ready_email(uuid) from public,anon,authenticated;
 grant execute on function public.claim_vehicle_ready_email(uuid) to authenticated;
 
 create or replace function public.complete_vehicle_ready_email(
   p_booking_id uuid,p_success boolean
 )
-returns void language plpgsql security definer set search_path='' as $
+returns void language plpgsql security definer set search_path='' as $$
 begin
   if auth.uid() is null or not exists (
     select 1 from public.garage_bookings b
@@ -207,7 +207,7 @@ begin
     ready_email_claimed_at=null
   where booking_id=p_booking_id and ready_email_claimed_at is not null
     and ready_email_sent_at is null;
-end; $;
+end; $$;
 revoke all on function public.complete_vehicle_ready_email(uuid,boolean) from public,anon,authenticated;
 grant execute on function public.complete_vehicle_ready_email(uuid,boolean) to authenticated;
 
