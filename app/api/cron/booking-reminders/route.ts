@@ -52,6 +52,15 @@ export async function GET(request: NextRequest) {
   let failed = 0;
   for (const row of (data ?? []) as ReminderRow[]) {
     try {
+      // Check again after claiming: the appointment could have been cancelled.
+      const current = await admin.from("garage_bookings")
+        .select("status").eq("id", row.booking_id).maybeSingle();
+      if (current.error || current.data?.status !== "confirmed") {
+        await admin.rpc("complete_booking_reminder", {
+          p_booking_id: row.booking_id, p_success: false, p_error: "Appointment no longer active",
+        });
+        continue;
+      }
       await sendBookingReminderEmail({
         clientEmail: row.client_email,
         clientName: row.client_name,
