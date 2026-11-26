@@ -716,7 +716,7 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
 
 /* Continuous loop — repeated groups make the seam invisible. */
 .bw-marquee {overflow:hidden; background:#ff5b13; color:#fff; padding:23px 0;position:relative;isolation:isolate;}
-.bw-marquee-track {display:flex;align-items:center;width:max-content;animation:bw-marquee-flow 34s linear infinite;}
+.bw-marquee-track {display:flex;align-items:center;gap:0;width:max-content;animation:bw-marquee-flow 100s linear infinite;will-change:transform;}
 .bw-marquee-group {display:flex;align-items:center;gap:32px;flex:none;padding-right:32px;}
 .bw-marquee-item {display:inline-flex;align-items:center;gap:32px;white-space:nowrap;font-size:14px;font-weight:850;letter-spacing:.11em;}
 .bw-marquee-spark {color:#17202a;font-size:19px;font-weight:900;}
@@ -855,10 +855,10 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
 .bw-dashboard-slot.is-booked {background:#fff0e7;color:#d85d20;font-weight:770;}
 .bw-dashboard-caption {font-size:10px;color:#a1a7ab;margin:13px 0 0;text-align:right;}
 @supports (animation-timeline:view()) {
- .bw-dashboard-window {animation:bw-dashboard-upright both linear;animation-timeline:view();animation-range:entry 0% cover 48%;}
+ .bw-dashboard-window {animation:bw-dashboard-upright both linear;animation-timeline:view();animation-range:cover 0% cover 72%;}
 }
 @keyframes bw-dashboard-upright {
- from {opacity:.60;transform:perspective(1250px) rotateX(24deg) translateY(42px) scale(.88);}
+ from {opacity:.88;transform:perspective(1250px) rotateX(54deg) translateY(90px) scale(.83);}
  to {opacity:1;transform:perspective(1250px) rotateX(0deg) translateY(0) scale(1);}
 }
 @media (max-width:1120px) {
