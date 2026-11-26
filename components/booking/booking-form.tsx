@@ -316,7 +316,7 @@ export default function BookingForm({
         setAvailabilityDebug(
           `Database error ${slotsResult.error.code ?? "unknown"}: ${technicalMessage}`
         );
-        console.error("MECATREX availability request failed", slotsResult.error);
+        console.error("BandWhip availability request failed", slotsResult.error);
       } else {
         const available = (
           slotsResult.data ?? []
@@ -481,7 +481,7 @@ export default function BookingForm({
         towingPending: wantsTowing,
       });
     } catch (submissionError) {
-      console.error("MECATREX booking submission failed:", submissionError);
+      console.error("BandWhip booking submission failed:", submissionError);
       setError(
         "Could not verify your reservation because of a connection or server error. " +
         "Please check My appointments before retrying to avoid a duplicate booking."
@@ -551,7 +551,7 @@ export default function BookingForm({
   return (
     <div className="space-y-5">
       <div className="rounded-[23px] border border-[#C5D5E9] bg-white px-4 py-5 shadow-sm sm:px-6">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#FF5B13]">
           One step at a time
         </p>
         <div className="mt-4 grid grid-cols-4 gap-2" aria-label="Booking progress">
@@ -567,7 +567,7 @@ export default function BookingForm({
                 }}
                 aria-current={active ? "step" : undefined}
                 className={"flex flex-col items-center gap-1 rounded-[14px] px-1 py-3 text-center transition sm:flex-row sm:justify-center sm:gap-2 " +
-                  (active ? "bg-[#4771A6] text-white shadow-sm" :
+                  (active ? "bg-[#FF5B13] text-white shadow-sm" :
                     done ? "bg-[#EDF7F2] text-[#027A48] hover:bg-[#DEF2E7]" :
                     "bg-[#F3F6FA] text-[#98A2B3]")}
               >
@@ -586,14 +586,14 @@ export default function BookingForm({
           STEP 1: SERVICE
       ================================================ */}
 
-      <section hidden={step !== 1} className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
+      <section hidden={step !== 1} className="rounded-[24px] border border-[#E2D9D2] bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#EDF3FA] text-[24px]">
+          <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#FFF1E8] text-[24px]">
             🔧
           </span>
 
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">
+            <p className="text-[12px] font-bold uppercase tracking-wider text-[#FF5B13]">
               Step 1 of 4
             </p>
 
@@ -607,30 +607,30 @@ export default function BookingForm({
           <p className="mb-3 text-[13px] font-bold text-[#344054]">
             Select all services you need. Each service adds its fixed price and time to this visit.
           </p>
-          <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-[14px] border border-[#D5DFEA] bg-[#F8FAFC] p-2">
+          <div className="max-h-[360px] space-y-2 overflow-y-auto rounded-[14px] border border-[#E9DED5] bg-[#F8FAFC] p-2">
             {services.map((service) => {
               const checked = serviceIds.includes(service.id);
               return (
-                <label key={service.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3.5 transition ${checked ? "border-[#4771A6] bg-[#EDF3FA]" : "border-transparent bg-white hover:border-[#CAD8E8]"}`}>
+                <label key={service.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3.5 transition ${checked ? "border-[#FF5B13] bg-[#FFF1E8]" : "border-transparent bg-white hover:border-[#CAD8E8]"}`}>
                   <input type="checkbox" checked={checked} onChange={() => toggleService(service.id)}
-                    className="h-5 w-5 shrink-0 accent-[#4771A6]" aria-label={`Add ${service.name}`} />
+                    className="h-5 w-5 shrink-0 accent-[#FF5B13]" aria-label={`Add ${service.name}`} />
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] font-extrabold text-[#101828]">{service.name}</p>
                     <p className="mt-1 text-[11px] text-[#667085]">{service.duration_minutes} min{service.description ? ` · ${service.description}` : ""}</p>
                   </div>
-                  <span className="shrink-0 text-[13px] font-extrabold text-[#315C91]">{formatPriceCents(service.price_cents)}</span>
+                  <span className="shrink-0 text-[13px] font-extrabold text-[#DD4E0D]">{formatPriceCents(service.price_cents)}</span>
                 </label>
               );
             })}
           </div>
-          <div className="mt-4 rounded-[16px] border border-[#BDD0E4] bg-[#EDF3FA] p-4">
+          <div className="mt-4 rounded-[16px] border border-[#BDD0E4] bg-[#FFF1E8] p-4">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <p className="text-[13px] font-extrabold text-[#101828]">
                 {selectedServices.length} selected {selectedServices.length === 1 ? "service" : "services"}
               </p>
               {selectedServices.length > 1 && (
                 <button type="button" onClick={() => setServiceIds([])}
-                  className="text-[12px] font-bold text-[#315C91] underline">Clear selection</button>
+                  className="text-[12px] font-bold text-[#DD4E0D] underline">Clear selection</button>
               )}
             </div>
             <div className="space-y-1">
@@ -655,14 +655,14 @@ export default function BookingForm({
           STEP 2: DATE AND AVAILABILITY
       ================================================ */}
 
-      <section hidden={step !== 2} className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
+      <section hidden={step !== 2} className="rounded-[24px] border border-[#E2D9D2] bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#EDF3FA] text-[24px]">
+          <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#FFF1E8] text-[24px]">
             📅
           </span>
 
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">
+            <p className="text-[12px] font-bold uppercase tracking-wider text-[#FF5B13]">
               Step 2 of 4
             </p>
 
@@ -698,7 +698,7 @@ export default function BookingForm({
             onClick={() =>
               setDay(today)
             }
-            className="h-[52px] rounded-[13px] border border-[#98A2B3] bg-[#EDF3FA] px-5 text-[14px] font-bold text-[#315C91] hover:bg-[#DFEAF7]"
+            className="h-[52px] rounded-[13px] border border-[#98A2B3] bg-[#FFF1E8] px-5 text-[14px] font-bold text-[#DD4E0D] hover:bg-[#DFEAF7]"
           >
             ⚡ ASAP / Today
           </button>
@@ -770,7 +770,7 @@ export default function BookingForm({
             !availabilityError &&
             hoursConfigured &&
             slots.length === 0 && (
-              <div className="rounded-[15px] border border-[#D5DFEA] bg-[#F8FAFC] p-5 text-center">
+              <div className="rounded-[15px] border border-[#E9DED5] bg-[#F8FAFC] p-5 text-center">
                 <p className="font-bold text-[#101828]">
                   No free slots on this date.
                 </p>
@@ -785,7 +785,7 @@ export default function BookingForm({
                   <button
                     type="button"
                     onClick={nextDay}
-                    className="mt-3 rounded-xl bg-[#4771A6] px-4 py-2.5 text-[13px] font-bold text-white"
+                    className="mt-3 rounded-xl bg-[#FF5B13] px-4 py-2.5 text-[13px] font-bold text-white"
                   >
                     Try next day →
                   </button>
@@ -839,8 +839,8 @@ export default function BookingForm({
                           className={`rounded-[12px] border px-3 py-3 text-[13px] font-bold transition ${
                             slot ===
                             item.slot_time
-                              ? "border-[#4771A6] bg-[#4771A6] text-white"
-                              : "border-[#D0D5DD] bg-white text-[#344054] hover:border-[#4771A6] hover:bg-[#EDF3FA]"
+                              ? "border-[#FF5B13] bg-[#FF5B13] text-white"
+                              : "border-[#D0D5DD] bg-white text-[#344054] hover:border-[#FF5B13] hover:bg-[#FFF1E8]"
                           }`}
                         >
                           {formatHour(
@@ -859,14 +859,14 @@ export default function BookingForm({
           STEP 3: CONFIRM BOOKING
       ================================================ */}
 
-      <section hidden={step !== 3} className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
+      <section hidden={step !== 3} className="rounded-[24px] border border-[#E2D9D2] bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#EDF3FA] text-[24px]">
+          <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#FFF1E8] text-[24px]">
             ✓
           </span>
 
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">
+            <p className="text-[12px] font-bold uppercase tracking-wider text-[#FF5B13]">
               Step 3 of 4
             </p>
 
@@ -880,16 +880,16 @@ export default function BookingForm({
         <div className="mt-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-[13px] font-bold text-[#344054]">Your vehicle <span className="font-normal text-[#667085]">(optional)</span></p>
-            {vehicleDescription && <p className="text-[12px] font-bold text-[#315C91]">{vehicleDescription}</p>}
+            {vehicleDescription && <p className="text-[12px] font-bold text-[#DD4E0D]">{vehicleDescription}</p>}
           </div>
           <p className="mt-1 text-[12px] text-[#667085]">
-            Saved MECATREX vehicle details appear automatically. If you do not know the details, leave all fields blank.
+            Saved BandWhip vehicle details appear automatically. If you do not know the details, leave all fields blank.
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className="block text-[12px] font-bold text-[#344054]">
               Year
               <select value={vehicleYear} onChange={(event) => setVehicleYear(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-[#BAC7D7] bg-white px-3 py-3 text-[14px] text-[#101828]">
+                className="mt-1.5 w-full rounded-xl border border-[#E2D9D2] bg-white px-3 py-3 text-[14px] text-[#101828]">
                 <option value="">Select year</option>
                 {VEHICLE_YEARS.map((year) => <option value={year} key={year}>{year}</option>)}
               </select>
@@ -899,7 +899,7 @@ export default function BookingForm({
               <select value={vehicleMake} onChange={(event) => {
                 setVehicleMake(event.target.value);
                 setVehicleModel("");
-              }} className="mt-1.5 w-full rounded-xl border border-[#BAC7D7] bg-white px-3 py-3 text-[14px] text-[#101828]">
+              }} className="mt-1.5 w-full rounded-xl border border-[#E2D9D2] bg-white px-3 py-3 text-[14px] text-[#101828]">
                 <option value="">Select make</option>
                 {VEHICLE_MAKES.map((make) => <option value={make} key={make}>{make}</option>)}
               </select>
@@ -907,7 +907,7 @@ export default function BookingForm({
             <label className="block text-[12px] font-bold text-[#344054]">
               Model
               <select value={vehicleModel} disabled={!vehicleMake} onChange={(event) => setVehicleModel(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-[#BAC7D7] bg-white px-3 py-3 text-[14px] text-[#101828] disabled:bg-[#F3F6FA]">
+                className="mt-1.5 w-full rounded-xl border border-[#E2D9D2] bg-white px-3 py-3 text-[14px] text-[#101828] disabled:bg-[#F3F6FA]">
                 <option value="">{vehicleMake ? "Select model" : "Select a make first"}</option>
                 {(VEHICLE_MODELS_BY_MAKE[vehicleMake] ?? []).map((model) => <option value={model} key={model}>{model}</option>)}
               </select>
@@ -915,7 +915,7 @@ export default function BookingForm({
             <label className="block text-[12px] font-bold text-[#344054]">
               Colour <span className="font-normal text-[#667085]">(optional)</span>
               <select value={vehicleColor} onChange={(event) => setVehicleColor(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-[#BAC7D7] bg-white px-3 py-3 text-[14px] text-[#101828]">
+                className="mt-1.5 w-full rounded-xl border border-[#E2D9D2] bg-white px-3 py-3 text-[14px] text-[#101828]">
                 <option value="">Select colour</option>
                 {VEHICLE_COLORS.map((color) => <option value={color} key={color}>{color}</option>)}
               </select>
@@ -940,18 +940,18 @@ export default function BookingForm({
               )
             }
             placeholder="Vehicle details, symptoms, anything helpful…"
-            className="w-full rounded-[13px] border border-[#98A2B3] px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]"
+            className="w-full rounded-[13px] border border-[#98A2B3] px-4 py-3 text-[14px] outline-none focus:border-[#FF5B13]"
           />
         </label>
 
 
       </section>
 
-      <section hidden={step !== 4} className="rounded-[24px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
+      <section hidden={step !== 4} className="rounded-[24px] border border-[#E2D9D2] bg-white p-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#EDF3FA] text-[24px]">🚛</span>
+          <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#FFF1E8] text-[24px]">🚛</span>
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">Step 4 of 4</p>
+            <p className="text-[12px] font-bold uppercase tracking-wider text-[#FF5B13]">Step 4 of 4</p>
             <h2 className="text-[21px] font-extrabold text-[#101828]">Do you need towing?</h2>
           </div>
         </div>
@@ -964,7 +964,7 @@ export default function BookingForm({
               onClick={() => { setWantsTowing(option.value); setStepError(""); }}
               aria-pressed={wantsTowing === option.value}
               className={"rounded-[15px] border p-4 text-left text-[13px] font-bold transition " +
-                (wantsTowing === option.value ? "border-[#4771A6] bg-[#EDF3FA] text-[#244F83]" : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-[#F8FAFC]")}
+                (wantsTowing === option.value ? "border-[#FF5B13] bg-[#FFF1E8] text-[#D6531B]" : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-[#F8FAFC]")}
             >
               <span className="block text-[23px]" aria-hidden="true">{option.icon}</span>
               <span className="mt-2 block">{option.label}</span>
@@ -977,13 +977,13 @@ export default function BookingForm({
               Pickup address <span className="text-[#B42318]">*</span>
               <input value={pickupAddress} maxLength={240} onChange={(event) => setPickupAddress(event.target.value)}
                 placeholder="Street address, city, province and postal code"
-                className="mt-2 w-full rounded-xl border border-[#BAC7D7] bg-white px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]"/>
+                className="mt-2 w-full rounded-xl border border-[#E2D9D2] bg-white px-4 py-3 text-[14px] outline-none focus:border-[#FF5B13]"/>
             </label>
             <label className="block text-[13px] font-bold text-[#344054]">
               Extra towing information (optional)
               <textarea rows={2} value={towingNote} maxLength={500} onChange={(event) => setTowingNote(event.target.value)}
                 placeholder="Is the car accessible? Flat tire, won't start, underground garage..."
-                className="mt-2 w-full rounded-xl border border-[#BAC7D7] bg-white px-4 py-3 text-[14px] outline-none focus:border-[#4771A6]"/>
+                className="mt-2 w-full rounded-xl border border-[#E2D9D2] bg-white px-4 py-3 text-[14px] outline-none focus:border-[#FF5B13]"/>
             </label>
             <p className="text-[12px] leading-5 text-[#52647D]">
               This is a request, not an accepted towing booking. Pickup time and towing price are not fixed yet; the provider will need to coordinate with you.
@@ -1027,7 +1027,7 @@ export default function BookingForm({
 
         {!canConfirm ? bookingSuspended ? (
           <div role="alert" className="mt-5 rounded-[15px] border border-[#FDA29B] bg-[#FEF3F2] p-5 text-[13px] font-bold text-[#B42318]">
-            Your MECATREX booking account is suspended after three late cancellation warnings.
+            Your BandWhip booking account is suspended after three late cancellation warnings.
             Existing bookings remain visible in your account. Contact support to request a review.
           </div>
         ) : (
@@ -1043,7 +1043,7 @@ export default function BookingForm({
                 href={`/login?next=${encodeURIComponent(
                   nextPath
                 )}`}
-                className="rounded-[13px] bg-[#4771A6] px-6 py-3.5 text-[14px] font-bold text-white"
+                className="rounded-[13px] bg-[#FF5B13] px-6 py-3.5 text-[14px] font-bold text-white"
               >
                 Log in to book →
               </Link>
@@ -1052,7 +1052,7 @@ export default function BookingForm({
                 href={`/signup?next=${encodeURIComponent(
                   nextPath
                 )}`}
-                className="rounded-[13px] border border-[#BAC7D7] px-6 py-3.5 text-[14px] font-bold text-[#315C91]"
+                className="rounded-[13px] border border-[#E2D9D2] px-6 py-3.5 text-[14px] font-bold text-[#DD4E0D]"
               >
                 Create client account
               </Link>
@@ -1070,7 +1070,7 @@ export default function BookingForm({
               (wantsTowing && pickupAddress.trim().length < 8)
             }
             onClick={submit}
-            className="mt-5 w-full rounded-[15px] bg-[#4771A6] px-6 py-4 text-[17px] font-extrabold text-white shadow-[0_8px_20px_rgba(71,113,166,0.17)] hover:bg-[#315C91] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-5 w-full rounded-[15px] bg-[#FF5B13] px-6 py-4 text-[17px] font-extrabold text-white shadow-[0_8px_20px_rgba(71,113,166,0.17)] hover:bg-[#DD4E0D] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {booking
               ? "Confirming your booking…"
@@ -1091,7 +1091,7 @@ export default function BookingForm({
           ← Back
         </button>
         {step < 4 && <button type="button" onClick={goForward}
-          className="rounded-[14px] bg-[#4771A6] px-7 py-3.5 text-[14px] font-bold text-white shadow-sm transition hover:bg-[#315C91]">
+          className="rounded-[14px] bg-[#FF5B13] px-7 py-3.5 text-[14px] font-bold text-white shadow-sm transition hover:bg-[#DD4E0D]">
           Continue →
         </button>}
       </div>
@@ -1148,7 +1148,7 @@ export default function BookingForm({
             </div>
             <button type="button" autoFocus
               onClick={() => router.push("/account?view=appointments&booked=1")}
-              className="mt-6 w-full rounded-[14px] bg-[#4771A6] px-5 py-3.5 text-[14px] font-extrabold text-white hover:bg-[#315C91]">
+              className="mt-6 w-full rounded-[14px] bg-[#FF5B13] px-5 py-3.5 text-[14px] font-extrabold text-white hover:bg-[#DD4E0D]">
               View my appointments →
             </button>
             <button type="button" onClick={() => router.push("/")}

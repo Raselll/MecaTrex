@@ -27,7 +27,7 @@ function ReviewForm({ bookingId, onDone }: { bookingId: string; onDone: () => vo
     else setError(result.message);
   }
 
-  return <form onSubmit={submit} className="mt-4 rounded-[16px] border border-[#BAC7D7] bg-[#F8FAFC] p-4">
+  return <form onSubmit={submit} className="mt-4 rounded-[16px] border border-[#E2D9D2] bg-[#F8FAFC] p-4">
     <h4 className="text-[14px] font-extrabold text-[#101828]">⭐ How was your garage visit?</h4>
     <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Your star rating">
       {[1,2,3,4,5].map((rating) => <button type="button" key={rating} onClick={() => setStars(rating)}
@@ -40,7 +40,7 @@ function ReviewForm({ bookingId, onDone }: { bookingId: string; onDone: () => vo
         placeholder="What went well? What could be improved?" className="w-full rounded-[12px] border border-[#98A2B3] bg-white px-3 py-3 text-[13px]" />
     </label>
     {error && <p role="alert" className="mt-2 text-[12px] font-semibold text-[#B42318]">{error}</p>}
-    <button disabled={pending} type="submit" className="mt-3 rounded-[12px] bg-[#4771A6] px-5 py-3 text-[13px] font-bold text-white disabled:opacity-50">{pending ? "Posting review…" : "Post my review"}</button>
+    <button disabled={pending} type="submit" className="mt-3 rounded-[12px] bg-[#FF5B13] px-5 py-3 text-[13px] font-bold text-white disabled:opacity-50">{pending ? "Posting review…" : "Post my review"}</button>
   </form>;
 }
 
@@ -112,11 +112,11 @@ export default function ClientBookings({ userId }: { userId: string }) {
     <section id="my-bookings" className="scroll-mt-12 rounded-[25px] border border-[#D0D5DD] bg-white p-6 sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-[12px] font-bold uppercase tracking-wide text-[#4771A6]">Your appointments</p>
+          <p className="text-[12px] font-bold uppercase tracking-wide text-[#FF5B13]">Your appointments</p>
           <h2 className="mt-1 text-[25px] font-extrabold text-[#101828]">📅 My bookings</h2>
           <p className="mt-2 text-[13px] text-[#667085]">Confirmed bookings, cancellations and reviews stay synchronized with each garage calendar.</p>
         </div>
-        <Link href="/#garage-results" className="rounded-[13px] bg-[#4771A6] px-5 py-3 text-[13px] font-bold text-white hover:bg-[#315C91]">+ Book a garage</Link>
+        <Link href="/#garage-results" className="rounded-[13px] bg-[#FF5B13] px-5 py-3 text-[13px] font-bold text-white hover:bg-[#DD4E0D]">+ Book a garage</Link>
       </div>
       <div className="mt-5 flex gap-2 border-b border-[#E4E7EC] pb-3">
         <button type="button" onClick={() => setTab("upcoming")} className={`rounded-xl px-4 py-2.5 text-[13px] font-bold ${tab === "upcoming" ? "bg-[#101828] text-white" : "bg-[#F2F4F7] text-[#344054]"}`}>Upcoming ({upcoming.length})</button>
@@ -124,13 +124,13 @@ export default function ClientBookings({ userId }: { userId: string }) {
       </div>
       <div className={`mt-4 rounded-xl border px-4 py-3 text-[12px] font-semibold ${clientPenalty.booking_banned ? "border-[#FDA29B] bg-[#FEF3F2] text-[#B42318]" : "border-[#E7C66B] bg-[#FFFAE7] text-[#7A5600]"}`}>
         {clientPenalty.booking_banned
-          ? "Your booking account is suspended after three late cancellations. Contact MECATREX."
+          ? "Your booking account is suspended after three late cancellations. Contact BandWhip."
           : `Cancellation standing: ${clientPenalty.charged_cancellations}/3 late warnings. Cancellations within 24 hours after booking are penalty-free.`}
       </div>
       {notice && <p role="status" className="mt-4 rounded-[12px] bg-[#ECFDF3] p-4 text-[13px] font-bold text-[#027A48]">{notice}</p>}
       {error && <p role="alert" className="mt-4 rounded-[12px] bg-[#FEF3F2] p-4 text-[13px] text-[#B42318]">{error}</p>}
       {loading ? <p className="mt-6 text-[14px] text-[#667085]">Loading bookings…</p> : visible.length === 0 ? (
-        <div className="mt-6 rounded-[17px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-8 text-center">
+        <div className="mt-6 rounded-[17px] border border-dashed border-[#E2D9D2] bg-[#F8FAFC] p-8 text-center">
           <p className="text-[30px]">🚗</p><p className="mt-2 font-bold text-[#101828]">{tab === "upcoming" ? "No upcoming appointments yet." : "No previous appointments."}</p>
           <p className="mt-1 text-[13px] text-[#667085]">Browse garages and choose the right service in a few taps.</p>
         </div>
@@ -140,9 +140,9 @@ export default function ClientBookings({ userId }: { userId: string }) {
           const ended = new Date(booking.ends_at).getTime() <= now;
           const towing = towingStatuses.find((request) => request.booking_id === booking.id);
           const towingCompany = towingCompanies.find((company) => company.id === towing?.towing_provider_id);
-          return <article key={booking.id} className="rounded-[18px] border border-[#BAC7D7] p-5">
+          return <article key={booking.id} className="rounded-[18px] border border-[#E2D9D2] p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div><p className="text-[12px] font-bold uppercase tracking-wide text-[#4771A6]">{booking.service_name}</p>
+              <div><p className="text-[12px] font-bold uppercase tracking-wide text-[#FF5B13]">{booking.service_name}</p>
                 <h3 className="mt-1 text-[20px] font-extrabold text-[#101828]">{booking.garage_name}</h3>
                 <p className="mt-2 text-[14px] font-bold text-[#344054]">📅 {formatMontrealDateTime(booking.starts_at)} · {booking.duration_minutes} min</p></div>
               <span className={`rounded-full px-3 py-2 text-[12px] font-bold ${booking.status !== "confirmed"
@@ -155,8 +155,8 @@ export default function ClientBookings({ userId }: { userId: string }) {
             </div>
             <p className="mt-3 text-[13px] text-[#667085]">📍 {booking.garage_address}</p>
             <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
-              {booking.garage_phone && <a className="font-bold text-[#315C91] underline" href={`tel:${booking.garage_phone.replace(/[^\d+]/g, "")}`}>📞 {booking.garage_phone}</a>}
-              {booking.garage_email && <a className="font-bold text-[#315C91] underline" href={`mailto:${booking.garage_email}`}>✉️ Email garage</a>}
+              {booking.garage_phone && <a className="font-bold text-[#DD4E0D] underline" href={`tel:${booking.garage_phone.replace(/[^\d+]/g, "")}`}>📞 {booking.garage_phone}</a>}
+              {booking.garage_email && <a className="font-bold text-[#DD4E0D] underline" href={`mailto:${booking.garage_email}`}>✉️ Email garage</a>}
             </div>
             {booking.vehicle_description && <p className="mt-2 text-[12px] text-[#667085]">🚗 Vehicle: {booking.vehicle_description}</p>}
             {booking.note && <p className="mt-2 text-[12px] text-[#667085]">Your note: {booking.note}</p>}

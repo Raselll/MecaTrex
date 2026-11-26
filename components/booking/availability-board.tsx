@@ -787,13 +787,13 @@ export default function AvailabilityBoard({
     <section
       id="garage-availability-board"
       aria-label="Garage availability calendar"
-      className="overflow-hidden rounded-[26px] border border-[#BAC7D7] bg-white"
+      className="overflow-hidden rounded-[26px] border border-[#E2D9D2] bg-white"
     >
       {/* HEADER */}
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E4E7EC] px-5 py-5 sm:px-7">
         <div>
-          <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#4771A6]">
+          <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#FF5B13]">
             Availability
           </p>
 
@@ -873,7 +873,7 @@ export default function AvailabilityBoard({
               ).getUTCFullYear()}
             </h4>
 
-            <span className="rounded-full bg-[#EDF3FA] px-3 py-1.5 text-[12px] font-bold text-[#315C91]">
+            <span className="rounded-full bg-[#FFF1E8] px-3 py-1.5 text-[12px] font-bold text-[#DD4E0D]">
               {selected.length} selected
             </span>
           </div>
@@ -913,7 +913,7 @@ export default function AvailabilityBoard({
                 event.stopPropagation();
               }
             }}
-            className="min-w-0 cursor-grab overflow-x-auto overscroll-x-contain rounded-[17px] border border-[#D5DFEA] active:cursor-grabbing [scrollbar-width:thin]"
+            className="min-w-0 cursor-grab overflow-x-auto overscroll-x-contain rounded-[17px] border border-[#E9DED5] active:cursor-grabbing [scrollbar-width:thin]"
           >
             <div
               style={{
@@ -999,12 +999,12 @@ export default function AvailabilityBoard({
                             : "bg-white"
                       } ${
                         selectedDay
-                          ? "ring-2 ring-inset ring-[#4771A6]"
+                          ? "ring-2 ring-inset ring-[#FF5B13]"
                           : isFocusedBookingDay
-                            ? "z-10 ring-[3px] ring-inset ring-[#4771A6] bg-[#E5F0FE]"
+                            ? "z-10 ring-[3px] ring-inset ring-[#FF5B13] bg-[#E5F0FE]"
                           : isToday
                             ? "ring-2 ring-inset ring-[#087F74]"
-                            : "hover:bg-[#EDF3FA]"
+                            : "hover:bg-[#FFF1E8]"
                       } ${
                         outOfRange
                           ? "cursor-not-allowed opacity-35"
@@ -1040,13 +1040,13 @@ export default function AvailabilityBoard({
                       )}
 
                       {isFocusedBookingDay && !selectedDay && (
-                        <span className="mt-1 block rounded-full bg-[#315C91] px-1.5 py-1 text-center text-[9px] font-extrabold text-white">
+                        <span className="mt-1 block rounded-full bg-[#DD4E0D] px-1.5 py-1 text-center text-[9px] font-extrabold text-white">
                           NEXT BOOKING
                         </span>
                       )}
 
                       {selectedDay && (
-                        <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#4771A6] text-[11px] font-bold text-white">
+                        <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#FF5B13] text-[11px] font-bold text-white">
                           ✓
                         </span>
                       )}
@@ -1074,7 +1074,7 @@ export default function AvailabilityBoard({
 
                         {confirmed.length >
                           0 && (
-                          <span className="block rounded-[6px] bg-[#DDEAFB] px-1.5 py-1 text-center text-[10px] font-bold text-[#315C91]">
+                          <span className="block rounded-[6px] bg-[#DDEAFB] px-1.5 py-1 text-center text-[10px] font-bold text-[#DD4E0D]">
                             {confirmed.length}{" "}
                             booked
                           </span>
@@ -1089,7 +1089,7 @@ export default function AvailabilityBoard({
                   CONTINUOUS AVAILABILITY TIMELINE
               ================================================= */}
 
-              <div className="border-t border-[#D5DFEA] bg-[#F8FAFC]">
+              <div className="border-t border-[#E9DED5] bg-[#F8FAFC]">
                 <div className="relative flex">
                   <div className="pointer-events-none absolute left-0 right-0 top-[19px] h-[3px] bg-[#D6DCE5]" />
 
@@ -1168,7 +1168,7 @@ export default function AvailabilityBoard({
                         }
                       >
                         {booked && (
-                          <span className="h-[6px] w-[70%] rounded-full bg-[#4771A6]" />
+                          <span className="h-[6px] w-[70%] rounded-full bg-[#FF5B13]" />
                         )}
                       </div>
                     );
@@ -1187,7 +1187,7 @@ export default function AvailabilityBoard({
             </span>
 
             <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#4771A6]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#FF5B13]" />
               Booked
             </span>
 
@@ -1216,8 +1216,8 @@ export default function AvailabilityBoard({
             RIGHT SIDE — BLOCK CREATION
         ================================================= */}
 
-        <aside className="border-t border-[#E4E7EC] bg-[#EDF3FA] p-5 lg:border-l lg:border-t-0 sm:p-6">
-          <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-[#315C91]">
+        <aside className="border-t border-[#E4E7EC] bg-[#FFF1E8] p-5 lg:border-l lg:border-t-0 sm:p-6">
+          <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-[#DD4E0D]">
             Unavailability
           </p>
 
@@ -1441,7 +1441,7 @@ export default function AvailabilityBoard({
               (mode === "all-day" &&
                 hasToday)
             }
-            className="mt-5 w-full rounded-[13px] bg-[#4771A6] px-5 py-4 text-[14px] font-bold text-white transition hover:bg-[#315C91] disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-5 w-full rounded-[13px] bg-[#FF5B13] px-5 py-4 text-[14px] font-bold text-white transition hover:bg-[#DD4E0D] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {submitting
               ? "Updating availability…"
@@ -1528,8 +1528,8 @@ export default function AvailabilityBoard({
                   {publicNotes[
                     block.id
                   ] && (
-                    <div className="mt-3 rounded-[10px] bg-[#EDF3FA] p-3">
-                      <p className="text-[11px] font-bold text-[#315C91]">
+                    <div className="mt-3 rounded-[10px] bg-[#FFF1E8] p-3">
+                      <p className="text-[11px] font-bold text-[#DD4E0D]">
                         🌐 Public note
                       </p>
 

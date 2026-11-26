@@ -381,11 +381,11 @@ export default function ProviderCalendar({
       id="garage-calendar"
       className="scroll-mt-24 space-y-6"
     >
-      <div className="rounded-[25px] border border-[#BAC7D7] bg-white p-6 sm:p-8">
+      <div className="rounded-[25px] border border-[#E2D9D2] bg-white p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">
-              Included with MECATREX · basic availability
+            <p className="text-[12px] font-bold uppercase tracking-wider text-[#FF5B13]">
+              Included with BandWhip · basic availability
             </p>
 
             <h2 className="mt-1 text-[27px] font-extrabold tracking-[-0.04em]">
@@ -404,7 +404,7 @@ export default function ProviderCalendar({
           <button
             type="button"
             onClick={() => void refresh()}
-            className="rounded-[12px] border border-[#BAC7D7] px-4 py-3 text-[13px] font-bold text-[#315C91] hover:bg-[#EDF3FA]"
+            className="rounded-[12px] border border-[#E2D9D2] px-4 py-3 text-[13px] font-bold text-[#DD4E0D] hover:bg-[#FFF1E8]"
           >
             ↻ Refresh calendar
           </button>
@@ -419,7 +419,7 @@ export default function ProviderCalendar({
               aria-label={nextBooking
                 ? `Show next reservation on ${formatMontrealDateTime(nextBooking.starts_at)} in the calendar`
                 : "No upcoming reservations"}
-              className="group rounded-[15px] bg-[#EDF3FA] p-5 text-left transition hover:bg-[#DCEBFA] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#4771A6] disabled:cursor-default disabled:opacity-70"
+              className="group rounded-[15px] bg-[#FFF1E8] p-5 text-left transition hover:bg-[#DCEBFA] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF5B13] disabled:cursor-default disabled:opacity-70"
             >
               <p className="text-[12px] font-bold text-[#667085]">
                 Upcoming bookings
@@ -427,7 +427,7 @@ export default function ProviderCalendar({
               <p className="mt-1 text-[28px] font-extrabold">
                 {upcoming.length}
               </p>
-              <p className="mt-2 text-[12px] font-bold text-[#315C91]">
+              <p className="mt-2 text-[12px] font-bold text-[#DD4E0D]">
                 {nextBooking
                   ? `Next: ${formatMontrealDateTime(nextBooking.starts_at)} →`
                   : "No upcoming reservations"}
@@ -526,7 +526,7 @@ export default function ProviderCalendar({
         )}
       </div>
 
-      <div className="rounded-[25px] border border-[#BAC7D7] bg-white p-6 sm:p-8">
+      <div className="rounded-[25px] border border-[#E2D9D2] bg-white p-6 sm:p-8">
         <h3 className="text-[22px] font-extrabold text-[#101828]">
           🕘 Regular business hours
         </h3>
@@ -556,7 +556,7 @@ export default function ProviderCalendar({
                         is_open: event.target.checked,
                       })
                     }
-                    className="h-5 w-5 accent-[#4771A6]"
+                    className="h-5 w-5 accent-[#FF5B13]"
                   />
                   {day}
                 </label>
@@ -601,7 +601,7 @@ export default function ProviderCalendar({
           type="button"
           disabled={savingHours || hours.length !== 7}
           onClick={() => void saveHours()}
-          className="mt-5 rounded-[13px] bg-[#4771A6] px-6 py-3.5 text-[14px] font-bold text-white hover:bg-[#315C91] disabled:opacity-50"
+          className="mt-5 rounded-[13px] bg-[#FF5B13] px-6 py-3.5 text-[14px] font-bold text-white hover:bg-[#DD4E0D] disabled:opacity-50"
         >
           {savingHours
             ? "Saving…"

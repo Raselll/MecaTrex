@@ -221,14 +221,14 @@ export default function WhenPicker() {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={activeSelection ? `When: ${formatSelection(activeSelection)}. Change selection` : "Choose when you need service"}
-        className={`flex min-h-[110px] w-full flex-col items-center justify-center rounded-[20px] px-4 py-4 text-center outline-none transition-transform focus-visible:ring-4 focus-visible:ring-[#4771A6]/20 ${activeSelection ? "max-sm:-translate-y-2 sm:group-hover:-translate-y-2 sm:group-focus-within:-translate-y-2" : ""}`}
+        className={`flex min-h-[110px] w-full flex-col items-center justify-center rounded-[20px] px-4 py-4 text-center outline-none transition-transform focus-visible:ring-4 focus-visible:ring-[#FF5B13]/20 ${activeSelection ? "max-sm:-translate-y-2 sm:group-hover:-translate-y-2 sm:group-focus-within:-translate-y-2" : ""}`}
       >
         <span className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">When</span>
         <span className="mt-2 max-w-full truncate text-[19px] font-semibold text-[#101828]">
           {activeSelection ? formatSelection(activeSelection) : "Choose when"}
         </span>
         {!activeSelection && (
-          <span className="mt-1.5 text-[13px] font-bold text-[#4771A6]">Choose timing</span>
+          <span className="mt-1.5 text-[13px] font-bold text-[#FF5B13]">Choose timing</span>
         )}
       </button>
 
@@ -237,7 +237,7 @@ export default function WhenPicker() {
           <button
             type="button"
             onClick={openPicker}
-            className="rounded-lg px-1 py-1 text-[12px] font-bold leading-4 text-[#4771A6] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#4771A6]"
+            className="rounded-lg px-1 py-1 text-[12px] font-bold leading-4 text-[#FF5B13] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF5B13]"
           >
             Change time
           </button>
@@ -245,7 +245,7 @@ export default function WhenPicker() {
           <button
             type="button"
             onClick={clearSelection}
-            className="rounded-lg px-1 py-1 text-[12px] font-bold leading-4 text-[#667085] hover:text-[#B42318] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#4771A6]"
+            className="rounded-lg px-1 py-1 text-[12px] font-bold leading-4 text-[#667085] hover:text-[#B42318] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF5B13]"
           >
             Clear saved
           </button>
@@ -267,7 +267,7 @@ export default function WhenPicker() {
           >
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <p className="text-[12px] font-bold uppercase tracking-wider text-[#4771A6]">Service timing</p>
+                <p className="text-[12px] font-bold uppercase tracking-wider text-[#FF5B13]">Service timing</p>
                 <h2 className="mt-1 text-[22px] font-bold text-[#101828]">When do you need help?</h2>
               </div>
               <button
@@ -342,7 +342,7 @@ export default function WhenPicker() {
                           setDraftDate(iso);
                           setDraftTime("");
                         }}
-                        className={`h-10 rounded-[11px] text-[13px] font-semibold transition ${selected ? "bg-[#4771A6] text-white" : disabled ? "text-[#D0D5DD]" : sameDay(day, today) ? "bg-[#EDF3FA] text-[#315C91] hover:bg-[#DCE8F5]" : "text-[#344054] hover:bg-[#F2F4F7]"}`}
+                        className={`h-10 rounded-[11px] text-[13px] font-semibold transition ${selected ? "bg-[#FF5B13] text-white" : disabled ? "text-[#D0D5DD]" : sameDay(day, today) ? "bg-[#FFF1E8] text-[#DD4E0D] hover:bg-[#DCE8F5]" : "text-[#344054] hover:bg-[#F2F4F7]"}`}
                       >
                         {day.getDate()}
                       </button>
@@ -356,7 +356,7 @@ export default function WhenPicker() {
                     value={draftTime}
                     onChange={(event) => setDraftTime(event.target.value)}
                     disabled={!dateWithinRange}
-                    className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-4 text-[14px] font-semibold text-[#101828] outline-none focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10 disabled:opacity-50"
+                    className="h-[48px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-4 text-[14px] font-semibold text-[#101828] outline-none focus:border-[#FF5B13] focus:ring-4 focus:ring-[#FF5B13]/10 disabled:opacity-50"
                   >
                     <option value="">Choose a time</option>
                     {timeOptions.map((time) => {
@@ -371,7 +371,7 @@ export default function WhenPicker() {
                   type="button"
                   disabled={!canConfirm}
                   onClick={() => saveSelection({ mode: "scheduled", date: draftDate, time: draftTime })}
-                  className="mt-4 w-full rounded-[13px] bg-[#101828] px-4 py-3.5 text-[14px] font-bold text-white transition hover:bg-[#4771A6] disabled:cursor-not-allowed disabled:bg-[#D0D5DD]"
+                  className="mt-4 w-full rounded-[13px] bg-[#101828] px-4 py-3.5 text-[14px] font-bold text-white transition hover:bg-[#FF5B13] disabled:cursor-not-allowed disabled:bg-[#D0D5DD]"
                 >
                   Confirm date &amp; time
                 </button>

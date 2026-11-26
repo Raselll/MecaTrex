@@ -196,7 +196,7 @@ function BusinessHours({
   }, []);
 
   return (
-    <div className="rounded-[16px] border border-[#D5DFEA] bg-[#F8FAFC] p-4">
+    <div className="rounded-[16px] border border-[#E9DED5] bg-[#F8FAFC] p-4">
       <h4 className="text-[13px] font-extrabold text-[#344054]">
         🕒 Business hours
       </h4>
@@ -218,7 +218,7 @@ function BusinessHours({
               key={day}
               className={`flex items-center justify-between gap-2 border-b border-[#EAECF0] px-3 py-2.5 last:border-b-0 ${
                 isToday
-                  ? "bg-[#EDF3FA]"
+                  ? "bg-[#FFF1E8]"
                   : "bg-white"
               }`}
             >
@@ -226,7 +226,7 @@ function BusinessHours({
                 <span
                   className={`text-[12px] font-bold ${
                     isToday
-                      ? "text-[#315C91]"
+                      ? "text-[#DD4E0D]"
                       : "text-[#344054]"
                   }`}
                 >
@@ -234,7 +234,7 @@ function BusinessHours({
                 </span>
 
                 {isToday && (
-                  <span className="rounded-full bg-[#4771A6] px-2 py-0.5 text-[9px] font-extrabold uppercase text-white">
+                  <span className="rounded-full bg-[#FF5B13] px-2 py-0.5 text-[9px] font-extrabold uppercase text-white">
                     Today
                   </span>
                 )}
@@ -244,7 +244,7 @@ function BusinessHours({
                 <span
                   className={`text-right text-[11px] font-semibold ${
                     isToday
-                      ? "text-[#315C91]"
+                      ? "text-[#DD4E0D]"
                       : "text-[#027A48]"
                   }`}
                 >
@@ -335,7 +335,7 @@ function ServiceCategoryAccordion({
                   )
             )
           }
-          className="rounded-[9px] border border-[#D6E0ED] px-3 py-2 text-[11px] font-bold text-[#4771A6] transition hover:bg-[#EDF3FA]"
+          className="rounded-[9px] border border-[#D6E0ED] px-3 py-2 text-[11px] font-bold text-[#FF5B13] transition hover:bg-[#FFF1E8]"
         >
           {allExpanded
             ? "− Collapse all"
@@ -391,7 +391,7 @@ function ServiceCategoryAccordion({
                 className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] text-[20px] ${isTowing ? "bg-[#FFF3C7]" : "bg-[#EDF3FA]"}`}>
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] text-[20px] ${isTowing ? "bg-[#FFF3C7]" : "bg-[#FFF1E8]"}`}>
                     {group.icon}
                   </span>
 
@@ -407,7 +407,7 @@ function ServiceCategoryAccordion({
                         : "services"}
 
                       {selectedCount > 0 && (
-                        <span className="font-bold text-[#4771A6]">
+                        <span className="font-bold text-[#FF5B13]">
                           {" · "}
                           {selectedCount} selected
                         </span>
@@ -420,8 +420,8 @@ function ServiceCategoryAccordion({
                   aria-hidden="true"
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[17px] font-bold transition-all duration-200 ${
                     showPanel
-                      ? isTowing ? "border-[#F3C547] bg-[#F3C547] text-[#35290D]" : "border-[#4771A6] bg-[#4771A6] text-white"
-                      : isTowing ? "border-[#E5C267] bg-white text-[#876100]" : "border-[#C7D7E9] bg-white text-[#4771A6]"
+                      ? isTowing ? "border-[#F3C547] bg-[#F3C547] text-[#35290D]" : "border-[#FF5B13] bg-[#FF5B13] text-white"
+                      : isTowing ? "border-[#E5C267] bg-white text-[#876100]" : "border-[#C7D7E9] bg-white text-[#FF5B13]"
                   }`}
                 >
                   {showPanel ? "−" : "+"}
@@ -458,8 +458,8 @@ function ServiceCategoryAccordion({
                           }
                           className={`rounded-full border px-3 py-2 text-[11px] font-bold transition-all duration-200 disabled:pointer-events-none ${
                             selected
-                              ? "border-[#4771A6] bg-[#4771A6] text-white shadow-[0_3px_10px_rgba(71,113,166,0.2)]"
-                              : "border-[#D0D5DD] bg-white text-[#344054] hover:border-[#4771A6] hover:bg-[#EDF3FA]"
+                              ? "border-[#FF5B13] bg-[#FF5B13] text-white shadow-[0_3px_10px_rgba(71,113,166,0.2)]"
+                              : "border-[#D0D5DD] bg-white text-[#344054] hover:border-[#FF5B13] hover:bg-[#FFF1E8]"
                           }`}
                         >
                           {selected ? "✓ " : ""}
@@ -625,7 +625,7 @@ export default function LiveGarages() {
 
       if (queryError) {
         console.error(
-          "Could not load MECATREX providers:",
+          "Could not load BandWhip providers:",
           queryError
         );
 
@@ -837,10 +837,10 @@ export default function LiveGarages() {
           SEARCH & SERVICE CATEGORIES
       ================================================= */}
 
-      <div className="mb-7 rounded-[24px] border border-[#BAC7D7] bg-white p-5 shadow-[0_5px_18px_rgba(16,24,40,0.045)] sm:p-6">
+      <div className="bw-provider-search mb-7 rounded-[24px] border border-[#E2D9D2] bg-white p-5 shadow-[0_5px_18px_rgba(16,24,40,0.045)] sm:p-6">
         <div role="group" aria-label="Choose provider type" className="mb-5 grid grid-cols-2 gap-2 rounded-[16px] bg-[#F2F4F7] p-1.5">
           <button type="button" aria-pressed={!isTowing} onClick={() => changeProviderType("garage")}
-            className={`rounded-xl px-4 py-3.5 text-[14px] font-extrabold transition ${!isTowing ? "bg-[#14263A] text-white shadow-sm" : "bg-white text-[#344054] hover:bg-[#E6EDF5]"}`}>
+            className={`rounded-xl px-4 py-3.5 text-[14px] font-extrabold transition ${!isTowing ? "bg-[#20262D] text-white shadow-sm" : "bg-white text-[#344054] hover:bg-[#E6EDF5]"}`}>
             🔧 Garage
           </button>
           <button type="button" aria-pressed={isTowing} onClick={() => changeProviderType("towing")}
@@ -852,7 +852,7 @@ export default function LiveGarages() {
           htmlFor="service-search"
           className="block text-[21px] font-extrabold text-[#101828]"
         >
-          {isTowing ? "🚛 Which towing service do you need?" : "🔎 What does your vehicle need?"}
+          {isTowing ? "Which towing service do you need?" : "What does your vehicle need?"}
         </label>
 
         <p className="mt-1 text-[13px] leading-6 text-[#667085]">
@@ -880,7 +880,7 @@ export default function LiveGarages() {
               }
             }}
             placeholder={isTowing ? "Search local towing, flatbed, roadside assistance..." : "Search oil change, battery, tire storage..."}
-            className={`h-[52px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 pr-14 text-[14px] font-semibold text-[#101828] outline-none transition ${isTowing ? "focus:border-[#D6A72A] focus:ring-2 focus:ring-[#F3C547]/20" : "focus:border-[#4771A6] focus:ring-2 focus:ring-[#4771A6]/10"}`}
+            className={`h-[52px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 pr-14 text-[14px] font-semibold text-[#101828] outline-none transition ${isTowing ? "focus:border-[#D6A72A] focus:ring-2 focus:ring-[#F3C547]/20" : "focus:border-[#FF5B13] focus:ring-2 focus:ring-[#FF5B13]/10"}`}
           />
 
           <datalist id="service-options">
@@ -912,7 +912,7 @@ export default function LiveGarages() {
           <button
             type="button"
             onClick={addSearchAsService}
-            className={isTowing ? "mt-3 rounded-full border border-[#E7C66B] bg-[#FFF3C7] px-4 py-2.5 text-[12px] font-bold text-[#725100] hover:bg-[#FBE8A1]" : "mt-3 rounded-full border border-[#BAC7D7] bg-[#EDF3FA] px-4 py-2.5 text-[12px] font-bold text-[#315C91] hover:bg-[#DDE9F6]"}
+            className={isTowing ? "mt-3 rounded-full border border-[#E7C66B] bg-[#FFF3C7] px-4 py-2.5 text-[12px] font-bold text-[#725100] hover:bg-[#FBE8A1]" : "mt-3 rounded-full border border-[#E2D9D2] bg-[#FFF1E8] px-4 py-2.5 text-[12px] font-bold text-[#DD4E0D] hover:bg-[#DDE9F6]"}
           >
             + Add {exactSearchMatch.icon}{" "}
             {exactSearchMatch.name}
@@ -922,7 +922,7 @@ export default function LiveGarages() {
         {/* SELECTED SERVICES SUMMARY */}
 
         {selectedServices.length > 0 && (
-          <div className={isTowing ? "mt-5 rounded-[16px] border border-[#E9C66A] bg-[#FFFAE7] p-4" : "mt-5 rounded-[16px] border border-[#B6CEE9] bg-[#EDF3FA] p-4"}>
+          <div className={isTowing ? "mt-5 rounded-[16px] border border-[#E9C66A] bg-[#FFFAE7] p-4" : "mt-5 rounded-[16px] border border-[#B6CEE9] bg-[#FFF1E8] p-4"}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-[13px] font-extrabold text-[#101828]">
@@ -943,7 +943,7 @@ export default function LiveGarages() {
               <button
                 type="button"
                 onClick={clearAll}
-                className="rounded-[9px] border border-[#BAC7D7] bg-white px-3 py-2 text-[11px] font-bold text-[#315C91] hover:bg-[#F8FAFC]"
+                className="rounded-[9px] border border-[#E2D9D2] bg-white px-3 py-2 text-[11px] font-bold text-[#DD4E0D] hover:bg-[#F8FAFC]"
               >
                 Clear all
               </button>
@@ -967,7 +967,7 @@ export default function LiveGarages() {
                     }
                     title={`Remove ${name}`}
                     aria-label={`Remove ${name}`}
-                    className="inline-flex items-center gap-2 rounded-full border border-[#4771A6] bg-white px-3 py-2 text-[12px] font-bold text-[#315C91] transition hover:border-[#B42318] hover:text-[#B42318]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[#FF5B13] bg-white px-3 py-2 text-[12px] font-bold text-[#DD4E0D] transition hover:border-[#B42318] hover:text-[#B42318]"
                   >
                     <span>
                       {catalogue?.icon ?? "🔧"}
@@ -1047,7 +1047,7 @@ export default function LiveGarages() {
       {!loading && !error && (
         <>
           {listedProviders.length === 0 ? (
-            <div className="rounded-[22px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-8 text-center">
+            <div className="rounded-[22px] border border-dashed border-[#E2D9D2] bg-[#F8FAFC] p-8 text-center">
               <h3 className="text-[21px] font-bold text-[#101828]">
                 {isTowing ? "Approved towing companies will appear here." : "Approved garages will appear here."}
               </h3>
@@ -1068,7 +1068,7 @@ export default function LiveGarages() {
                 </p>
 
                 {selectedServices.length > 1 && (
-                  <span className="rounded-full bg-[#EDF3FA] px-3 py-1.5 text-[11px] font-bold text-[#315C91]">
+                  <span className="rounded-full bg-[#FFF1E8] px-3 py-1.5 text-[11px] font-bold text-[#DD4E0D]">
                     ✓ All {selectedServices.length} services
                   </span>
                 )}
@@ -1077,7 +1077,7 @@ export default function LiveGarages() {
               {/* NO MATCHES */}
 
               {filtered.length === 0 && (
-                <div className="mb-5 rounded-[20px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-7 text-center">
+                <div className="mb-5 rounded-[20px] border border-dashed border-[#E2D9D2] bg-[#F8FAFC] p-7 text-center">
                   <span className="text-[32px]">
                     🔎
                   </span>
@@ -1095,7 +1095,7 @@ export default function LiveGarages() {
                   <button
                     type="button"
                     onClick={clearAll}
-                    className="mt-4 rounded-[12px] bg-[#4771A6] px-5 py-3 text-[12px] font-bold text-white hover:bg-[#315C91]"
+                    className="mt-4 rounded-[12px] bg-[#FF5B13] px-5 py-3 text-[12px] font-bold text-white hover:bg-[#DD4E0D]"
                   >
                     Clear filters
                   </button>
@@ -1201,14 +1201,14 @@ export default function LiveGarages() {
                   return (
                     <article
                       key={garage.id}
-                      className="min-w-0 overflow-hidden rounded-[23px] border border-[#E4E7EC] bg-white shadow-[0_8px_28px_rgba(16,24,40,0.045)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(16,24,40,0.10)]"
+                      className="bw-provider-card min-w-0 overflow-hidden rounded-[23px] border border-[#E4E7EC] bg-white shadow-[0_8px_28px_rgba(16,24,40,0.045)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(16,24,40,0.10)]"
                     >
-                      <div className={`px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider ${isTowing ? "bg-[#F3C547] text-[#35290D]" : "bg-[#14263A] text-white"}`}>
-                        {isTowing ? "🚛 Towing company" : "🔧 Garage"}
+                      <div className={`px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider ${isTowing ? "bg-[#F3C547] text-[#35290D]" : "bg-[#20262D] text-white"}`}>
+                        {isTowing ? "🚛 Towing company" : "Garages"}
                       </div>
                       {/* PROVIDER IMAGE */}
 
-                      <div className={`relative h-[175px] overflow-hidden bg-gradient-to-br ${isTowing ? "from-[#85621A] to-[#F3C547]" : "from-[#14263A] to-[#4771A6]"}`}>
+                      <div className={`relative h-[175px] overflow-hidden bg-gradient-to-br ${isTowing ? "from-[#85621A] to-[#F3C547]" : "from-[#20262D] to-[#FF5B13]"}`}>
                         {imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -1223,7 +1223,7 @@ export default function LiveGarages() {
                         )}
 
                         <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold text-[#101828] shadow-sm">
-                          ✓ Approved MECATREX {isTowing ? "towing company" : "garage"}
+                          ✓ Approved BandWhip {isTowing ? "towing company" : "garage"}
                         </span>
                       </div>
 
@@ -1265,7 +1265,7 @@ export default function LiveGarages() {
                                 : "Services & prices"}
                             </p>
 
-                            <span className="text-[10px] font-bold text-[#4771A6]">
+                            <span className="text-[10px] font-bold text-[#FF5B13]">
                               {services.length} listed
                             </span>
                           </div>
@@ -1305,7 +1305,7 @@ export default function LiveGarages() {
                                       </p>
                                     </div>
 
-                                    <span className="shrink-0 text-[12px] font-bold text-[#4771A6]">
+                                    <span className="shrink-0 text-[12px] font-bold text-[#FF5B13]">
                                       {priceLabel(
                                         service
                                       )}
@@ -1329,7 +1329,7 @@ export default function LiveGarages() {
                           {/* Expand the complete catalogue without replacing the compact preview. */}
                           {services.length > displayed.length && (
                             <details className="group mt-3 overflow-hidden rounded-[12px] border border-[#C9D8E9] bg-white">
-                              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-[12px] font-extrabold text-[#315C91] hover:bg-[#EDF3FA] [&::-webkit-details-marker]:hidden">
+                              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-[12px] font-extrabold text-[#DD4E0D] hover:bg-[#FFF1E8] [&::-webkit-details-marker]:hidden">
                                 <span>
                                   <span className="group-open:hidden">+ </span>
                                   <span className="hidden group-open:inline">− </span>
@@ -1354,7 +1354,7 @@ export default function LiveGarages() {
                                           Approx. {service.duration_minutes} min
                                         </p>
                                       </div>
-                                      <span className="shrink-0 text-[12px] font-bold text-[#4771A6]">
+                                      <span className="shrink-0 text-[12px] font-bold text-[#FF5B13]">
                                         {priceLabel(service)}
                                       </span>
                                     </div>
@@ -1407,7 +1407,7 @@ export default function LiveGarages() {
                         ) : (
                           <Link
                             href={`/book/${garage.id}?service=${encodeURIComponent(chosen.id)}`}
-                            className="mt-4 flex w-full items-center justify-center rounded-[13px] bg-[#4771A6] px-4 py-3.5 text-[14px] font-extrabold text-white transition hover:bg-[#315C91]"
+                            className="mt-4 flex w-full items-center justify-center rounded-[13px] bg-[#FF5B13] px-4 py-3.5 text-[14px] font-extrabold text-white transition hover:bg-[#DD4E0D]"
                           >
                             📅 Book this garage →
                           </Link>
@@ -1422,7 +1422,7 @@ export default function LiveGarages() {
                         {/* EXPANDABLE BUSINESS DETAILS */}
 
                         <details className="group mt-4 border-t border-[#E4E7EC] pt-3">
-                          <summary className="flex cursor-pointer list-none items-center justify-between text-[12px] font-bold text-[#315C91] [&::-webkit-details-marker]:hidden">
+                          <summary className="flex cursor-pointer list-none items-center justify-between text-[12px] font-bold text-[#DD4E0D] [&::-webkit-details-marker]:hidden">
                             <span>
                               View business details
                             </span>
@@ -1481,7 +1481,7 @@ export default function LiveGarages() {
                                 href={website}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block break-all text-[12px] font-bold text-[#315C91] underline"
+                                className="block break-all text-[12px] font-bold text-[#DD4E0D] underline"
                               >
                                 🌐 Visit website
                               </a>
@@ -1493,7 +1493,7 @@ export default function LiveGarages() {
                                   /[^\d+]/g,
                                   ""
                                 )}`}
-                                className="block text-[12px] font-bold text-[#315C91] underline"
+                                className="block text-[12px] font-bold text-[#DD4E0D] underline"
                               >
                                 📞{" "}
                                 {
@@ -1505,7 +1505,7 @@ export default function LiveGarages() {
                             {garage.public_email && (
                               <a
                                 href={`mailto:${garage.public_email}`}
-                                className="block break-all text-[12px] font-bold text-[#315C91] underline"
+                                className="block break-all text-[12px] font-bold text-[#DD4E0D] underline"
                               >
                                 ✉️{" "}
                                 {

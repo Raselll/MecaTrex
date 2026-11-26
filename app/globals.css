@@ -75,22 +75,22 @@ body {
   border-radius: 50%;
 
   /* The actual dot never changes color, size, or opacity. */
-  background: #4771a6;
+  background: #ff5b13;
 }
 
 /* Fixed progression: light blue -> medium blue -> dark blue.
    Background alpha recreates the original opacity on white,
    without making the animated halo itself transparent. */
 .timeline-connector span:nth-child(1) {
-  background: rgba(71, 113, 166, 0.5);
+  background: rgba(255, 91, 19, 0.5);
 }
 
 .timeline-connector span:nth-child(2) {
-  background: rgba(71, 113, 166, 0.75);
+  background: rgba(255, 91, 19, 0.75);
 }
 
 .timeline-connector span:nth-child(3) {
-  background: #4771a6;
+  background: #ff5b13;
 }
 
 /* The light is OUTSIDE the dots. Their blue fill never animates. */
@@ -173,17 +173,17 @@ body {
 .timeline-card:hover {
   transform: translateY(-5px);
 
-  border-color: rgba(71, 113, 166, 0.25);
+  border-color: rgba(255, 91, 19, 0.25);
 
   box-shadow:
     0 26px 65px rgba(16, 24, 40, 0.11);
 }
 
 .timeline-card-primary {
-  border-color: rgba(71, 113, 166, 0.23);
+  border-color: rgba(255, 91, 19, 0.23);
 
   box-shadow:
-    0 18px 55px rgba(71, 113, 166, 0.1);
+    0 18px 55px rgba(255, 91, 19, 0.1);
 }
 
 .timeline-art {
@@ -305,171 +305,15 @@ model-viewer {
 }
 
 /* ========================================================= */
-/* DYNAMIC BLUE ORBITS â€” MECATREX HOME HERO */
-/* ========================================================= */
-
-/* The existing homepage markup already has a #find section. We can add
-   the animated layers in CSS without touching the 66 KB app/page.tsx. */
-#find > div {
-  isolation: isolate;
-}
-
-#find > div::before,
-#find > div::after {
-  content: "";
-  position: absolute;
-  top: 43%;
-  left: 50%;
-  width: min(1020px, 95vw);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 1;
-  translate: -50% -50%;
-  background: conic-gradient(
-    from 18deg,
-    transparent 0deg 15deg,
-    rgba(139, 194, 255, 0.92) 15deg 35deg,
-    transparent 35deg 55deg,
-    rgba(74, 142, 218, 0.9) 55deg 81deg,
-    transparent 81deg 107deg,
-    rgba(161, 207, 255, 0.94) 107deg 127deg,
-    transparent 127deg 163deg,
-    rgba(87, 150, 224, 0.9) 163deg 184deg,
-    transparent 184deg 219deg,
-    rgba(146, 198, 255, 0.94) 219deg 245deg,
-    transparent 245deg 278deg,
-    rgba(77, 149, 232, 0.9) 278deg 300deg,
-    transparent 300deg 330deg,
-    rgba(161, 207, 255, 0.88) 330deg 349deg,
-    transparent 349deg 360deg
-  );
-  -webkit-mask-image: radial-gradient(
-    circle closest-side,
-    transparent 0 51%,
-    #000 52% 55%,
-    transparent 56% 68%,
-    #000 69% 72%,
-    transparent 73% 85%,
-    #000 86% 89%,
-    transparent 90%
-  );
-  mask-image: radial-gradient(
-    circle closest-side,
-    transparent 0 51%,
-    #000 52% 55%,
-    transparent 56% 68%,
-    #000 69% 72%,
-    transparent 73% 85%,
-    #000 86% 89%,
-    transparent 90%
-  );
-  will-change: transform;
-}
-
-#find > div::before {
-  opacity: 0.43;
-  animation: mecatrex-orbit-clockwise 28s linear infinite;
-}
-
-#find > div::after {
-  width: min(810px, 78vw);
-  opacity: 0.32;
-  filter: hue-rotate(10deg);
-  animation: mecatrex-orbit-counterclockwise 22s linear infinite;
-}
-
-/* Reuse the existing blue Find garages button: no JSX change required. */
-#find a[href="#garage-results"] {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-}
-
-#find a[href="#garage-results"]::before {
-  content: "";
-  position: absolute;
-  inset: -60%;
-  border-radius: 50%;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.30;
-  background: conic-gradient(
-    from 10deg,
-    transparent 0deg 22deg,
-    rgba(255, 255, 255, 0.6) 22deg 42deg,
-    transparent 42deg 82deg,
-    rgba(255, 255, 255, 0.5) 82deg 105deg,
-    transparent 105deg 158deg,
-    rgba(255, 255, 255, 0.65) 158deg 180deg,
-    transparent 180deg 220deg,
-    rgba(255, 255, 255, 0.45) 220deg 247deg,
-    transparent 247deg 300deg,
-    rgba(255, 255, 255, 0.6) 300deg 324deg,
-    transparent 324deg 360deg
-  );
-  -webkit-mask-image: radial-gradient(
-    circle closest-side,
-    transparent 0 45%,
-    #000 46% 53%,
-    transparent 54% 70%,
-    #000 71% 78%,
-    transparent 79%
-  );
-  mask-image: radial-gradient(
-    circle closest-side,
-    transparent 0 45%,
-    #000 46% 53%,
-    transparent 54% 70%,
-    #000 71% 78%,
-    transparent 79%
-  );
-  animation: mecatrex-orbit-clockwise 12s linear infinite;
-}
-
-@keyframes mecatrex-orbit-clockwise {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes mecatrex-orbit-counterclockwise {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
-}
-
-@media (max-width: 767px) {
-  #find > div::before {
-    width: 180vw;
-    top: 30%;
-    opacity: 0.27;
-  }
-
-  #find > div::after {
-    width: 150vw;
-    top: 30%;
-    opacity: 0.20;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #find > div::before,
-  #find > div::after,
-  #find a[href="#garage-results"]::before {
-    animation: none;
-    will-change: auto;
-  }
-}
-
-/* ========================================================= */
 /* ACCOUNT + ADMIN — SIX PERSISTENT, ACCESSIBLE PORTAL THEMES */
 /* ========================================================= */
 .portal-theme {
-  --portal-accent: #4771a6;
-  --portal-accent-deep: #284e7c;
-  --portal-soft: #edf3fa;
+  --portal-accent: #ff5b13;
+  --portal-accent-deep: #C8450B;
+  --portal-soft: #fff1e8;
   --portal-contrast: #ffffff;
   --portal-border: #c5d5e8;
-  --portal-glow: rgba(71, 113, 166, .16);
+  --portal-glow: rgba(255, 91, 19, .16);
   min-height: 100vh;
   background:
     radial-gradient(ellipse at 80% -10%, var(--portal-glow), transparent 44%),
@@ -524,13 +368,13 @@ model-viewer {
 .portal-theme .portal-feature-banner h2,
 .portal-theme .portal-feature-banner p { color: #ffffff !important; }
 .portal-theme .portal-feature-banner p.portal-banner-muted { color: rgba(255,255,255,.85) !important; }
-.portal-theme [class*="bg-[#4771A6]"],
+.portal-theme [class*="bg-[#FF5B13]"],
 .portal-theme [class*="bg-[#315C91]"],
 .portal-theme [class*="bg-[#101828]"] {
   background-color: var(--portal-accent) !important;
   color: #ffffff !important;
 }
-.portal-theme [class*="text-[#4771A6]"],
+.portal-theme [class*="text-[#FF5B13]"],
 .portal-theme [class*="text-[#315C91]"] { color: var(--portal-accent-deep) !important; }
 .portal-theme [class*="border-[#D5DFEA]"],
 .portal-theme [class*="border-[#D6E0ED]"],
@@ -682,7 +526,7 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
 .bw-search-submit:hover { background:#e84b08; transform:translateY(-2px); }
 .bw-clear-vehicle { position:absolute;right:13px;bottom:-26px;font-size:11px;color:#858585; }
 .bw-journey { padding-top:225px!important; padding-bottom:110px!important;scroll-margin-top:100px; }
-.bw-journey>div:first-child p:first-child, .bw-services p[class*="text-[#4771A6]"],.bw-listings>div:first-child>p { color:var(--bw-orange)!important;text-transform:uppercase;font-size:11px!important;letter-spacing:.17em;font-weight:820; }
+.bw-journey>div:first-child p:first-child, .bw-services p[class*="text-[#FF5B13]"],.bw-listings>div:first-child>p { color:var(--bw-orange)!important;text-transform:uppercase;font-size:11px!important;letter-spacing:.17em;font-weight:820; }
 .bw-journey h2,.bw-services h2,.bw-listings h2 { font-size:clamp(37px,4.4vw,64px)!important;letter-spacing:-.065em!important;line-height:1.1; color:#16191d; }
 .bw-journey .timeline-card { border-radius:23px;box-shadow:0 14px 43px #1b253013; border:1px solid #efefec; padding:13px 13px 30px; }
 .bw-journey .timeline-card:hover { border-color:#ffc3a8;box-shadow:0 27px 58px #ff5b131a; }
@@ -812,3 +656,23 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
 @media(prefers-reduced-motion:reduce) {
  .bw-page *, .bw-page *::before, .bw-page *::after { animation-duration:.01ms!important;transition-duration:.01ms!important; }
 }
+
+/* BandWhip app surfaces — consistent but non-invasive styling */
+.bw-site-body :is(input, select, textarea) { accent-color:#ff5b13; }
+.bw-site-body button, .bw-site-body a { -webkit-tap-highlight-color:transparent; }
+.bw-site-body input:focus-visible,.bw-site-body select:focus-visible,.bw-site-body textarea:focus-visible { outline-color:#ff5b13; }
+.bw-auth-page { background:linear-gradient(150deg,#fff6ee 0%,#faf8f5 46%,#fff 100%)!important; }
+.bw-auth-card { border:1px solid #ece7e2!important;border-radius:25px!important;box-shadow:0 25px 75px #221d1810!important; }
+.bw-booking-page { background:#faf8f5!important; }
+.bw-booking-page>header { background:#fff!important;border-color:#eee7e1!important; }
+.bw-booking-page>div>div:first-child { border-radius:23px!important;border-color:#ebe6e0!important; }
+.bw-booking-page :is(button,a,summary) { transition:background .2s,border-color .2s,transform .2s; }
+.bw-provider-search { border-color:#e9e1d9!important;border-radius:24px!important;box-shadow:0 12px 35px #2d1d1110!important; }
+.bw-provider-card { border-color:#ebe5df!important;border-radius:20px!important;box-shadow:0 10px 27px #1d191310!important; }
+.bw-provider-card:hover { border-color:#ffb58e!important;box-shadow:0 23px 55px #ff5b1315!important; }
+.bw-provider-card h3 { letter-spacing:-.04em!important; }
+.bw-provider-card :is(button,a):focus-visible { outline-color:#ff5b13; }
+.portal-theme .portal-main-card { border-radius:24px!important; }
+.portal-theme .portal-summary-card { border-radius:18px!important; }
+.portal-theme [class*="bg-[#FF5B13]"] { background-color:var(--portal-accent)!important; }
+.portal-theme [class*="text-[#FF5B13]"] { color:var(--portal-accent-deep)!important; }
