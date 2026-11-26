@@ -10,9 +10,10 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "MECATREX",
+  title: "BandWhip | Book car care without the runaround",
+  icons: { icon: "/bandwhip-icon.svg", shortcut: "/bandwhip-icon.svg", apple: "/bandwhip-icon.svg" },
   description:
-    "Find and book the right garage for your vehicle in under one minute.",
+    "Find and compare garage services, browse local availability and book instantly with BandWhip.",
 };
 
 export default function RootLayout({
@@ -22,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={geist.className}>
+      <body className={`${geist.className} bw-site-body`}>
         <ClientNavigation />
         {children}
       </body>

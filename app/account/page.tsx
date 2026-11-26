@@ -91,7 +91,7 @@ function ProviderReadiness({
       href: "#services",
     },
     {
-      title: "MECATREX approval",
+      title: "BandWhip approval",
       description: "Complete the provider review process.",
       complete:
         provider.status === "approved" &&
@@ -120,7 +120,7 @@ function ProviderReadiness({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#FF5B13]">
             Get your business ready
           </p>
 
@@ -133,7 +133,7 @@ function ProviderReadiness({
           </p>
         </div>
 
-        <span className="rounded-full bg-[#EDF3FA] px-4 py-2 text-[12px] font-bold text-[#315C91]">
+        <span className="rounded-full bg-[#FFF1E8] px-4 py-2 text-[12px] font-bold text-[#DD4E0D]">
           {completed} / {items.length} complete
         </span>
       </div>
@@ -147,7 +147,7 @@ function ProviderReadiness({
         className="mt-5 h-[8px] overflow-hidden rounded-full bg-[#E9EEF5]"
       >
         <div
-          className="h-full rounded-full bg-[#4771A6] transition-all duration-500"
+          className="h-full rounded-full bg-[#FF5B13] transition-all duration-500"
           style={{
             width: `${percentage}%`,
           }}
@@ -162,7 +162,7 @@ function ProviderReadiness({
             className={`flex items-start gap-3 rounded-[15px] border p-4 transition ${
               item.complete
                 ? "border-[#D1FADF] bg-[#F0FDF4]"
-                : "border-[#D6E0ED] bg-[#F8FAFC] hover:border-[#4771A6] hover:bg-[#EDF3FA]"
+                : "border-[#D6E0ED] bg-[#F8FAFC] hover:border-[#FF5B13] hover:bg-[#FFF1E8]"
             }`}
           >
             <span
@@ -170,7 +170,7 @@ function ProviderReadiness({
               className={`flex h-[29px] w-[29px] shrink-0 items-center justify-center rounded-full text-[14px] font-extrabold ${
                 item.complete
                   ? "bg-[#D1FADF] text-[#027A48]"
-                  : "bg-[#E4EAF3] text-[#4771A6]"
+                  : "bg-[#E4EAF3] text-[#FF5B13]"
               }`}
             >
               {item.complete ? "✓" : "○"}
@@ -230,7 +230,7 @@ export default async function AccountPage({
       <AccountShell>
         <div className="rounded-[24px] border border-[#FECACA] bg-[#FEF2F2] p-6 text-[#991B1B]">
           <h1 className="text-[24px] font-bold">
-            Your MECATREX database profile is not ready.
+            Your BandWhip database profile is not ready.
           </h1>
 
           <p className="mt-3 text-[14px] leading-6">
@@ -304,7 +304,7 @@ export default async function AccountPage({
             <p className="mt-3 text-[14px] leading-6">
               Your account is authenticated, but your
               business application could not be loaded.
-              Apply the required MECATREX database
+              Apply the required BandWhip database
               migrations or contact the administrator.
             </p>
 
@@ -376,8 +376,8 @@ export default async function AccountPage({
 
           <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="portal-kicker text-[12px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">
-                MECATREX Business Dashboard
+              <p className="portal-kicker text-[12px] font-bold uppercase tracking-[0.14em] text-[#FF5B13]">
+                BandWhip Business Dashboard
               </p>
 
               <h1 className="mt-2 text-[31px] font-bold tracking-[-0.04em] text-[#101828] sm:text-[39px]">
@@ -387,7 +387,7 @@ export default async function AccountPage({
               <p className="mt-2 text-[14px] leading-6 text-[#667085]">
                 {approved
                   ? "Manage your business, calendar, services and appointments in one place."
-                  : "Track your provider application and MECATREX review."}
+                  : "Track your provider application and BandWhip review."}
               </p>
             </div>
 
@@ -408,7 +408,7 @@ export default async function AccountPage({
 
               <p className="mt-2 text-[14px] leading-6 text-[#475467]">
                 Your email has been verified.
-                MECATREX will review your business
+                BandWhip will review your business
                 registration and submitted services.
                 We aim to respond within 24 hours
                 by email. Pricing and publication
@@ -453,14 +453,14 @@ export default async function AccountPage({
             }
             settings={
               <div className="space-y-5">
-                <section className="rounded-[20px] border border-[#D5DFEA] bg-white p-5 sm:p-6">
+                <section className="rounded-[20px] border border-[#E9DED5] bg-white p-5 sm:p-6">
                   <h3 className="text-[18px] font-extrabold text-[#101828]">Dashboard appearance</h3>
                   <p className="mt-1 text-[12px] text-[#667085]">Choose your workspace colour.</p>
                   <div className="mt-4">
                     <AccentPicker userId={user.id} initialAccent={accent} compact />
                   </div>
                 </section>
-                <section className="rounded-[20px] border border-[#D5DFEA] bg-white p-5 sm:p-6">
+                <section className="rounded-[20px] border border-[#E9DED5] bg-white p-5 sm:p-6">
                   <h3 className="text-[18px] font-extrabold text-[#101828]">Account information</h3>
                   <p className="mt-1 text-[12px] text-[#667085]">
                     These account details are separate from your public business listing.
@@ -510,8 +510,8 @@ export default async function AccountPage({
         style={{ borderTopColor: (ACCENT_COLORS[accent] ?? ACCENT_COLORS.blue).hex }}
       >
         <div className="px-1 pt-2 sm:px-2">
-          <p className="portal-kicker text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
-            MECATREX client account
+          <p className="portal-kicker text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#FF5B13]">
+            BandWhip client account
           </p>
           <h1 className="mt-2 text-[28px] font-extrabold tracking-tight text-[#101828] sm:text-[36px]">
             Welcome back, {profile.first_name}.
@@ -530,7 +530,7 @@ export default async function AccountPage({
           financials={<FinancialOverview ownerId={user.id} kind="client" />}
           settings={
             <div className="space-y-5">
-              <section className="rounded-[20px] border border-[#D5DFEA] bg-white p-5 sm:p-6">
+              <section className="rounded-[20px] border border-[#E9DED5] bg-white p-5 sm:p-6">
                 <h3 className="text-[18px] font-extrabold text-[#101828]">Dashboard appearance</h3>
                 <p className="mt-1 text-[12px] text-[#667085]">Choose your dashboard colour.</p>
                 <div className="mt-4">
@@ -583,8 +583,8 @@ function AccountShell({
             className="inline-flex items-center"
           >
             <Image
-              src="/mecatrex-logo-web.png"
-              alt="MECATREX"
+              src="/bandwhip-logo.svg"
+              alt="BandWhip"
               width={280}
               height={78}
               priority

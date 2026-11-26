@@ -68,33 +68,33 @@ export default async function GarageBookingPage({
   const image = garage.image_path ? supabase.storage.from("garage-images").getPublicUrl(garage.image_path).data.publicUrl : "";
 
   return (
-    <main className="min-h-screen bg-[#F5F7FA] pb-20 text-[#101828]">
+    <main className="bw-booking-page min-h-screen bg-[#FAF8F5] pb-20 text-[#101828]">
       <header className="border-b border-[#E4E7EC] bg-white">
         <div className="mx-auto flex max-w-[1170px] items-center justify-between gap-4 px-5 py-5">
           <Link href="/#garage-results">
-            <Image src="/mecatrex-logo-web.png" alt="MECATREX" width={230} height={65} priority className="h-[49px] w-auto" />
+            <Image src="/bandwhip-logo.svg" alt="BandWhip" width={230} height={65} priority className="h-[49px] w-auto" />
           </Link>
-          <Link href="/#garage-results" className="rounded-[13px] border border-[#BAC7D7] px-4 py-3 text-[13px] font-bold text-[#344054] hover:bg-[#EDF3FA]">← All garages</Link>
+          <Link href="/#garage-results" className="rounded-[13px] border border-[#E2D9D2] px-4 py-3 text-[13px] font-bold text-[#344054] hover:bg-[#FFF1E8]">← All garages</Link>
         </div>
       </header>
 
       <div className="mx-auto max-w-[1170px] px-5">
         <div className="mt-8 overflow-hidden rounded-[27px] border border-[#DCE4ED] bg-white sm:grid sm:grid-cols-[0.36fr_0.64fr]">
-          <div className="h-[220px] bg-gradient-to-br from-[#14263A] to-[#4771A6] sm:h-full sm:min-h-[250px]">
+          <div className="h-[220px] bg-gradient-to-br from-[#23282F] to-[#FF5B13] sm:h-full sm:min-h-[250px]">
             {image ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={image} alt={garage.business_name} className="h-full w-full object-cover" />
-            ) : <div className="flex h-full items-center justify-center text-[84px]">🔧</div>}
+            ) : <div className="flex h-full items-center justify-center text-[84px]"><span className="text-white font-bold tracking-[-0.08em]">BW</span></div>}
           </div>
           <div className="p-6 sm:p-8">
-            <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#4771A6]">✓ Approved MECATREX garage</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#FF5B13]">✓ Approved BandWhip garage</p>
             <h1 className="mt-2 text-[34px] font-extrabold tracking-[-0.04em]">{garage.business_name}</h1>
             {garage.business_description && <p className="mt-2 text-[14px] leading-6 text-[#667085]">{garage.business_description}</p>}
             <div className="mt-5 space-y-2 text-[14px] text-[#475467]">
               <p>📍 {garage.address_line1}, {garage.city}, {garage.province} {garage.postal_code}</p>
-              {garage.public_phone && <p>📞 <a className="font-bold text-[#315C91] underline" href={`tel:${garage.public_phone.replace(/[^\d+]/g, "")}`}>{garage.public_phone}</a></p>}
-              {garage.public_email && <p>✉️ <a className="break-all font-bold text-[#315C91] underline" href={`mailto:${garage.public_email}`}>{garage.public_email}</a></p>}
-              {website && <p>🌐 <a href={website} target="_blank" rel="noopener noreferrer" className="font-bold text-[#315C91] underline">Visit garage website ↗</a></p>}
+              {garage.public_phone && <p>📞 <a className="font-bold text-[#DD4E0D] underline" href={`tel:${garage.public_phone.replace(/[^\d+]/g, "")}`}>{garage.public_phone}</a></p>}
+              {garage.public_email && <p>✉️ <a className="break-all font-bold text-[#DD4E0D] underline" href={`mailto:${garage.public_email}`}>{garage.public_email}</a></p>}
+              {website && <p>🌐 <a href={website} target="_blank" rel="noopener noreferrer" className="font-bold text-[#DD4E0D] underline">Visit garage website ↗</a></p>}
               {rating && <p className="font-semibold">⭐ {rating}/5 · {reviews.length} recent review{reviews.length !== 1 ? "s" : ""}</p>}
             </div>
           </div>
@@ -103,7 +103,7 @@ export default async function GarageBookingPage({
         <div className="mt-7 grid items-start gap-7 lg:grid-cols-[1.42fr_0.76fr]">
           <div>
             <div className="mb-5">
-              <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-[#4771A6]">Garage booking</p>
+              <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-[#FF5B13]">Garage booking</p>
               <h2 className="mt-2 text-[32px] font-extrabold tracking-[-0.04em]">Book your service in a minute.</h2>
               <p className="mt-1 text-[15px] text-[#667085]">See real availability, choose your time, and confirm instantly.</p>
             </div>
@@ -118,10 +118,10 @@ export default async function GarageBookingPage({
           </div>
 
           <aside className="space-y-4 lg:sticky lg:top-5">
-            <details className="group rounded-[23px] border border-[#BAC7D7] bg-white p-5">
+            <details className="group rounded-[23px] border border-[#E2D9D2] bg-white p-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[17px] font-extrabold text-[#101828]">
                 <span>🕒 Business hours</span>
-                <span aria-hidden="true" className="text-[19px] text-[#4771A6]">⌄</span>
+                <span aria-hidden="true" className="text-[19px] text-[#FF5B13]">⌄</span>
               </summary>
               <p className="mt-1 text-[12px] text-[#667085]">Montreal local time · changes appear automatically in availability</p>
               <div className="mt-4 space-y-2.5">
@@ -138,10 +138,10 @@ export default async function GarageBookingPage({
               <p className="mt-3 text-[12px] text-[#667085]">Specific dates can also be blocked by the garage. Only available appointments appear in the booking form.</p>
             </details>
 
-            <details className="group rounded-[23px] border border-[#BAC7D7] bg-white p-5">
+            <details className="group rounded-[23px] border border-[#E2D9D2] bg-white p-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[17px] font-extrabold text-[#101828]">
                 <span>⭐ Garage reviews</span>
-                <span aria-hidden="true" className="text-[19px] text-[#4771A6]">⌄</span>
+                <span aria-hidden="true" className="text-[19px] text-[#FF5B13]">⌄</span>
               </summary>
               {reviews.length === 0 ? (
                 <p className="mt-3 text-[13px] text-[#667085]">No reviews yet. Only customers with a completed appointment can leave one.</p>

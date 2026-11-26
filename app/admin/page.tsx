@@ -86,7 +86,7 @@ const registryUrl =
   "https://www.quebec.ca/entreprises-et-travailleurs-autonomes/obtenir-renseignements-entreprise/recherche-registre-entreprises/acceder-registre-entreprises";
 
 const fieldClass =
-  "w-full rounded-[12px] border border-[#CBD5E1] bg-white px-4 py-3 text-[13px] text-[#101828] outline-none focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10";
+  "w-full rounded-[12px] border border-[#CBD5E1] bg-white px-4 py-3 text-[13px] text-[#101828] outline-none focus:border-[#FF5B13] focus:ring-4 focus:ring-[#FF5B13]/10";
 
 function statusClass(status: ProviderRow["status"]) {
   return {
@@ -122,7 +122,7 @@ function EmailLink({ email }: { email?: string | null }) {
   return (
     <a
       href={`mailto:${email}`}
-      className="break-all text-[#315C91] underline"
+      className="break-all text-[#DD4E0D] underline"
     >
       {email}
     </a>
@@ -135,7 +135,7 @@ function PhoneLink({ number }: { number?: string | null }) {
   return (
     <a
       href={`tel:${number.replace(/[^\d+]/g, "")}`}
-      className="text-[#315C91] underline"
+      className="text-[#DD4E0D] underline"
     >
       {number}
     </a>
@@ -180,11 +180,11 @@ function BusinessCard({
     <details
       id={`provider-${provider.id}`}
       className={`group scroll-mt-8 overflow-hidden rounded-[20px] border bg-white shadow-sm ${
-        needsReview ? "border-[#93B4DC]" : "border-[#D6E0ED]"
+        needsReview ? "border-[#FFC9A9]" : "border-[#D6E0ED]"
       }`}
     >
       <summary className="relative cursor-pointer list-none px-5 py-5 pr-16 [&::-webkit-details-marker]:hidden">
-        <span className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#C9D6E5] bg-[#EDF3FA] text-[21px] font-bold text-[#315C91]">
+        <span className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#C9D6E5] bg-[#FFF1E8] text-[21px] font-bold text-[#DD4E0D]">
           <span className="group-open:hidden">+</span>
           <span className="hidden group-open:inline">−</span>
         </span>
@@ -200,7 +200,7 @@ function BusinessCard({
             {provider.status.replaceAll("_", " ")}
           </span>
 
-          <span className="rounded-full bg-[#EDF3FA] px-3 py-1 text-[10px] font-bold uppercase text-[#315C91]">
+          <span className="rounded-full bg-[#FFF1E8] px-3 py-1 text-[10px] font-bold uppercase text-[#DD4E0D]">
             {provider.provider_type}
           </span>
 
@@ -241,7 +241,7 @@ function BusinessCard({
 
       <div className="space-y-5 border-t border-[#D6E0ED] p-5">
         <div className="grid gap-5 md:grid-cols-[280px_1fr]">
-          <section className="rounded-[16px] border border-[#D6E0ED] bg-[#F8FAFD] p-4">
+          <section className="rounded-[16px] border border-[#D6E0ED] bg-[#FBF9F7] p-4">
             <h4 className="text-[14px] font-extrabold">
               📸 Business photo
             </h4>
@@ -264,7 +264,7 @@ function BusinessCard({
             )}
           </section>
 
-          <section className="rounded-[16px] border border-[#D6E0ED] bg-[#F8FAFD] p-4">
+          <section className="rounded-[16px] border border-[#D6E0ED] bg-[#FBF9F7] p-4">
             <h4 className="text-[14px] font-extrabold">
               Business verification dossier
             </h4>
@@ -302,7 +302,7 @@ function BusinessCard({
                   href={provider.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-bold text-[#315C91] underline"
+                  className="font-bold text-[#DD4E0D] underline"
                 >
                   {provider.website}
                 </a>
@@ -313,7 +313,7 @@ function BusinessCard({
               href={registryUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 inline-block text-[12px] font-bold text-[#315C91] underline"
+              className="mt-4 inline-block text-[12px] font-bold text-[#DD4E0D] underline"
             >
               Verify NEQ in Quebec enterprise registry
             </a>
@@ -342,7 +342,7 @@ function BusinessCard({
                 (service, index) => (
                   <span
                     key={`${service}-${index}`}
-                    className="rounded-full border border-[#D6E0ED] bg-[#EDF3FA] px-3 py-2 text-[11px] font-semibold text-[#315C91]"
+                    className="rounded-full border border-[#D6E0ED] bg-[#FFF1E8] px-3 py-2 text-[11px] font-semibold text-[#DD4E0D]"
                   >
                     {service}
                   </span>
@@ -418,7 +418,7 @@ function BusinessCard({
             />
             <button
               type="submit"
-              className="rounded-[10px] border border-[#BAC7D7] bg-white px-4 py-2 text-[12px] font-bold text-[#315C91]"
+              className="rounded-[10px] border border-[#E2D9D2] bg-white px-4 py-2 text-[12px] font-bold text-[#DD4E0D]"
             >
               Resend detailed application to admin
             </button>
@@ -428,7 +428,7 @@ function BusinessCard({
         {!approved && !provider.is_removed && (
           <form
             action={setProviderStatus}
-            className="rounded-[16px] border border-[#BAC7D7] bg-[#F8FAFC] p-5"
+            className="rounded-[16px] border border-[#E2D9D2] bg-[#F8FAFC] p-5"
           >
             <input
               type="hidden"
@@ -466,7 +466,7 @@ function BusinessCard({
                 type="submit"
                 name="status"
                 value="needs_information"
-                className="rounded-[11px] bg-[#4771A6] px-4 py-3 text-[12px] font-bold text-white"
+                className="rounded-[11px] bg-[#FF5B13] px-4 py-3 text-[12px] font-bold text-white"
               >
                 Request more info
               </button>
@@ -484,7 +484,7 @@ function BusinessCard({
         )}
 
         {approved && !provider.is_removed && (
-          <section className="rounded-[17px] border border-[#A4C1DB] bg-[#F0F6FC] p-5">
+          <section className="rounded-[17px] border border-[#A4C1DB] bg-[#FFF5EF] p-5">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-white text-[22px]">
                 ✉️
@@ -559,7 +559,7 @@ function BusinessCard({
 
               <button
                 type="submit"
-                className="rounded-[11px] bg-[#315C91] px-5 py-3 text-[12px] font-bold text-white hover:bg-[#234674]"
+                className="rounded-[11px] bg-[#DD4E0D] px-5 py-3 text-[12px] font-bold text-white hover:bg-[#234674]"
               >
                 ✉ Send communication
               </button>
@@ -574,7 +574,7 @@ function BusinessCard({
         {!provider.is_removed && (
           <section className="rounded-[16px] border border-[#FDA29B] bg-[#FFF9F8] p-4">
             <h4 className="text-[13px] font-extrabold text-[#B42318]">
-              Remove this business from MECATREX
+              Remove this business from BandWhip
             </h4>
 
             <form action={removeProvider} className="mt-3">
@@ -612,7 +612,7 @@ function BusinessCard({
             />
             <button
               type="submit"
-              className="rounded-[10px] border border-[#BAC7D7] bg-white px-4 py-2.5 text-[12px] font-bold text-[#315C91]"
+              className="rounded-[10px] border border-[#E2D9D2] bg-white px-4 py-2.5 text-[12px] font-bold text-[#DD4E0D]"
             >
               ↻ Resend approval / decision email
             </button>
@@ -633,14 +633,14 @@ function AccountCard({
   return (
     <details className="group overflow-hidden rounded-[15px] border border-[#D6E0ED] bg-white">
       <summary className="relative cursor-pointer list-none p-4 pr-14 [&::-webkit-details-marker]:hidden">
-        <span className="absolute right-4 top-4 rounded-lg bg-[#EDF3FA] px-3 py-1 text-[20px] text-[#315C91]">
+        <span className="absolute right-4 top-4 rounded-lg bg-[#FFF1E8] px-3 py-1 text-[20px] text-[#DD4E0D]">
           <span className="group-open:hidden">+</span>
           <span className="hidden group-open:inline">−</span>
         </span>
 
         <p className="text-[14px] font-bold">
           {account.first_name} {account.last_name}
-          <span className="ml-2 rounded-full bg-[#EDF3FA] px-2 py-1 text-[10px] uppercase text-[#315C91]">
+          <span className="ml-2 rounded-full bg-[#FFF1E8] px-2 py-1 text-[10px] uppercase text-[#DD4E0D]">
             {account.account_type}
           </span>
         </p>
@@ -802,10 +802,10 @@ export default async function AdminPage({
     >
       <div className="mx-auto max-w-[1250px]">
         <header className="flex flex-wrap items-center justify-between gap-4">
-          <Link href="/" aria-label="MECATREX homepage">
+          <Link href="/" aria-label="BandWhip homepage">
             <Image
-              src="/mecatrex-logo-web.png"
-              alt="MECATREX"
+              src="/bandwhip-logo.svg"
+              alt="BandWhip"
               width={260}
               height={74}
               priority
@@ -816,15 +816,15 @@ export default async function AdminPage({
           <div className="flex gap-2">
             <Link
               href="/"
-              className="rounded-[11px] border border-[#BAC7D7] bg-white px-4 py-3 text-[12px] font-bold"
+              className="rounded-[11px] border border-[#E2D9D2] bg-white px-4 py-3 text-[12px] font-bold"
             >
-              ← MECATREX home
+              ← BandWhip home
             </Link>
 
             <form action={signOut}>
               <button
                 type="submit"
-                className="rounded-[11px] border border-[#BAC7D7] bg-white px-4 py-3 text-[12px] font-bold"
+                className="rounded-[11px] border border-[#E2D9D2] bg-white px-4 py-3 text-[12px] font-bold"
               >
                 Log out
               </button>
@@ -833,8 +833,8 @@ export default async function AdminPage({
         </header>
 
         <div className="portal-main-card mt-7 rounded-[25px] border border-[#E4E7EC] bg-white p-5 shadow-sm sm:p-8">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-[#4771A6]">
-            MECATREX administration
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.15em] text-[#FF5B13]">
+            BandWhip administration
           </p>
 
           <h1 className="mt-2 text-[32px] font-extrabold tracking-tight">
@@ -869,7 +869,7 @@ export default async function AdminPage({
               <a
                 key={item.label}
                 href={item.href}
-                className="rounded-[16px] border border-[#BAC7D7] bg-[#F5F8FC] p-5 hover:border-[#4771A6]"
+                className="rounded-[16px] border border-[#E2D9D2] bg-[#F5F8FC] p-5 hover:border-[#FF5B13]"
               >
                 <p className="text-[11px] font-bold text-[#667085]">
                   {item.label}
@@ -932,7 +932,7 @@ export default async function AdminPage({
             </p>
 
             {pending.length === 0 ? (
-              <div className="mt-4 rounded-[15px] border border-dashed border-[#BAC7D7] bg-[#F8FAFC] p-6 text-center text-[13px]">
+              <div className="mt-4 rounded-[15px] border border-dashed border-[#E2D9D2] bg-[#F8FAFC] p-6 text-center text-[13px]">
                 ✓ Nothing needs review right now.
               </div>
             ) : (
@@ -941,13 +941,13 @@ export default async function AdminPage({
                   <a
                     key={provider.id}
                     href={`#provider-${provider.id}`}
-                    className="rounded-[15px] border border-[#BAC7D7] bg-[#F8FAFC] p-4 hover:border-[#4771A6]"
+                    className="rounded-[15px] border border-[#E2D9D2] bg-[#F8FAFC] p-4 hover:border-[#FF5B13]"
                   >
                     <strong>{provider.business_name}</strong>
                     <p className="mt-1 text-[12px] text-[#667085]">
                       {provider.provider_type} · {provider.status}
                     </p>
-                    <p className="mt-2 text-[12px] font-bold text-[#315C91]">
+                    <p className="mt-2 text-[12px] font-bold text-[#DD4E0D]">
                       Open verification dossier
                     </p>
                   </a>

@@ -59,12 +59,12 @@ export default async function LoginPage({
     params.email || (isAdminLogin ? adminEmail : "");
 
   return (
-    <main className="min-h-screen bg-[#F5F7FA] px-5 py-10">
+    <main className="bw-auth-page min-h-screen bg-[#FAF8F5] px-5 py-10">
       <div className="mx-auto max-w-[620px]">
         <Link href="/" className="inline-flex items-center">
           <Image
-            src="/mecatrex-logo-web.png"
-            alt="MECATREX"
+            src="/bandwhip-logo.svg"
+            alt="BandWhip"
             width={280}
             height={78}
             priority
@@ -72,25 +72,25 @@ export default async function LoginPage({
           />
         </Link>
 
-        <div className="mt-8 rounded-[30px] border border-[#EAECF0] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-10">
-          <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">
-            {isAdminLogin ? "MECATREX ADMINISTRATION" : "WELCOME BACK"}
+        <div className="bw-auth-card mt-8 rounded-[30px] border border-[#EAECF0] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-10">
+          <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#FF5B13]">
+            {isAdminLogin ? "BandWhip ADMINISTRATION" : "WELCOME BACK"}
           </p>
 
           <h1 className="mt-3 text-[35px] font-bold tracking-[-0.04em] text-[#101828] sm:text-[44px]">
             {isAdminLogin
               ? "Admin sign in."
-              : "Log in to MECATREX."}
+              : "Log in to BandWhip."}
           </h1>
 
           <p className="mt-3 text-[16px] leading-7 text-[#667085]">
             {isAdminLogin
-              ? "Sign in to review provider applications, approve businesses and manage MECATREX."
+              ? "Sign in to review provider applications, approve businesses and manage BandWhip."
               : "Access your account, bookings, and provider dashboard."}
           </p>
 
           {user && isAdminLogin && (
-            <div className="mt-5 rounded-[15px] border border-[#D6E0ED] bg-[#EDF3FA] px-4 py-3 text-[13px] leading-6 text-[#344054]">
+            <div className="mt-5 rounded-[15px] border border-[#D6E0ED] bg-[#FFF1E8] px-4 py-3 text-[13px] leading-6 text-[#344054]">
               You are currently signed in with another account.
               Sign in as the administrator to switch accounts.
             </div>
@@ -132,7 +132,7 @@ export default async function LoginPage({
                 autoComplete="email"
                 defaultValue={prefilledEmail}
                 required
-                className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[16px] text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
+                className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[16px] text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:border-[#FF5B13] focus:ring-4 focus:ring-[#FF5B13]/10"
               />
             </label>
 
@@ -144,7 +144,7 @@ export default async function LoginPage({
 
                 <Link
                   href="/forgot-password"
-                  className="text-[13px] font-bold text-[#4771A6] underline underline-offset-2 hover:text-[#315C91]"
+                  className="text-[13px] font-bold text-[#FF5B13] underline underline-offset-2 hover:text-[#DD4E0D]"
                 >
                   Forgot password?
                 </Link>
@@ -155,13 +155,13 @@ export default async function LoginPage({
                 type="password"
                 autoComplete="current-password"
                 required
-                className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[16px] text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
+                className="h-[55px] w-full rounded-[15px] border border-[#D0D5DD] bg-white px-4 text-[16px] text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:border-[#FF5B13] focus:ring-4 focus:ring-[#FF5B13]/10"
               />
             </label>
 
             <button
               type="submit"
-              className="w-full rounded-[15px] bg-[#4771A6] px-6 py-4 text-[16px] font-bold text-white transition hover:bg-[#3C6190]"
+              className="w-full rounded-[15px] bg-[#FF5B13] px-6 py-4 text-[16px] font-bold text-white transition hover:bg-[#EA4B06]"
             >
               {isAdminLogin
                 ? "Access admin dashboard"
@@ -178,7 +178,7 @@ export default async function LoginPage({
                     ? `/signup?next=${encodeURIComponent(next)}`
                     : "/signup"
                 }
-                className="font-bold text-[#4771A6]"
+                className="font-bold text-[#FF5B13]"
               >
                 Sign up
               </Link>
@@ -186,7 +186,7 @@ export default async function LoginPage({
           )}
 
           <p className="mt-6 text-center text-[12px] text-[#98A2B3]">
-            Your session stays active while you navigate MECATREX.
+            Your session stays active while you navigate BandWhip.
           </p>
         </div>
       </div>
