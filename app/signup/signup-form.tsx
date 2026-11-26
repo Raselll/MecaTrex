@@ -40,7 +40,7 @@ type AddressDetails = {
 const PHONE_REGEX = /^\d{3}-\d{3}-\d{4}$/;
 
 const inputClass =
-  "h-[52px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-4 text-[14px] text-[#101828] outline-none transition focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10";
+  "h-[52px] w-full rounded-[13px] border border-[#D0D5DD] bg-white px-4 text-[14px] text-[#101828] outline-none transition focus:border-[#FF5B13] focus:ring-4 focus:ring-[#FF5B13]/10";
 
 function formatPhone(text: string) {
   const digits = text.replace(/\D/g, "").slice(0, 10);
@@ -435,7 +435,7 @@ export default function SignupForm({
                 }}
                 className={`rounded-[15px] border p-4 text-left ${
                   providerType === type
-                    ? "border-[#4771A6] bg-[#EDF3FA]"
+                    ? "border-[#FF5B13] bg-[#FFF1E8]"
                     : "border-[#D0D5DD] bg-white"
                 }`}
               >
@@ -499,7 +499,7 @@ export default function SignupForm({
       {accountType === "provider" && (
         <section className="mt-8 space-y-6 border-t border-[#EAECF0] pt-7">
           <div>
-            <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
+            <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#FF5B13]">
               Business information
             </p>
             <h3 className="mt-2 text-[20px] font-extrabold">
@@ -574,7 +574,7 @@ export default function SignupForm({
             )}
 
             {addressMessage && (
-              <p className="mt-2 text-[12px] text-[#4771A6]">
+              <p className="mt-2 text-[12px] text-[#FF5B13]">
                 {addressMessage}
               </p>
             )}
@@ -619,7 +619,7 @@ export default function SignupForm({
                   Required for verification and your public listing.
                 </p>
               </div>
-              <span className="rounded-full bg-[#E4ECF8] px-3 py-1 text-[11px] font-bold text-[#315C91]">
+              <span className="rounded-full bg-[#E4ECF8] px-3 py-1 text-[11px] font-bold text-[#DD4E0D]">
                 Required
               </span>
             </div>
@@ -649,7 +649,7 @@ export default function SignupForm({
               )}
             </div>
 
-            <label className="mt-4 block cursor-pointer rounded-[12px] border border-[#4771A6] bg-white px-4 py-3 text-center text-[13px] font-bold text-[#315C91]">
+            <label className="mt-4 block cursor-pointer rounded-[12px] border border-[#FF5B13] bg-white px-4 py-3 text-center text-[13px] font-bold text-[#DD4E0D]">
               {photo ? "Change business photo" : "Upload business photo"}
               <input
                 name="business_photo"
@@ -673,7 +673,7 @@ export default function SignupForm({
             )}
           </div>
 
-          <div className="rounded-[20px] border border-[#D6E0ED] bg-[#F8FAFD] p-5">
+          <div className="rounded-[20px] border border-[#D6E0ED] bg-[#FBF9F7] p-5">
             <h3 className="text-[17px] font-extrabold">
               Business verification
             </h3>
@@ -745,7 +745,7 @@ export default function SignupForm({
                   onChange={(event) =>
                     setApplicationDescription(event.target.value)
                   }
-                  className="w-full rounded-[13px] border border-[#D0D5DD] bg-white p-4 text-[13px] outline-none focus:border-[#4771A6]"
+                  className="w-full rounded-[13px] border border-[#D0D5DD] bg-white p-4 text-[13px] outline-none focus:border-[#FF5B13]"
                   placeholder="Tell us about your experience, specialties and equipment."
                 />
               </Field>
@@ -822,8 +822,8 @@ export default function SignupForm({
             </div>
           </div>
 
-          <p className="rounded-[13px] bg-[#EDF3FA] p-4 text-[12px] leading-5 text-[#475467]">
-            MECATREX reviews your registration, photo, business
+          <p className="rounded-[13px] bg-[#FFF1E8] p-4 text-[12px] leading-5 text-[#475467]">
+            BandWhip reviews your registration, photo, business
             information, planned services and opening hours.
             Prices and publication become available after approval.
           </p>
@@ -876,7 +876,7 @@ export default function SignupForm({
           className="mt-1"
         />
         <span>
-          I agree to the MECATREX{" "}
+          I agree to the BandWhip{" "}
           <Link href="/terms" target="_blank" className="font-bold underline">
             Terms of Service
           </Link>{" "}
@@ -890,7 +890,7 @@ export default function SignupForm({
       <button
         type="submit"
         disabled={!signupReady || pending}
-        className="mt-7 w-full rounded-[14px] bg-[#4771A6] px-5 py-4 text-[15px] font-bold text-white hover:bg-[#315C91] disabled:cursor-not-allowed disabled:bg-[#B8C6D8]"
+        className="mt-7 w-full rounded-[14px] bg-[#FF5B13] px-5 py-4 text-[15px] font-bold text-white hover:bg-[#DD4E0D] disabled:cursor-not-allowed disabled:bg-[#B8C6D8]"
       >
         {pending
           ? "Submitting application..."

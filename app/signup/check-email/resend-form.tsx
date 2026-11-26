@@ -61,11 +61,11 @@ export default function ResendForm({
   return (
     <section
       aria-labelledby="resend-title"
-      className="mt-8 rounded-[22px] border border-[#DCE5F0] bg-[#F8FAFD] p-5 text-left sm:p-6"
+      className="mt-8 rounded-[22px] border border-[#DCE5F0] bg-[#FBF9F7] p-5 text-left sm:p-6"
     >
       <div className="flex items-start gap-3">
         <span
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-white text-[#4771A6] shadow-sm"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-white text-[#FF5B13] shadow-sm"
           aria-hidden="true"
         >
           <svg
@@ -120,13 +120,13 @@ export default function ResendForm({
           autoComplete="email"
           defaultValue={initialEmail}
           placeholder="you@example.com"
-          className="h-[52px] w-full rounded-[13px] border border-[#C9D5E3] bg-white px-4 text-[15px] text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:border-[#4771A6] focus:ring-4 focus:ring-[#4771A6]/10"
+          className="h-[52px] w-full rounded-[13px] border border-[#C9D5E3] bg-white px-4 text-[15px] text-[#101828] outline-none transition placeholder:text-[#98A2B3] focus:border-[#FF5B13] focus:ring-4 focus:ring-[#FF5B13]/10"
         />
 
         <button
           type="submit"
           disabled={isPending || secondsLeft > 0}
-          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[13px] bg-[#4771A6] px-5 py-3.5 text-[14px] font-bold text-white transition hover:bg-[#315C91] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4771A6] disabled:cursor-not-allowed disabled:bg-[#AFC0D4]"
+          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[13px] bg-[#FF5B13] px-5 py-3.5 text-[14px] font-bold text-white transition hover:bg-[#DD4E0D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF5B13] disabled:cursor-not-allowed disabled:bg-[#AFC0D4]"
         >
           {isPending ? (
             <>
@@ -168,7 +168,7 @@ export default function ResendForm({
         up?{" "}
         <Link
           href="/signup"
-          className="font-bold text-[#315C91] underline underline-offset-2"
+          className="font-bold text-[#DD4E0D] underline underline-offset-2"
         >
           Start again
         </Link>.

@@ -56,9 +56,9 @@ export type CalendarBlock = {
 
 export const ACCENT_COLORS = {
   blue: {
-    name: "Classic blue",
-    hex: "#4771A6",
-    soft: "#EDF3FA",
+    name: "BandWhip orange",
+    hex: "#FF5B13",
+    soft: "#FFF1E8",
   },
   teal: {
     name: "Deep teal",

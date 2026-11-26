@@ -17,7 +17,7 @@ export default async function CheckEmailPage() {
   );
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F5F7FA] px-4 py-10 sm:px-6">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#FAF8F5] px-4 py-10 sm:px-6">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -left-36 top-1/4 h-[420px] w-[420px] rounded-full bg-[#DBE9FA]/40 blur-[100px]"
@@ -32,11 +32,11 @@ export default async function CheckEmailPage() {
         <Link
           href="/"
           className="mx-auto mb-7 flex w-fit items-center justify-center"
-          aria-label="MECATREX home"
+          aria-label="BandWhip home"
         >
           <Image
-            src="/mecatrex-logo-web.png"
-            alt="MECATREX"
+            src="/bandwhip-logo.svg"
+            alt="BandWhip"
             width={210}
             height={60}
             priority
@@ -46,17 +46,17 @@ export default async function CheckEmailPage() {
 
         <div className="rounded-[30px] border border-[#E4EAF2] bg-white px-5 py-8 shadow-[0_22px_70px_rgba(16,24,40,0.08)] sm:px-10 sm:py-10">
           <div className="mb-7 flex items-center justify-between gap-3 border-b border-[#EEF1F5] pb-5">
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#FF5B13]">
               Almost there
             </span>
 
-            <span className="rounded-full bg-[#EDF3FA] px-3 py-1.5 text-[11px] font-bold text-[#4771A6]">
+            <span className="rounded-full bg-[#FFF1E8] px-3 py-1.5 text-[11px] font-bold text-[#FF5B13]">
               Step 2 of 2
             </span>
           </div>
 
           <div
-            className="mx-auto flex h-[84px] w-[84px] items-center justify-center rounded-[26px] bg-[#EDF3FA] text-[#4771A6] shadow-[0_12px_30px_rgba(71,113,166,0.1)]"
+            className="mx-auto flex h-[84px] w-[84px] items-center justify-center rounded-[26px] bg-[#FFF1E8] text-[#FF5B13] shadow-[0_12px_30px_rgba(71,113,166,0.1)]"
             aria-hidden="true"
           >
             <svg
@@ -71,7 +71,7 @@ export default async function CheckEmailPage() {
                 width="50"
                 height="35"
                 rx="8"
-                fill="#4771A6"
+                fill="#FF5B13"
               />
 
               <path
@@ -107,13 +107,13 @@ export default async function CheckEmailPage() {
             </h1>
 
             <p className="mx-auto mt-3 max-w-[430px] text-[15px] leading-7 text-[#667085]">
-              Your MECATREX account is almost ready.
+              Your BandWhip account is almost ready.
               Open the confirmation email and click
               the verification link to activate it.
             </p>
 
             {initialEmail && (
-              <div className="mx-auto mt-4 inline-flex max-w-full items-center gap-2 rounded-full border border-[#E1E8F0] bg-[#F8FAFC] px-4 py-2 text-[13px] font-semibold text-[#315C91]">
+              <div className="mx-auto mt-4 inline-flex max-w-full items-center gap-2 rounded-full border border-[#E1E8F0] bg-[#F8FAFC] px-4 py-2 text-[13px] font-semibold text-[#DD4E0D]">
                 <span aria-hidden="true">✉</span>
                 <span className="truncate">
                   {initialEmail}
@@ -123,7 +123,7 @@ export default async function CheckEmailPage() {
           </div>
 
           <div className="mt-7 grid grid-cols-[auto_1fr] gap-x-3 gap-y-4 rounded-[20px] border border-[#E8EDF4] bg-white p-5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#EDF3FA] text-[12px] font-extrabold text-[#4771A6]">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FFF1E8] text-[12px] font-extrabold text-[#FF5B13]">
               1
             </div>
 
@@ -137,7 +137,7 @@ export default async function CheckEmailPage() {
               </p>
             </div>
 
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#EDF3FA] text-[12px] font-extrabold text-[#4771A6]">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FFF1E8] text-[12px] font-extrabold text-[#FF5B13]">
               2
             </div>
 
@@ -161,7 +161,7 @@ export default async function CheckEmailPage() {
           <div className="mt-7 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/login"
-              className="text-[14px] font-bold text-[#315C91] underline underline-offset-4 hover:text-[#101828]"
+              className="text-[14px] font-bold text-[#DD4E0D] underline underline-offset-4 hover:text-[#101828]"
             >
               Already verified? Log in
             </Link>
@@ -177,13 +177,13 @@ export default async function CheckEmailPage() {
               href="/"
               className="text-[14px] font-semibold text-[#667085] hover:text-[#101828]"
             >
-              Back to MECATREX
+              Back to BandWhip
             </Link>
           </div>
         </div>
 
         <p className="mt-5 text-center text-[12px] leading-5 text-[#98A2B3]">
-          Secure email verification by MECATREX.
+          Secure email verification by BandWhip.
         </p>
       </div>
     </main>
