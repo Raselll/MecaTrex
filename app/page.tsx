@@ -6,6 +6,9 @@ import Link from "next/link";
 import LiveGarages from "@/components/home/live-garages";
 import HomeAuthActions from "@/components/home/home-auth-actions";
 import WhenPicker from "@/components/home/when-picker";
+import BrandMarquee from "@/components/home/brand-marquee";
+import BookingPhoneShowcase from "@/components/home/booking-phone-showcase";
+import GarageDashboardStory from "@/components/home/garage-dashboard-story";
 import { SERVICE_CATALOGUE } from "@/lib/service-listing";
 import {
   FormEvent,
@@ -2543,6 +2546,10 @@ export default function Home() {
           </div>
         </section>
 
+        {/* CONTINUOUS BRAND STORY + MOBILE PRODUCT EXPERIENCE */}
+        <BrandMarquee />
+        <BookingPhoneShowcase />
+
         {/* SERVICES */}
 
         <section
@@ -2615,6 +2622,9 @@ export default function Home() {
 
           <LiveGarages />
         </section>
+
+        {/* PRODUCT-LED GARAGE WORKSPACE STORY */}
+        <GarageDashboardStory />
 
         {/* THE BUSINESS PROMISE */}
         <section id="garages" className="bw-business" data-bw-reveal>
