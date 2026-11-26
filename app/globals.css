@@ -821,7 +821,7 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
 .bw-dashboard-story-link {display:inline-flex;gap:20px;color:#ec5a1b;font-size:13px;font-weight:800;margin-top:20px;text-decoration:none;}
 .bw-dashboard-story-link:hover {text-decoration:underline;}
 .bw-dashboard-perspective {max-width:1100px;margin:70px auto 0;perspective:1300px;}
-.bw-dashboard-window {background:#fff;border:1px solid #e4e7e8;border-radius:20px;overflow:hidden;box-shadow:0 38px 95px #18243124;transform-origin:center bottom;transform:perspective(1250px) rotateX(0) translateY(0);will-change:transform;}
+.bw-dashboard-window {background:#fff;border:1px solid #e4e7e8;border-radius:20px;overflow:hidden;box-shadow:0 38px 95px #18243124;transform-origin:center bottom;backface-visibility:hidden;transform:perspective(1350px) translate3d(0,var(--bw-dashboard-lift,112px),0) rotateX(var(--bw-dashboard-angle,72deg)) scale(var(--bw-dashboard-scale,.80));will-change:transform;}
 .bw-dashboard-window-top {display:flex;align-items:center;justify-content:space-between;gap:20px;background:#f3f4f4;border-bottom:1px solid #e9ecec;padding:13px 18px;font-size:10px;color:#6a737b;}
 .bw-dashboard-window-dots {display:flex;gap:6px;}
 .bw-dashboard-window-dots i {width:9px;height:9px;background:#d1d6d7;border-radius:50%;}
@@ -854,13 +854,7 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
 .bw-dashboard-slot {margin:5px 4px;padding:11px 3px;border-radius:6px;font-size:9px;color:#a3aaae;}
 .bw-dashboard-slot.is-booked {background:#fff0e7;color:#d85d20;font-weight:770;}
 .bw-dashboard-caption {font-size:10px;color:#a1a7ab;margin:13px 0 0;text-align:right;}
-@supports (animation-timeline:view()) {
- .bw-dashboard-window {animation:bw-dashboard-upright both linear;animation-timeline:view();animation-range:cover 0% cover 72%;}
-}
-@keyframes bw-dashboard-upright {
- from {opacity:.88;transform:perspective(1250px) rotateX(54deg) translateY(90px) scale(.83);}
- to {opacity:1;transform:perspective(1250px) rotateX(0deg) translateY(0) scale(1);}
-}
+/* Dashboard perspective is driven by measured scroll progress in garage-dashboard-story.tsx. */
 @media (max-width:1120px) {
  .bw-mobile-story-grid {gap:20px;}
  .bw-phone-side-card {width:146px;}

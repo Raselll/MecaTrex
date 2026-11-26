@@ -1,8 +1,65 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 
 const days = ["MON 09", "TUE 10", "WED 11", "THU 12", "FRI 13"];
 
 export default function GarageDashboardStory() {
+  const scrollAnchorRef = useRef<HTMLDivElement>(null);
+  const dashboardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const anchor = scrollAnchorRef.current;
+    const dashboard = dashboardRef.current;
+    if (!anchor || !dashboard) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let raf = 0;
+
+    const updatePerspective = () => {
+      raf = 0;
+      if (reducedMotion.matches) {
+        dashboard.style.removeProperty("--bw-dashboard-angle");
+        dashboard.style.removeProperty("--bw-dashboard-scale");
+        dashboard.style.removeProperty("--bw-dashboard-lift");
+        return;
+      }
+
+      // Measure the stationary wrapper; reading the transformed dashboard
+      // would make scroll progress change as the animation itself moves.
+      const { top } = anchor.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || 1;
+
+      // Starts nearly flat when entering at the bottom of the viewport;
+      // stands upright when the top reaches the upper quarter of the screen.
+      const start = viewportHeight * 0.99;
+      const finish = viewportHeight * 0.24;
+      const progress = Math.min(1, Math.max(0, (start - top) / (start - finish)));
+      const eased = progress * progress * (3 - 2 * progress);
+
+      dashboard.style.setProperty("--bw-dashboard-angle", `${(72 * (1 - eased)).toFixed(2)}deg`);
+      dashboard.style.setProperty("--bw-dashboard-scale", (0.80 + 0.20 * eased).toFixed(4));
+      dashboard.style.setProperty("--bw-dashboard-lift", `${(112 * (1 - eased)).toFixed(1)}px`);
+    };
+
+    const requestUpdate = () => {
+      if (!raf) raf = window.requestAnimationFrame(updatePerspective);
+    };
+
+    updatePerspective();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+    reducedMotion.addEventListener("change", requestUpdate);
+
+    return () => {
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+      reducedMotion.removeEventListener("change", requestUpdate);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
   return (
     <section className="bw-dashboard-story" aria-labelledby="bw-dashboard-heading">
       <div className="bw-shell">
@@ -12,8 +69,8 @@ export default function GarageDashboardStory() {
           <p>Less guesswork, more structure. Give your team a simple view of the week, manage unavailable time and keep bookings organized in one place.</p>
           <Link href="/signup" className="bw-dashboard-story-link">Explore BandWhip for garages <span aria-hidden="true">↗</span></Link>
         </div>
-        <div className="bw-dashboard-perspective">
-          <div className="bw-dashboard-window">
+        <div ref={scrollAnchorRef} className="bw-dashboard-perspective">
+          <div ref={dashboardRef} className="bw-dashboard-window">
             <div className="bw-dashboard-window-top"><div className="bw-dashboard-window-dots"><i /><i /><i /></div><span>BandWhip / Garage workspace</span><span className="bw-dashboard-demo-label">ILLUSTRATIVE PREVIEW</span></div>
             <div className="bw-dashboard-app">
               <aside className="bw-dashboard-sidebar"><span className="bw-dashboard-small-logo">B</span><strong>Workspace</strong><span className="is-active">▦ <span>Calendar</span></span><span>◫ <span>Bookings</span></span><span>◷ <span>Availability</span></span><span>≡ <span>Services</span></span><div className="bw-sidebar-help">✦ <span>Stay organized</span></div></aside>
