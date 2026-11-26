@@ -2623,14 +2623,14 @@ export default function Home() {
               <div className="bw-business-copy">
                 <span className="bw-eyebrow bw-eyebrow-light">FOR GARAGES & TOWING TEAMS</span>
                 <h2>Spend less time<br /><em>on the phone.</em><br />More time doing.</h2>
-                <p>Stay in control of your hours, your services and your appointments in one organized workspace. When an available slot is booked, everyone knows what's next.</p>
+                <p>Stay in control of your hours, your services and your appointments in one organized workspace. When an available slot is booked, everyone knows what&apos;s next.</p>
                 <Link className="bw-button bw-button-orange" href="/signup">List your business <span aria-hidden="true">↗</span></Link>
               </div>
               <div className="bw-calendar-demo">
                 <div className="bw-calendar-header"><div><small>YOUR WORKSPACE</small><strong>Capacity, made clearer.</strong></div><span className="bw-calendar-pill">Interactive preview</span></div>
                 <div className="bw-demo-control"><label htmlFor="demo-bays">Available service bays</label><div><button type="button" onClick={() => setDemoBays(Math.max(1, demoBays - 1))} aria-label="Remove one service bay">−</button><span>{demoBays}</span><button type="button" onClick={() => setDemoBays(Math.min(4, demoBays + 1))} aria-label="Add one service bay">+</button></div></div>
                 <div className="bw-demo-grid">{[1,2,3,4].map((number) => <div key={number} className={number <= demoBays ? "bw-demo-bay is-active" : "bw-demo-bay"}><span>Bay {number}</span><strong>{number <= demoBays ? "Available" : "Closed"}</strong><small>{number <= demoBays ? "Ready for appointments" : "Not bookable"}</small></div>)}</div>
-                <div className="bw-calendar-note"><span>✓</span> Closed bays won't appear as bookable availability.</div>
+                <div className="bw-calendar-note"><span>✓</span> Closed bays won&apos;t appear as bookable availability.</div>
                 <small className="bw-demo-disclaimer">Demo only — no changes are made to a real garage calendar.</small>
               </div>
             </div>
