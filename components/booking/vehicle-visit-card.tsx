@@ -139,7 +139,7 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
 
   return (
     <section className="mt-4 rounded-[16px] border border-[#BDD0E4] bg-[#F8FAFC] p-4">
-      <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#4771A6]">🚗 Vehicle handoff and pickup</p>
+      <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#FF5B13]">🚗 Vehicle handoff and pickup</p>
       <p className="mt-2 text-[14px] font-extrabold text-[#101828]">{stage}</p>
       {error && <p role="alert" className="mt-3 rounded-lg bg-[#FEF3F2] p-3 text-[12px] font-semibold text-[#B42318]">{error}</p>}
       {notice && <p role="status" className="mt-3 rounded-lg bg-[#ECFDF3] p-3 text-[12px] font-semibold text-[#027A48]">{notice}</p>}
@@ -158,10 +158,10 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
             Their entry records the garage-approved handoff. Do not share it in advance.
           </p>
           <button type="button" disabled={busy} onClick={() => void perform(() => revealGarageHandoffCode(booking.id))}
-            className="mt-3 rounded-xl bg-[#14263A] px-4 py-2.5 text-[12px] font-extrabold text-white disabled:opacity-50">
+            className="mt-3 rounded-xl bg-[#20262D] px-4 py-2.5 text-[12px] font-extrabold text-white disabled:opacity-50">
             {secretVisible ? "Show handoff code again" : "Reveal handoff code"}
           </button>
-          {secretVisible && <p className="mt-3 select-all rounded-lg bg-[#EDF3FA] p-3 text-center font-mono text-[22px] font-extrabold tracking-[0.22em] text-[#14263A]">
+          {secretVisible && <p className="mt-3 select-all rounded-lg bg-[#FFF1E8] p-3 text-center font-mono text-[22px] font-extrabold tracking-[0.22em] text-[#20262D]">
             {secretVisible}
           </p>}
         </div>
@@ -176,7 +176,7 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
           </p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={() => setConfirmedDropoff(true)} aria-pressed={confirmedDropoff}
-              className={`rounded-lg border px-4 py-2 text-[12px] font-bold ${confirmedDropoff ? "border-[#4771A6] bg-[#EDF3FA]" : "border-[#CAD6E3] bg-white"}`}>
+              className={`rounded-lg border px-4 py-2 text-[12px] font-bold ${confirmedDropoff ? "border-[#FF5B13] bg-[#FFF1E8]" : "border-[#CAD6E3] bg-white"}`}>
               Yes, I dropped off the car
             </button>
             <button type="button" onClick={() => { setConfirmedDropoff(false); setEnteredCode(""); }}
@@ -195,7 +195,7 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
             </label>
             <button type="button" disabled={busy || enteredCode.length !== 8}
               onClick={() => void perform(() => confirmVehicleDropoff(booking.id, enteredCode))}
-              className="rounded-xl bg-[#4771A6] px-4 py-3 text-[12px] font-extrabold text-white disabled:opacity-50">
+              className="rounded-xl bg-[#FF5B13] px-4 py-3 text-[12px] font-extrabold text-white disabled:opacity-50">
               Confirm garage handoff
             </button>
           </>}
@@ -227,7 +227,7 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
             <div className="mt-3 flex flex-wrap gap-2">
               <button type="button" disabled={busy || Boolean(visit?.ready_email_sent_at)}
                 onClick={() => void perform(() => emailClientVehicleReady(booking.id))}
-                className="rounded-xl bg-[#4771A6] px-4 py-2.5 font-extrabold text-white disabled:opacity-50">
+                className="rounded-xl bg-[#FF5B13] px-4 py-2.5 font-extrabold text-white disabled:opacity-50">
                 {visit?.ready_email_sent_at ? "✓ Pickup email sent" : "✉️ Email client · car ready"}
               </button>
               {phone && <a href={`tel:${phone}`} className="rounded-xl border border-[#A6E0C0] bg-white px-4 py-2.5 font-extrabold text-[#05603A]">
@@ -272,7 +272,7 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
           <p className="text-[12px] font-bold text-[#344054]">Optional photo evidence</p>
           <p className="mt-1 text-[11px] leading-5 text-[#667085]">
             Photos can document the condition of the vehicle and the garage storefront at drop-off.
-            MECATREX does not verify where an image was taken, provide insurance or handle damage claims.
+            BandWhip does not verify where an image was taken, provide insurance or handle damage claims.
             Add photos within one hour after the handoff code is accepted, before the garage marks the service complete.
           </p>
           {mode === "client" && photoWindowOpen && photos.length < MAX_PHOTOS && (
@@ -283,7 +283,7 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
                 className="block max-w-full text-[12px] text-[#475467]" />
               <button type="button" disabled={busy || files.length === 0}
                 onClick={() => void uploadPhotos()}
-                className="mt-3 rounded-lg border border-[#A8C2DF] bg-white px-4 py-2.5 text-[12px] font-bold text-[#315C91] disabled:opacity-50">
+                className="mt-3 rounded-lg border border-[#A8C2DF] bg-white px-4 py-2.5 text-[12px] font-bold text-[#DD4E0D] disabled:opacity-50">
                 Upload {files.length || ""} photos (max 6, 5 MB each)
               </button>
             </div>

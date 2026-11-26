@@ -65,7 +65,7 @@ function statusCopy(status: ProviderStatus) {
     pending: {
       title: "Application under review",
       description:
-        "Your application is awaiting MECATREX review. We aim to respond within 24 hours by email. Services and pricing remain locked until approval.",
+        "Your application is awaiting BandWhip review. We aim to respond within 24 hours by email. Services and pricing remain locked until approval.",
       className: "bg-[#FFF7E8] text-[#92400E]",
     },
     approved: {
@@ -77,13 +77,13 @@ function statusCopy(status: ProviderStatus) {
     needs_information: {
       title: "More information requested",
       description:
-        "MECATREX needs additional information before approving your business.",
+        "BandWhip needs additional information before approving your business.",
       className: "bg-[#EFF6FF] text-[#1D4ED8]",
     },
     rejected: {
       title: "Application not approved",
       description:
-        "Your business cannot publish services. Contact MECATREX if you believe this decision should be reviewed.",
+        "Your business cannot publish services. Contact BandWhip if you believe this decision should be reviewed.",
       className: "bg-[#FEF3F2] text-[#B42318]",
     },
   }[status];
@@ -223,7 +223,7 @@ export default function ProviderDashboard({
       href: "#services",
     },
     {
-      title: "MECATREX approval",
+      title: "BandWhip approval",
       complete: provider.status === "approved",
       href: "#application-status",
     },
@@ -647,7 +647,7 @@ export default function ProviderDashboard({
     service: ProviderService
   ) {
     const confirmed = window.confirm(
-      `Remove ${service.name} from your MECATREX catalogue?`
+      `Remove ${service.name} from your BandWhip catalogue?`
     );
 
     if (!confirmed) return;
@@ -682,7 +682,7 @@ export default function ProviderDashboard({
     ) {
       setError(
         provider.booking_suspended
-          ? "Bookings are suspended. Contact MECATREX administration."
+          ? "Bookings are suspended. Contact BandWhip administration."
           : provider.status !== "approved"
           ? "Your business must be approved before publication."
           : "Add at least one active fixed-price service before publishing."
@@ -729,9 +729,9 @@ export default function ProviderDashboard({
     return (
       <section
         id="application-status"
-        className="mt-7 rounded-[24px] border border-[#D6E0ED] bg-[#F8FAFD] p-7"
+        className="mt-7 rounded-[24px] border border-[#D6E0ED] bg-[#FBF9F7] p-7"
       >
-        <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
+        <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#FF5B13]">
           Application status
         </p>
 
@@ -748,7 +748,7 @@ export default function ProviderDashboard({
         {adminMessage && (
           <div className="mt-5 rounded-[15px] border border-[#D6E0ED] bg-white p-5">
             <p className="text-[13px] font-bold">
-              Message from MECATREX
+              Message from BandWhip
             </p>
 
             <p className="mt-2 whitespace-pre-wrap text-[14px] text-[#475467]">
@@ -757,7 +757,7 @@ export default function ProviderDashboard({
           </div>
         )}
 
-        <p className="mt-5 text-[13px] font-semibold text-[#315C91]">
+        <p className="mt-5 text-[13px] font-semibold text-[#DD4E0D]">
           Services and pricing unlock after approval.
         </p>
       </section>
@@ -772,7 +772,7 @@ export default function ProviderDashboard({
       >
         <a
           href="#garage-calendar"
-          className="rounded-[17px] border border-[#BAC7D7] bg-[#EDF3FA] p-5 transition hover:border-[#4771A6]"
+          className="rounded-[17px] border border-[#E2D9D2] bg-[#FFF1E8] p-5 transition hover:border-[#FF5B13]"
         >
           <span className="text-[12px] font-bold uppercase tracking-wide text-[#667085]">
             Availability
@@ -782,14 +782,14 @@ export default function ProviderDashboard({
             📅 Booking availability
           </span>
 
-          <span className="mt-1 block text-[12px] font-semibold text-[#4771A6]">
+          <span className="mt-1 block text-[12px] font-semibold text-[#FF5B13]">
             Manage availability →
           </span>
         </a>
 
         <a
           href="#application-status"
-          className="rounded-[17px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:border-[#4771A6]"
+          className="rounded-[17px] border border-[#E2D9D2] bg-[#F8FAFC] p-5 transition hover:border-[#FF5B13]"
         >
           <span className="text-[12px] font-bold uppercase text-[#667085]">
             01 · Account status
@@ -799,14 +799,14 @@ export default function ProviderDashboard({
             ✓ Approved
           </span>
 
-          <span className="mt-1 block text-[12px] font-semibold text-[#4771A6]">
+          <span className="mt-1 block text-[12px] font-semibold text-[#FF5B13]">
             View status →
           </span>
         </a>
 
         <a
           href="#business-profile"
-          className="rounded-[17px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:border-[#4771A6]"
+          className="rounded-[17px] border border-[#E2D9D2] bg-[#F8FAFC] p-5 transition hover:border-[#FF5B13]"
         >
           <span className="text-[12px] font-bold uppercase text-[#667085]">
             02 · Your business
@@ -816,14 +816,14 @@ export default function ProviderDashboard({
             📸 Photo & details
           </span>
 
-          <span className="mt-1 block text-[12px] font-semibold text-[#4771A6]">
+          <span className="mt-1 block text-[12px] font-semibold text-[#FF5B13]">
             Edit profile →
           </span>
         </a>
 
         <a
           href="#services"
-          className="rounded-[17px] border border-[#BAC7D7] bg-[#F8FAFC] p-5 transition hover:border-[#4771A6]"
+          className="rounded-[17px] border border-[#E2D9D2] bg-[#F8FAFC] p-5 transition hover:border-[#FF5B13]"
         >
           <span className="text-[12px] font-bold uppercase text-[#667085]">
             03 · Service catalogue
@@ -836,13 +836,13 @@ export default function ProviderDashboard({
               : "services"}
           </span>
 
-          <span className="mt-1 block text-[12px] font-semibold text-[#4771A6]">
+          <span className="mt-1 block text-[12px] font-semibold text-[#FF5B13]">
             Edit services & prices →
           </span>
         </a>
       </nav>
 
-      <div className="rounded-[19px] border border-[#D5DFEA] bg-white p-5">
+      <div className="rounded-[19px] border border-[#E9DED5] bg-white p-5">
         <h2 className="text-[17px] font-extrabold text-[#101828]">
           Your listing checklist
         </h2>
@@ -857,13 +857,13 @@ export default function ProviderDashboard({
             <a
               key={item.title}
               href={item.href}
-              className="flex items-center gap-3 rounded-[13px] bg-[#F8FAFC] px-4 py-3 hover:bg-[#EDF3FA]"
+              className="flex items-center gap-3 rounded-[13px] bg-[#F8FAFC] px-4 py-3 hover:bg-[#FFF1E8]"
             >
               <span
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-[14px] font-bold ${
                   item.complete
                     ? "bg-[#D1FADF] text-[#027A48]"
-                    : "bg-[#EDF3FA] text-[#4771A6]"
+                    : "bg-[#FFF1E8] text-[#FF5B13]"
                 }`}
               >
                 {item.complete ? "✓" : "○"}
@@ -877,7 +877,7 @@ export default function ProviderDashboard({
         </div>
       </div>
 
-      <div className="provider-save-toolbar sticky top-3 z-30 flex flex-col gap-3 rounded-[20px] border border-[#BAC7D7] bg-white/95 px-5 py-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <div className="provider-save-toolbar sticky top-3 z-30 flex flex-col gap-3 rounded-[20px] border border-[#E2D9D2] bg-white/95 px-5 py-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[15px] font-bold text-[#101828]">
             Business & service updates
@@ -936,9 +936,9 @@ export default function ProviderDashboard({
         </div>
 
         {adminMessage && (
-          <div className="mt-4 rounded-[14px] border border-[#BAC7D7] bg-white/85 p-4 text-[14px] text-[#344054]">
+          <div className="mt-4 rounded-[14px] border border-[#E2D9D2] bg-white/85 p-4 text-[14px] text-[#344054]">
             <strong className="block">
-              Message from MECATREX
+              Message from BandWhip
             </strong>
 
             <p className="mt-2 whitespace-pre-wrap">
@@ -965,12 +965,12 @@ export default function ProviderDashboard({
         id="business-profile"
         className="grid scroll-mt-28 gap-7 xl:grid-cols-[0.72fr_1.28fr]"
       >
-        <section className="rounded-[28px] border border-[#BAC7D7] bg-white p-6 shadow-sm">
-          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#4771A6]">
+        <section className="rounded-[28px] border border-[#E2D9D2] bg-white p-6 shadow-sm">
+          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-[#FF5B13]">
             Garage image
           </p>
 
-          <div className="mt-4 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#14263A] to-[#4771A6]">
+          <div className="mt-4 overflow-hidden rounded-[20px] bg-gradient-to-br from-[#20262D] to-[#FF5B13]">
             {imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -1014,7 +1014,7 @@ export default function ProviderDashboard({
 
         <form
           onSubmit={saveProfile}
-          className="rounded-[28px] border border-[#BAC7D7] bg-white p-6 shadow-sm"
+          className="rounded-[28px] border border-[#E2D9D2] bg-white p-6 shadow-sm"
         >
           <p className="text-[14px] font-extrabold uppercase text-[#101828]">
             Public profile
@@ -1125,7 +1125,7 @@ export default function ProviderDashboard({
           <button
             type="submit"
             disabled={savingProfile}
-            className="mt-6 rounded-[14px] bg-[#4771A6] px-6 py-3.5 text-[14px] font-bold text-white disabled:opacity-50"
+            className="mt-6 rounded-[14px] bg-[#FF5B13] px-6 py-3.5 text-[14px] font-bold text-white disabled:opacity-50"
           >
             {savingProfile
               ? "Saving..."
@@ -1136,7 +1136,7 @@ export default function ProviderDashboard({
 
       <section
         id="services"
-        className="scroll-mt-28 rounded-[28px] border border-[#BAC7D7] bg-white p-6 shadow-sm"
+        className="scroll-mt-28 rounded-[28px] border border-[#E2D9D2] bg-white p-6 shadow-sm"
       >
         <p className="text-[14px] font-extrabold uppercase text-[#101828]">
           Service catalogue
@@ -1317,7 +1317,7 @@ function ProviderField({
         disabled={disabled}
         required={required}
         min={min}
-        className="h-[48px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6] disabled:bg-[#F2F4F7]"
+        className="h-[48px] w-full rounded-[13px] border border-[#98A2B3] bg-white px-4 text-[14px] outline-none focus:border-[#FF5B13] disabled:bg-[#F2F4F7]"
       />
     </label>
   );
@@ -1339,7 +1339,7 @@ function ServiceEditor({
   onDelete: () => void;
 }) {
   return (
-    <div className="rounded-[20px] border border-[#BAC7D7] bg-white p-5">
+    <div className="rounded-[20px] border border-[#E2D9D2] bg-white p-5">
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr_0.7fr_auto] lg:items-end">
         <ServiceNamePicker
           providerType={providerType}
@@ -1394,7 +1394,7 @@ function ServiceEditor({
               )
             }
             onClick={onSave}
-            className="h-[48px] rounded-[12px] bg-[#4771A6] px-4 text-[12px] font-bold text-white disabled:opacity-40"
+            className="h-[48px] rounded-[12px] bg-[#FF5B13] px-4 text-[12px] font-bold text-white disabled:opacity-40"
           >
             Save
           </button>
@@ -1492,7 +1492,7 @@ function ServiceEditor({
           </button>
         </div>
       ) : (
-        <p className="mt-3 text-[12px] font-semibold text-[#4771A6]">
+        <p className="mt-3 text-[12px] font-semibold text-[#FF5B13]">
           Public display:{" "}
           {formatPrice(service)}
         </p>

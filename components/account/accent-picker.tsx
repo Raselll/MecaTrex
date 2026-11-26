@@ -73,7 +73,7 @@ export default function AccentPicker({
       className={
         compact
           ? "flex flex-col items-start gap-2 sm:items-end"
-          : "portal-theme-picker mt-6 rounded-[20px] border border-[#D5DFEA] bg-white p-5"
+          : "portal-theme-picker mt-6 rounded-[20px] border border-[#E9DED5] bg-white p-5"
       }
       aria-label="Dashboard theme selection"
     >

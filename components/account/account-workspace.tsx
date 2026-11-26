@@ -108,7 +108,7 @@ export default function AccountWorkspace({
       <div className="overflow-hidden rounded-[25px] border border-[#DCE5EF] bg-[#F7F9FC] shadow-[0_16px_42px_rgba(16,24,40,0.05)] lg:grid lg:grid-cols-[230px_minmax(0,1fr)]">
         <aside className="border-b border-[#DCE5EF] bg-white p-3 lg:border-b-0 lg:border-r lg:p-5">
           <div className="hidden lg:block">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#4771A6]">My workspace</p>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#FF5B13]">My workspace</p>
             <p className="mt-2 truncate text-[17px] font-extrabold text-[#101828]">{firstName}</p>
             <p className="mt-1 text-[12px] text-[#667085]">
               {kind === "provider" ? "Business account" : "Personal account"}
@@ -127,7 +127,7 @@ export default function AccountWorkspace({
                   className={
                     "flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-[12px] px-4 py-3 text-left text-[13px] font-bold transition lg:w-full " +
                     (active
-                      ? "bg-[#E8F0FA] text-[#244F83] shadow-sm"
+                      ? "bg-[#E8F0FA] text-[#D6531B] shadow-sm"
                       : "text-[#475467] hover:bg-[#F2F5FA] hover:text-[#101828]")
                   }
                 >
@@ -138,7 +138,7 @@ export default function AccountWorkspace({
             })}
           </nav>
           <div className="mt-8 hidden rounded-[14px] bg-[#EFF5FC] p-4 lg:block">
-            <p className="text-[12px] font-bold text-[#244F83]">MECATREX</p>
+            <p className="text-[12px] font-bold text-[#D6531B]">BandWhip</p>
             <p className="mt-1 text-[11px] leading-5 text-[#667085]">
               {kind === "provider"
                 ? "Keep your services and schedule up to date."
@@ -150,7 +150,7 @@ export default function AccountWorkspace({
         <div className="min-w-0 p-4 sm:p-6 lg:p-8">
           <header className="mb-6 flex items-start justify-between gap-3 border-b border-[#E4EAF1] pb-5">
             <div>
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#4771A6]">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#FF5B13]">
                 {kind === "provider" ? "Garage workspace" : "Client workspace"}
               </p>
               <h2 className="mt-1.5 text-[25px] font-extrabold tracking-tight text-[#101828] sm:text-[31px]">{titles[view]}</h2>

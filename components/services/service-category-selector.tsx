@@ -136,16 +136,16 @@ export default function ServiceCategorySelector({
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search oil change, rustproofing, glass..."
-            className="h-[48px] w-full rounded-[12px] border border-[#BAC7D7] bg-[#F8FAFC] pl-11 pr-4 text-[13px] text-[#101828] outline-none focus:border-[#4771A6] focus:ring-2 focus:ring-[#4771A6]/10"
+            className="h-[48px] w-full rounded-[12px] border border-[#E2D9D2] bg-[#F8FAFC] pl-11 pr-4 text-[13px] text-[#101828] outline-none focus:border-[#FF5B13] focus:ring-2 focus:ring-[#FF5B13]/10"
           />
         </div>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <span className="rounded-full bg-[#EDF3FA] px-3 py-1.5 text-[12px] font-bold text-[#315C91]" aria-live="polite">
+          <span className="rounded-full bg-[#FFF1E8] px-3 py-1.5 text-[12px] font-bold text-[#DD4E0D]" aria-live="polite">
             {selectedTotal} {selectedTotal === 1 ? "service" : "services"} selected
           </span>
           <div className="flex gap-3">
-            <button type="button" onClick={expandAll} className="text-[11px] font-bold text-[#315C91] hover:underline">
+            <button type="button" onClick={expandAll} className="text-[11px] font-bold text-[#DD4E0D] hover:underline">
               Expand all
             </button>
             <button type="button" onClick={collapseAll} className="text-[11px] font-bold text-[#667085] hover:underline">
@@ -166,7 +166,7 @@ export default function ServiceCategorySelector({
                   aria-expanded={expanded}
                   aria-controls={id}
                   onClick={() => toggleCategory(category)}
-                  className={`flex min-h-[59px] w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#F3F7FC] ${expanded ? "bg-[#EDF3FA]" : "bg-[#F9FAFC]"}`}
+                  className={`flex min-h-[59px] w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-[#F3F7FC] ${expanded ? "bg-[#FFF1E8]" : "bg-[#F9FAFC]"}`}
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-white text-lg" aria-hidden="true">
@@ -180,7 +180,7 @@ export default function ServiceCategorySelector({
                       </span>
                     </span>
                   </span>
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#C5D2E2] bg-white text-xl font-semibold text-[#315C91]" aria-hidden="true">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#C5D2E2] bg-white text-xl font-semibold text-[#DD4E0D]" aria-hidden="true">
                     {expanded ? "−" : "+"}
                   </span>
                 </button>
@@ -194,10 +194,10 @@ export default function ServiceCategorySelector({
                           type="button"
                           aria-pressed={active}
                           onClick={() => onToggleService(service.name)}
-                          className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2.5 text-[12px] font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4771A6] ${
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2.5 text-[12px] font-bold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF5B13] ${
                             active
-                              ? "border-[#4771A6] bg-[#4771A6] text-white"
-                              : "border-[#C7D3E2] bg-white text-[#344054] hover:border-[#4771A6] hover:bg-[#F4F8FD]"
+                              ? "border-[#FF5B13] bg-[#FF5B13] text-white"
+                              : "border-[#C7D3E2] bg-white text-[#344054] hover:border-[#FF5B13] hover:bg-[#F4F8FD]"
                           }`}
                         >
                           <span aria-hidden="true">{active ? "✓" : service.icon}</span>
@@ -222,7 +222,7 @@ export default function ServiceCategorySelector({
             type="button"
             aria-pressed={otherServiceEnabled}
             onClick={onToggleOther}
-            className={`rounded-full border px-4 py-2.5 text-[12px] font-bold ${otherServiceEnabled ? "border-[#4771A6] bg-[#4771A6] text-white" : "border-[#C7D3E2] bg-white text-[#344054]"}`}
+            className={`rounded-full border px-4 py-2.5 text-[12px] font-bold ${otherServiceEnabled ? "border-[#FF5B13] bg-[#FF5B13] text-white" : "border-[#C7D3E2] bg-white text-[#344054]"}`}
           >
             {otherServiceEnabled ? "✓" : "+"} ✨ Other service
           </button>
@@ -236,7 +236,7 @@ export default function ServiceCategorySelector({
                 maxLength={100}
                 onChange={(event) => onOtherServiceChange(event.target.value)}
                 placeholder="Enter your custom service"
-                className="mt-2 h-[48px] w-full rounded-[12px] border border-[#C7D3E2] bg-white px-4 text-[13px] outline-none focus:border-[#4771A6]"
+                className="mt-2 h-[48px] w-full rounded-[12px] border border-[#C7D3E2] bg-white px-4 text-[13px] outline-none focus:border-[#FF5B13]"
               />
             </label>
           )}
@@ -244,8 +244,8 @@ export default function ServiceCategorySelector({
       </div>
 
       {selectedTotal > 0 && (
-        <div className="mt-4 rounded-[15px] border border-[#B9D0EA] bg-[#EDF3FA] p-4">
-          <p className="mb-3 text-[12px] font-extrabold text-[#315C91]">✓ Your selected services ({selectedTotal})</p>
+        <div className="mt-4 rounded-[15px] border border-[#B9D0EA] bg-[#FFF1E8] p-4">
+          <p className="mb-3 text-[12px] font-extrabold text-[#DD4E0D]">✓ Your selected services ({selectedTotal})</p>
           <div className="flex flex-wrap gap-2">
             {selectedServices.map((name) => (
               <button
@@ -253,13 +253,13 @@ export default function ServiceCategorySelector({
                 type="button"
                 onClick={() => onToggleService(name)}
                 aria-label={`Remove ${name}`}
-                className="rounded-full border border-[#B8CCE2] bg-white px-3 py-2 text-[11px] font-bold text-[#315C91] transition hover:border-[#4771A6]"
+                className="rounded-full border border-[#B8CCE2] bg-white px-3 py-2 text-[11px] font-bold text-[#DD4E0D] transition hover:border-[#FF5B13]"
               >
                 {name} <span aria-hidden="true">×</span>
               </button>
             ))}
             {otherServiceEnabled && otherService.trim() && (
-              <span className="rounded-full bg-white px-3 py-2 text-[11px] font-bold text-[#315C91]">
+              <span className="rounded-full bg-white px-3 py-2 text-[11px] font-bold text-[#DD4E0D]">
                 ✨ {otherService.trim()}
               </span>
             )}
