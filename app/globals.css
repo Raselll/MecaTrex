@@ -14,7 +14,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* ========================================================= */
@@ -422,7 +422,7 @@ html { scroll-padding-top: 96px; }
 body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Arial, Helvetica, sans-serif; }
 ::selection { background:#ffb38e; color:#151515; }
 :where(a,button,input,select,textarea,summary):focus-visible { outline:3px solid #ff7c40; outline-offset:3px; }
-.bw-page { overflow:hidden; background:#fff; color:var(--bw-ink); }
+.bw-page { overflow-x:clip; background:#fff; color:var(--bw-ink); }
 .bw-shell { width:min(100% - 64px,1392px); margin-inline:auto; }
 .bw-header { position:sticky; z-index:80; top:0; background:rgba(255,255,255,.94); border-bottom:1px solid #eceae7; backdrop-filter:blur(22px); }
 .bw-nav-inner { min-height:91px; display:flex; align-items:center; justify-content:space-between; gap:28px; }
@@ -441,7 +441,7 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
 .bw-nav-actions a[href="/signup"], .bw-nav-actions a[href="/account"] { background:var(--bw-ink) !important; color:#fff !important; }
 .bw-nav-actions a[href="/signup"]:hover, .bw-nav-actions a[href="/account"]:hover { background:var(--bw-orange) !important; }
 .bw-mobile-nav { display:none; position:relative; }
-.bw-hero { position:relative; background:#121920; color:white; padding:90px 0 0; overflow:hidden; }
+.bw-hero { position:relative; background:#121920; color:white; padding:90px 0 0; overflow:visible; }
 .bw-hero::before { content:""; position:absolute; width:700px; aspect-ratio:1; border-radius:50%; right:-130px; top:-250px; background:radial-gradient(circle,rgba(255,92,21,.22),transparent 66%); pointer-events:none; }
 .bw-hero::after { content:""; position:absolute; width:620px; aspect-ratio:1; border:1px solid rgba(255,255,255,.06); border-radius:50%; left:41%; bottom:-390px; pointer-events:none; }
 .bw-hero-grain { position:absolute; inset:0; opacity:.16; background-image:radial-gradient(#fff .55px,transparent .55px); background-size:16px 16px; mask-image:linear-gradient(90deg,transparent,black); pointer-events:none; }
