@@ -85,7 +85,7 @@ async function sendBrevoEmail({
       },
       body: JSON.stringify({
         sender: {
-          name: "MECATREX",
+          name: "BandWhip",
           email: senderEmail,
         },
         to: [{ email: toEmail, name: toName }],
@@ -145,11 +145,11 @@ export async function sendAdminProviderApplicationEmail(
 
   return sendBrevoEmail({
     toEmail: adminEmail,
-    toName: "MECATREX Admin",
+    toName: "BandWhip Admin",
     subject: `New ${type} application — ${application.businessName}`,
     html: `
       <div style="font-family:Arial,sans-serif;color:#101828;line-height:1.7;max-width:680px;margin:auto">
-        <h2>New MECATREX provider application</h2>
+        <h2>New BandWhip provider application</h2>
         <p>A new service provider has submitted an application for review.</p>
         <div style="padding:18px;background:#f4f7fb;border:1px solid #d7e2ef;border-radius:12px">
           <p><strong>Type:</strong> ${escapeHtml(type)}</p>
@@ -168,7 +168,7 @@ export async function sendAdminProviderApplicationEmail(
         </div>
         <p>Verify the company's NEQ, submitted photo, opening hours and services before making a decision.</p>
         <p style="margin:24px 0">
-          <a href="${escapeHtml(appUrl("/admin?view=review#applications"))}" style="display:inline-block;background:#4771A6;padding:13px 20px;border-radius:10px;color:#fff;text-decoration:none;font-weight:bold">
+          <a href="${escapeHtml(appUrl("/admin?view=review#applications"))}" style="display:inline-block;background:#FF5B13;padding:13px 20px;border-radius:10px;color:#fff;text-decoration:none;font-weight:bold">
             Review provider application
           </a>
         </p>
@@ -183,19 +183,19 @@ export async function sendProviderDecisionEmail(
 ) {
   const copy = {
     approved: {
-      subject: "Your MECATREX provider account has been approved",
-      heading: "Welcome to MECATREX!",
+      subject: "Your BandWhip provider account has been approved",
+      heading: "Welcome to BandWhip!",
       description:
         "Your business has been approved. Your submitted photo, business information, selected services and opening hours are already saved in your account. You can now set the fixed prices and estimated durations for your services, then publish your listing when ready.",
     },
     needs_information: {
-      subject: "More information is needed for your MECATREX application",
+      subject: "More information is needed for your BandWhip application",
       heading: "More information requested",
       description:
-        "MECATREX needs additional information before making a decision. Please read the message below. Your application remains under review until the required information has been received.",
+        "BandWhip needs additional information before making a decision. Please read the message below. Your application remains under review until the required information has been received.",
     },
     rejected: {
-      subject: "Update regarding your MECATREX application",
+      subject: "Update regarding your BandWhip application",
       heading: "Application update",
       description:
         "We are unable to approve your business application at this time. Your listing will not be published. Please review the decision below.",
@@ -217,16 +217,16 @@ export async function sendProviderDecisionEmail(
         <p><strong>Status:</strong> ${escapeHtml(data.status.replaceAll("_", " "))}</p>
         ${
           message
-            ? `<div style="padding:16px;background:#f4f7fb;border-radius:12px"><strong>Message from MECATREX:</strong><p style="white-space:pre-wrap">${escapeHtml(message)}</p></div>`
+            ? `<div style="padding:16px;background:#f4f7fb;border-radius:12px"><strong>Message from BandWhip:</strong><p style="white-space:pre-wrap">${escapeHtml(message)}</p></div>`
             : ""
         }
         <p style="margin:24px 0">
-          <a href="${escapeHtml(appUrl("/account"))}" style="display:inline-block;background:#4771A6;padding:13px 20px;border-radius:10px;color:white;text-decoration:none;font-weight:bold">
-            Open your MECATREX account
+          <a href="${escapeHtml(appUrl("/account"))}" style="display:inline-block;background:#FF5B13;padding:13px 20px;border-radius:10px;color:white;text-decoration:none;font-weight:bold">
+            Open your BandWhip account
           </a>
         </p>
         <p>If you have questions, reply to this email.</p>
-        <p>— MECATREX</p>
+        <p>— BandWhip</p>
       </div>
     `,
   });
@@ -265,7 +265,7 @@ export async function sendBookingEmailNotifications(
 
   const clientMessage = cancelled
     ? data.event === "provider_cancelled"
-      ? `${data.providerName} cancelled your appointment. You can book another garage on MECATREX.`
+      ? `${data.providerName} cancelled your appointment. You can book another garage on BandWhip.`
       : data.freeCancellation
         ? "You cancelled within 24 hours of booking. No cancellation warning was counted."
         : `Cancellation warning: the booking was cancelled. You have ${data.cancellationRemaining ?? 0} of 3 chargeable cancellations remaining. ${data.cancellationRemaining === 0 ? "Your account is suspended from making new bookings. Contact support." : ""}`
@@ -287,7 +287,7 @@ export async function sendBookingEmailNotifications(
     link: string
   ) => `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#101828;line-height:1.6">
-      <p style="color:#4771A6;font-weight:bold;letter-spacing:2px">MECATREX</p>
+      <p style="color:#FF5B13;font-weight:bold;letter-spacing:2px">BandWhip</p>
       <h1 style="font-size:24px">${escapeHtml(title)}</h1>
       <p>${escapeHtml(message)}</p>
       <div style="padding:18px;background:#f5f7fa;border-radius:14px">
@@ -308,8 +308,8 @@ export async function sendBookingEmailNotifications(
             : "Payment is handled at the garage. No online charge was made."
       }</p>
       <p style="margin-top:24px">
-        <a href="${escapeHtml(appUrl(link))}" style="background:#4771A6;padding:14px 20px;border-radius:12px;color:white;text-decoration:none;font-weight:bold">
-          Open your MECATREX account
+        <a href="${escapeHtml(appUrl(link))}" style="background:#FF5B13;padding:14px 20px;border-radius:12px;color:white;text-decoration:none;font-weight:bold">
+          Open your BandWhip account
         </a>
       </p>
     </div>`;
@@ -319,8 +319,8 @@ export async function sendBookingEmailNotifications(
       toEmail: data.clientEmail,
       toName: data.clientName,
       subject: cancelled
-        ? "MECATREX appointment cancelled"
-        : data.towingPending ? "MECATREX garage reserved · towing pending" : "MECATREX booking confirmed",
+        ? "BandWhip appointment cancelled"
+        : data.towingPending ? "BandWhip garage reserved · towing pending" : "BandWhip booking confirmed",
       html: mail(
         cancelled ? "Appointment update" : data.towingPending ? "Awaiting towing acceptance" : "Your booking is confirmed",
         clientMessage,
@@ -331,8 +331,8 @@ export async function sendBookingEmailNotifications(
       toEmail: data.providerEmail,
       toName: data.providerName,
       subject: cancelled
-        ? "MECATREX booking cancelled"
-        : "New MECATREX garage booking",
+        ? "BandWhip booking cancelled"
+        : "New BandWhip garage booking",
       html: mail(
         cancelled ? "Appointment cancelled" : data.towingPending ? "Garage reserved · towing pending" : "You have a new appointment",
         providerMessage,
@@ -349,7 +349,7 @@ export async function sendBookingEmailNotifications(
 
   if (failed > 0) {
     console.error(
-      "MECATREX booking emails failed for",
+      "BandWhip booking emails failed for",
       failed,
       "recipient(s)."
     );
@@ -382,11 +382,11 @@ export async function sendBookingReminderEmail(data: BookingReminderEmail) {
   return sendBrevoEmail({
     toEmail: data.clientEmail,
     toName: data.clientName,
-    subject: "MECATREX reminder: upcoming garage appointment",
+    subject: "BandWhip reminder: upcoming garage appointment",
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:580px;margin:auto;padding:28px;color:#101828;line-height:1.6">
-        <p style="font-weight:800;letter-spacing:2px;color:#4771A6">MECATREX</p>
-        <p style="color:#4771A6;font-weight:700">Your car repair made easier</p>
+        <p style="font-weight:800;letter-spacing:2px;color:#FF5B13">BandWhip</p>
+        <p style="color:#FF5B13;font-weight:700">Your car repair made easier</p>
         <h1 style="font-size:26px;margin:18px 0">Your appointment is coming up!</h1>
         <p>Hi ${escapeHtml(data.clientName)}, this is your reminder for your upcoming garage appointment.</p>
         <div style="background:#EDF3FA;border-radius:16px;padding:20px;margin:22px 0">
@@ -399,11 +399,11 @@ export async function sendBookingReminderEmail(data: BookingReminderEmail) {
         ${data.towingPending
           ? '<p style="background:#FFFAE7;padding:12px;border-radius:10px">Your garage slot is held, but a towing company has not accepted the trip yet. Please check your account for updates.</p>'
           : ""}
-        <p style="background:#F4F7FB;padding:12px;border-radius:10px">Two hours before the appointment, your drop-off checklist will appear in MECATREX. At the garage, ask the staff for the one-time handoff code. Photos are optional.</p>
+        <p style="background:#F4F7FB;padding:12px;border-radius:10px">Two hours before the appointment, your drop-off checklist will appear in BandWhip. At the garage, ask the staff for the one-time handoff code. Photos are optional.</p>
         <p style="margin-top:26px">
-          <a href="${escapeHtml(appUrl("/account"))}" style="display:inline-block;border-radius:11px;background:#4771A6;color:#fff;padding:13px 20px;text-decoration:none;font-weight:700">View my appointment</a>
+          <a href="${escapeHtml(appUrl("/account"))}" style="display:inline-block;border-radius:11px;background:#FF5B13;color:#fff;padding:13px 20px;text-decoration:none;font-weight:700">View my appointment</a>
         </p>
-        <p style="font-size:12px;color:#667085;margin-top:25px">This is a transactional reminder for your confirmed MECATREX reservation.</p>
+        <p style="font-size:12px;color:#667085;margin-top:25px">This is a transactional reminder for your confirmed BandWhip reservation.</p>
       </div>
     `,
   });
@@ -421,10 +421,10 @@ export async function sendMecatrexNotice({
     toName: name,
     subject,
     html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#101828;line-height:1.6">
-      <p style="color:#4771A6;font-weight:bold;letter-spacing:2px">MECATREX</p>
+      <p style="color:#FF5B13;font-weight:bold;letter-spacing:2px">BandWhip</p>
       <h1 style="font-size:23px">${escapeHtml(subject)}</h1>
       <p>${escapeHtml(message)}</p>
-      <p><a href="${escapeHtml(appUrl(accountPath))}" style="display:inline-block;background:#14263A;color:white;padding:12px 20px;border-radius:10px;text-decoration:none">Open MECATREX</a></p>
+      <p><a href="${escapeHtml(appUrl(accountPath))}" style="display:inline-block;background:#20262D;color:white;padding:12px 20px;border-radius:10px;text-decoration:none">Open BandWhip</a></p>
     </div>`,
   });
 }

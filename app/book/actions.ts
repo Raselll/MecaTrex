@@ -88,7 +88,7 @@ async function notifyAvailableTowingProviders(bookingId: string) {
       sendMecatrexNotice({
         email: recipient.email,
         name: recipient.company_name,
-        subject: "MECATREX · New towing opportunity",
+        subject: "BandWhip · New towing opportunity",
         message: `A client needs towing for ${recipient.service_name} at ${recipient.garage_name} on ${appointment(recipient.appointment_at)}. Pickup address: ${recipient.pickup_address}. Open Towing jobs to accept or decline. The first eligible company to accept gets the job.`,
         accountPath: "/account",
       })
@@ -166,7 +166,7 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
     const rpcName = serviceIds.length > 1
       ? "book_garage_services"
       : wantsTowing ? "book_garage_service_with_towing" : "book_garage_service";
-    console.error("MECATREX booking creation was rejected", {
+    console.error("BandWhip booking creation was rejected", {
       rpcName,
       code: error?.code ?? "UNKNOWN",
       message: error?.message ?? "No booking ID returned",
@@ -254,7 +254,7 @@ export async function cancelGarageBooking(bookingId: string):
       await sendMecatrexNotice({
         email: tow.towing_email,
         name: tow.towing_name,
-        subject: "MECATREX · Accepted towing trip cancelled",
+        subject: "BandWhip · Accepted towing trip cancelled",
         message: `The ${tow.service_name} garage appointment at ${tow.garage_name} for ${tow.client_name} was cancelled. Your towing assignment is also cancelled and will disappear from your calendar. No towing cancellation penalty applies because the garage or client cancelled.`,
       });
     }
@@ -265,7 +265,7 @@ export async function cancelGarageBooking(bookingId: string):
   revalidatePath("/account");
   revalidatePath("/");
   return { ok: true, message: actualProviderCancellation
-    ? remaining === 0 ? "Third garage cancellation: your listing is suspended. Contact MECATREX." : `Garage cancellation warning. ${remaining} of 3 cancellations remaining.`
+    ? remaining === 0 ? "Third garage cancellation: your listing is suspended. Contact BandWhip." : `Garage cancellation warning. ${remaining} of 3 cancellations remaining.`
     : freeCancellation ? "Booking cancelled within the 24-hour grace period. No strike was counted."
     : remaining === 0 ? "Cancellation warning 3/3. Your account is now suspended from making new bookings."
     : `Cancellation warning. ${remaining} of 3 late cancellations remain.`,

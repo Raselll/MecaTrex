@@ -78,7 +78,7 @@ export default function BookingNotifications({ userId }: { userId: string }) {
         aria-expanded={open}
         aria-controls="mecatrex-notification-popover"
         onClick={() => setOpen((current) => !current)}
-        className="relative flex h-11 w-11 items-center justify-center rounded-[14px] border border-[#D4DFEA] bg-white text-[22px] shadow-sm transition hover:border-[#4771A6] hover:bg-[#EDF3FA]"
+        className="relative flex h-11 w-11 items-center justify-center rounded-[14px] border border-[#D4DFEA] bg-white text-[22px] shadow-sm transition hover:border-[#FF5B13] hover:bg-[#FFF1E8]"
       >
         <span aria-hidden="true">🔔</span>
         {unread > 0 && (
@@ -91,7 +91,7 @@ export default function BookingNotifications({ userId }: { userId: string }) {
       {open && (
         <div
           id="mecatrex-notification-popover"
-          className="absolute right-0 top-[calc(100%+12px)] z-50 w-[min(88vw,390px)] overflow-hidden rounded-[20px] border border-[#D5DFEA] bg-white shadow-[0_22px_70px_rgba(16,24,40,0.20)]"
+          className="absolute right-0 top-[calc(100%+12px)] z-50 w-[min(88vw,390px)] overflow-hidden rounded-[20px] border border-[#E9DED5] bg-white shadow-[0_22px_70px_rgba(16,24,40,0.20)]"
           role="region"
           aria-label="Notifications"
         >
@@ -103,7 +103,7 @@ export default function BookingNotifications({ userId }: { userId: string }) {
               </p>
             </div>
             <div className="flex items-center gap-1">
-              <button type="button" onClick={() => void refresh()} className="rounded-lg px-2.5 py-2 text-[11px] font-bold text-[#315C91] hover:bg-[#E8F0FA]">
+              <button type="button" onClick={() => void refresh()} className="rounded-lg px-2.5 py-2 text-[11px] font-bold text-[#DD4E0D] hover:bg-[#E8F0FA]">
                 Refresh
               </button>
               <button type="button" onClick={() => setOpen(false)} aria-label="Close notifications" className="rounded-lg px-2.5 py-2 text-[16px] font-bold text-[#475467] hover:bg-[#E8F0FA]">
@@ -133,7 +133,7 @@ export default function BookingNotifications({ userId }: { userId: string }) {
                       <p className="mt-2 text-[10px] text-[#98A2B3]">{new Date(alert.created_at).toLocaleString("en-CA")}</p>
                     </div>
                     {!alert.read_at && (
-                      <button type="button" onClick={() => void markRead(alert.id)} className="shrink-0 rounded-lg border border-[#C4D6EC] bg-white px-2.5 py-2 text-[10px] font-bold text-[#315C91] hover:bg-[#EDF3FA]">
+                      <button type="button" onClick={() => void markRead(alert.id)} className="shrink-0 rounded-lg border border-[#C4D6EC] bg-white px-2.5 py-2 text-[10px] font-bold text-[#DD4E0D] hover:bg-[#FFF1E8]">
                         Mark read
                       </button>
                     )}
@@ -152,13 +152,13 @@ export default function BookingNotifications({ userId }: { userId: string }) {
             aria-modal="true"
             aria-labelledby="mecatrex-reminder-title"
             aria-describedby="mecatrex-reminder-description"
-            className="w-full max-w-[470px] rounded-[25px] border border-[#D5DFEA] bg-white p-6 shadow-[0_30px_90px_rgba(0,0,0,0.2)] sm:p-8"
+            className="w-full max-w-[470px] rounded-[25px] border border-[#E9DED5] bg-white p-6 shadow-[0_30px_90px_rgba(0,0,0,0.2)] sm:p-8"
           >
-            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#EDF3FA] text-[30px]">
+            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFF1E8] text-[30px]">
               📅
             </div>
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#4771A6]">
-              MECATREX appointment reminder
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#FF5B13]">
+              BandWhip appointment reminder
             </p>
             <h2 id="mecatrex-reminder-title" className="mt-2 text-[24px] font-extrabold text-[#101828]">
               Your appointment is coming up!
@@ -173,7 +173,7 @@ export default function BookingNotifications({ userId }: { userId: string }) {
               type="button"
               autoFocus
               onClick={() => dismissReminder(dueReminder.id)}
-              className="mt-6 w-full rounded-[13px] bg-[#4771A6] px-5 py-3.5 text-[14px] font-extrabold text-white hover:bg-[#315C91]"
+              className="mt-6 w-full rounded-[13px] bg-[#FF5B13] px-5 py-3.5 text-[14px] font-extrabold text-white hover:bg-[#DD4E0D]"
             >
               Got it — thanks!
             </button>

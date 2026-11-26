@@ -46,19 +46,19 @@ async function sendPartyNotices(
   const cancelled = event === "cancelled";
   const messages = cancelled
     ? [
-      { email: data.client_email, name: data.client_name, subject: "MECATREX · Towing provider cancelled",
+      { email: data.client_email, name: data.client_name, subject: "BandWhip · Towing provider cancelled",
         message: `${data.towing_name} cancelled the towing portion of your booking. Your garage time remains reserved, but the full trip is pending another towing company. ${details}` },
-      { email: data.garage_email, name: data.garage_name, subject: "MECATREX · Towing company withdrew",
+      { email: data.garage_email, name: data.garage_name, subject: "BandWhip · Towing company withdrew",
         message: `${data.towing_name} withdrew the accepted towing trip for ${data.client_name}. The garage booking stays reserved while dispatch reopens. ${details}` },
-      { email: data.towing_email, name: data.towing_name, subject: "MECATREX · Towing cancellation warning",
-        message: `Your towing cancellation has been counted. ${remaining ?? 0} cancellation(s) remain before suspension. ${remaining === 0 ? "Your towing listing is now suspended. Contact MECATREX." : ""} ${details}` },
+      { email: data.towing_email, name: data.towing_name, subject: "BandWhip · Towing cancellation warning",
+        message: `Your towing cancellation has been counted. ${remaining ?? 0} cancellation(s) remain before suspension. ${remaining === 0 ? "Your towing listing is now suspended. Contact BandWhip." : ""} ${details}` },
     ]
     : [
-      { email: data.client_email, name: data.client_name, subject: "MECATREX · Garage and towing confirmed",
+      { email: data.client_email, name: data.client_name, subject: "BandWhip · Garage and towing confirmed",
         message: `${data.towing_name} has accepted your towing request. Your full garage-and-towing booking is confirmed. Contact the towing company to agree on pickup time and towing charges. ${details}` },
-      { email: data.garage_email, name: data.garage_name, subject: "MECATREX · Towing confirmed for your booking",
+      { email: data.garage_email, name: data.garage_name, subject: "BandWhip · Towing confirmed for your booking",
         message: `${data.towing_name} accepted the towing job for ${data.client_name}. The full booking is now confirmed. ${details}` },
-      { email: data.towing_email, name: data.towing_name, subject: "MECATREX · Your towing job is confirmed",
+      { email: data.towing_email, name: data.towing_name, subject: "BandWhip · Your towing job is confirmed",
         message: `You accepted towing for ${data.client_name}. Coordinate pickup and your towing price with the client. ${details}` },
     ];
 
@@ -66,7 +66,7 @@ async function sendPartyNotices(
     sendMecatrexNotice({ ...item, accountPath: "/account" })
   ));
   if (outcomes.some((item) => item.status === "rejected")) {
-    console.error("Some MECATREX towing participant emails could not be delivered.");
+    console.error("Some BandWhip towing participant emails could not be delivered.");
   }
 }
 
@@ -88,7 +88,7 @@ async function notifyAvailableCompanies(bookingId: string) {
     const results = await Promise.allSettled(rows.slice(i, i + 10).map((row) =>
       sendMecatrexNotice({
         email: row.email, name: row.company_name,
-        subject: "MECATREX · Towing opportunity reopened",
+        subject: "BandWhip · Towing opportunity reopened",
         message: `A towing trip is available for ${row.service_name} at ${row.garage_name}, arriving ${appointmentTime(row.appointment_at)}. Pickup: ${row.pickup_address}. Open Towing jobs to accept or decline.`,
       })
     ));
@@ -148,7 +148,7 @@ export async function cancelAcceptedTowingJob(requestId: string): Promise<Action
     ok: true,
     remaining: typeof remaining === "number" ? remaining : undefined,
     message: remaining === 0
-      ? "Third towing cancellation: your listing is suspended. Contact MECATREX."
+      ? "Third towing cancellation: your listing is suspended. Contact BandWhip."
       : `Towing cancellation warning. ${remaining} cancellation(s) remain before suspension. The job was reopened to other companies.`,
   };
 }

@@ -52,7 +52,7 @@ export default function ServiceNamePicker({
         <div className="flex items-center gap-2">
           <span
             aria-hidden="true"
-            className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-[12px] bg-[#EDF3FA] text-[26px]"
+            className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-[12px] bg-[#FFF1E8] text-[26px]"
           >
             {selectedService?.icon ?? (providerType === "towing" ? "🚛" : "🔧")}
           </span>
@@ -71,7 +71,7 @@ export default function ServiceNamePicker({
                 onChange(next);
               }
             }}
-            className="h-[48px] min-w-0 w-full rounded-[13px] border border-[#667085] bg-white px-3 text-[14px] font-semibold outline-none focus:border-[#4771A6]"
+            className="h-[48px] min-w-0 w-full rounded-[13px] border border-[#667085] bg-white px-3 text-[14px] font-semibold outline-none focus:border-[#FF5B13]"
           >
             <option value="">{providerType === "towing" ? "Select a towing service" : "Select a service"}</option>
 
@@ -111,7 +111,7 @@ export default function ServiceNamePicker({
               onChange(event.target.value)
             }
             placeholder="Enter your service"
-            className="h-[48px] w-full rounded-[13px] border border-[#667085] bg-white px-4 text-[14px] outline-none focus:border-[#4771A6]"
+            className="h-[48px] w-full rounded-[13px] border border-[#667085] bg-white px-4 text-[14px] outline-none focus:border-[#FF5B13]"
           />
         </label>
       )}

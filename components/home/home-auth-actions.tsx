@@ -58,7 +58,7 @@ export default function HomeAuthActions() {
   }
 
   return (
-    <div className="flex items-center gap-2 sm:gap-4">
+    <div className="bw-auth-actions flex items-center gap-2 sm:gap-4">
       <Link href="/login" className="rounded-xl px-3 py-3 text-[13px] font-semibold text-[#344054] transition hover:bg-[#F2F4F7] sm:px-6 sm:text-[17px]">
         Log in
       </Link>

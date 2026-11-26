@@ -254,7 +254,7 @@ export async function signup(
 
     if (businessCity !== "Montreal" || businessProvince !== "Quebec") {
       return signupError(
-        "MECATREX currently supports Montreal, Quebec."
+        "BandWhip currently supports Montreal, Quebec."
       );
     }
 
@@ -509,7 +509,7 @@ export async function signup(
       adminEmailAccepted = true;
     } catch (emailError) {
       console.error(
-        "MECATREX admin application notification failed:",
+        "BandWhip admin application notification failed:",
         emailError
       );
     }
