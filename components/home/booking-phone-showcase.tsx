@@ -51,7 +51,7 @@ export default function BookingPhoneShowcase() {
         <div className="bw-phone-stage" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setPaused(false); }}>
           <div className="bw-phone-stage-ring" aria-hidden="true" />
           <div className="bw-phone-side-card bw-phone-side-left" aria-hidden="true"><span>01</span><strong>Find your service.</strong><small>Easy from the start</small></div>
-          <div className="bw-phone-side-card bw-phone-side-right" aria-hidden="true"><span>✓</span><strong>You're booked.</strong><small>Without the phone calls</small></div>
+          <div className="bw-phone-side-card bw-phone-side-right" aria-hidden="true"><span>✓</span><strong>You&apos;re booked.</strong><small>Without the phone calls</small></div>
           <div className="bw-phone-device">
             <div className="bw-phone-bezel">
               <div className="bw-phone-island" aria-hidden="true" />
