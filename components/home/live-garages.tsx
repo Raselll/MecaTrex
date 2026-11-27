@@ -1,6 +1,7 @@
 
 "use client";
 
+import { orderServices } from "@/lib/service-display-order";
 import { PublicProviderPreferences } from "@/components/provider/public-preferences";
 import {
   useEffect,
@@ -51,6 +52,7 @@ type Garage = {
   image_path: string | null;
   payment_methods: string[];
   spoken_languages: string[];
+  service_display_order: string[];
   latitude: number | null;
   longitude: number | null;
   provider_services: Service[] | null;
@@ -157,14 +159,14 @@ function closureDate(value: string) {
 }
 
 function activeFixedServices(garage: Garage) {
-  return (garage.provider_services ?? []).filter(
+  return orderServices((garage.provider_services ?? []).filter(
     (service) =>
       service.is_active &&
       service.pricing_type === "fixed" &&
       service.price_cents !== null &&
       service.duration_minutes !== null &&
       service.duration_minutes > 0
-  );
+  ), garage.service_display_order);
 }
 
 /* =========================================================
@@ -613,6 +615,7 @@ export default function LiveGarages() {
           image_path,
           payment_methods,
           spoken_languages,
+          service_display_order,
           latitude,
           longitude,
           booking_suspended,
@@ -1186,7 +1189,7 @@ export default function LiveGarages() {
 
                   const displayed = matched.slice(
                     0,
-                    selectedServices.length > 0 ? 3 : 2
+                    3
                   );
 
                   const chosen =

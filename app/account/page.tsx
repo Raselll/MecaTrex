@@ -252,7 +252,7 @@ export default async function AccountPage({
 
   if (profile.account_type === "provider") {
     const providerSelect =
-      "id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, image_path, payment_methods, spoken_languages, latitude, longitude, is_listing_active, is_removed, provider_cancellation_count, booking_suspended";
+      "id, owner_id, provider_type, business_name, address_line1, city, province, postal_code, status, business_description, public_email, public_phone, website, image_path, payment_methods, spoken_languages, service_display_order, latitude, longitude, is_listing_active, is_removed, provider_cancellation_count, booking_suspended";
 
     let {
       data: provider,

@@ -1,6 +1,7 @@
 
 "use client";
 
+import { orderServices } from "@/lib/service-display-order";
 import { PAYMENT_OPTIONS, LANGUAGE_OPTIONS, PaymentMark } from "@/components/provider/public-preferences";
 import {
   type FormEvent,
@@ -44,6 +45,7 @@ export type ProviderRecord = {
   image_path: string | null;
   payment_methods: string[];
   spoken_languages: string[];
+  service_display_order: string[];
   latitude: number | null;
   longitude: number | null;
   is_listing_active: boolean;
@@ -152,6 +154,9 @@ export default function ProviderDashboard({
   const [services, setServices] =
     useState(initialServices);
 
+  const [draggedService, setDraggedService] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [orderDraft, setOrderDraft] = useState<string[] | null>(null);
   const [savingProfile, setSavingProfile] =
     useState(false);
 
@@ -197,6 +202,31 @@ export default function ProviderDashboard({
         service.duration_minutes
       )
   );
+
+  const orderedActiveServices = orderServices(activeServices, orderDraft ?? provider.service_display_order);
+  function moveService(id:string, target:number) {
+    if (savingOrder) return;
+    const ids = orderedActiveServices.map(s=>s.id);
+    const from = ids.indexOf(id);
+    if(from < 0 || target < 0 || target >= ids.length || from === target) return;
+    ids.splice(from,1);
+    ids.splice(target,0,id);
+    setOrderDraft(ids);
+  }
+  async function saveDisplayOrder() {
+    setSavingOrder(true); setError(""); setMessage("");
+    try {
+      const ids = orderedActiveServices.map(s=>s.id);
+      const {data,error:problem} = await supabase.from("service_providers")
+        .update({service_display_order:ids}).eq("id",provider.id)
+        .select("service_display_order").single();
+      if(problem || !data) {setError(problem?.message ?? "Could not save service order."); return;}
+      setProvider(current=>({...current,service_display_order:data.service_display_order}));
+      setOrderDraft(null);
+      setMessage("Service display order saved.");
+    } catch {setError("Could not save service order.");}
+    finally {setSavingOrder(false);}
+  }
 
   const canPublish =
     provider.status === "approved" &&
@@ -1278,6 +1308,27 @@ export default function ProviderDashboard({
           </button>
         </form>
 
+        {orderedActiveServices.length > 0 && <section className="mt-6 rounded-2xl border border-[#E4E7EC] bg-[#F8FAFC] p-4">
+          <h3 className="text-base font-extrabold text-[#101828]">Public service display order</h3>
+          <p className="mt-1 text-xs leading-5 text-[#667085]">Drag services or use the arrows to reorder. The first three appear on your public card; the rest appear under View all services.</p>
+          <div className="mt-4 space-y-2">
+            {orderedActiveServices.map((service,index)=><div key={service.id}>
+              {(index===0 || index===3) && <p className="mb-2 mt-3 text-[11px] font-bold uppercase tracking-wide text-[#667085]">{index===0?"Featured on your card":"Additional services"}</p>}
+              <div onDragOver={event=>{if(!savingOrder)event.preventDefault();}} onDrop={event=>{event.preventDefault();if(draggedService)moveService(draggedService,index);setDraggedService(null);}} className={`flex min-w-0 items-center gap-2 rounded-xl border bg-white p-3 ${draggedService===service.id?"border-[#FF5B13] opacity-60":"border-[#E4E7EC]"}`}>
+                <span draggable={!savingOrder} onDragStart={event=>{setDraggedService(service.id);event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain",service.id);}} onDragEnd={()=>setDraggedService(null)} title="Drag to reorder" className="cursor-grab select-none text-xl text-[#98A2B3]" aria-hidden="true">⠿</span>
+                <span className="w-5 shrink-0 text-xs font-bold text-[#98A2B3]">{index+1}</span>
+                <span className="min-w-0 flex-1 break-words text-sm font-bold">{service.name}</span>
+                <span className="shrink-0 text-xs font-semibold text-[#667085]">{formatPrice(service)}</span>
+                <button type="button" disabled={savingOrder||index===0} aria-label={`Move ${service.name} up`} onClick={()=>moveService(service.id,index-1)} className="rounded-md border border-[#E4E7EC] px-2 py-1 text-sm disabled:opacity-30">↑</button>
+                <button type="button" disabled={savingOrder||index===orderedActiveServices.length-1} aria-label={`Move ${service.name} down`} onClick={()=>moveService(service.id,index+1)} className="rounded-md border border-[#E4E7EC] px-2 py-1 text-sm disabled:opacity-30">↓</button>
+              </div>
+            </div>)}
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button type="button" disabled={savingOrder||orderDraft===null} onClick={()=>void saveDisplayOrder()} className="rounded-xl bg-[#FF5B13] px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">{savingOrder?"Saving…":"Save display order"}</button>
+            {orderDraft!==null&&<button type="button" disabled={savingOrder} onClick={()=>setOrderDraft(null)} className="text-xs font-semibold text-[#667085]">Discard changes</button>}
+          </div>
+        </section>}
         <div className="mt-6 space-y-4">
           {services.length === 0 ? (
             <div className="rounded-[18px] border border-dashed border-[#98A2B3] p-8 text-center text-[14px] text-[#667085]">

@@ -1,3 +1,4 @@
+import { orderServices } from "@/lib/service-display-order";
 import { PublicProviderPreferences } from "@/components/provider/public-preferences";
 import Image from "next/image";
 import Link from "next/link";
@@ -30,7 +31,7 @@ export default async function GarageBookingPage({
   const [{ data: { user } }, { data: garage }] = await Promise.all([
     supabase.auth.getUser(),
     supabase.from("service_providers")
-      .select("id,business_name,business_description,address_line1,city,province,postal_code,public_phone,public_email,website,image_path,payment_methods,spoken_languages,status,is_listing_active,provider_type,booking_suspended")
+      .select("id,business_name,business_description,address_line1,city,province,postal_code,public_phone,public_email,website,image_path,payment_methods,spoken_languages,service_display_order,status,is_listing_active,provider_type,booking_suspended")
       .eq("id", providerId)
       .eq("provider_type", "garage")
       .eq("status", "approved")
@@ -59,9 +60,9 @@ export default async function GarageBookingPage({
         .select("booking_banned").eq("client_id", user.id).maybeSingle()
     : { data: null };
 
-  const services = ((rawServices ?? []) as PublicService[])
+  const services = orderServices(((rawServices ?? []) as PublicService[])
     .filter((s) => s.price_cents !== null && s.duration_minutes !== null && s.duration_minutes > 0)
-    .map((s) => ({ id: s.id, name: s.name, description: s.description, price_cents: s.price_cents, duration_minutes: s.duration_minutes }));
+    .map((s) => ({ id: s.id, name: s.name, description: s.description, price_cents: s.price_cents, duration_minutes: s.duration_minutes })), garage.service_display_order);
   const hours = (rawHours ?? []) as BusinessHour[];
   const reviews = rawReviews ?? [];
   const rating = reviews.length > 0 ? (reviews.reduce((sum, review) => sum + review.stars, 0) / reviews.length).toFixed(1) : null;
