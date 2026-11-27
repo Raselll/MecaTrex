@@ -1008,7 +1008,7 @@ export default function ProviderDashboard({
           </p>
 
           <p className="mt-1 text-center text-[11px] text-[#98A2B3]">
-            JPG, PNG or WebP · maximum 5 MB.
+            Landscape photo recommended (16:9) · JPG, PNG or WebP · maximum 5 MB.
           </p>
         </section>
 

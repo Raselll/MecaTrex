@@ -351,7 +351,7 @@ export default function SignupForm({
       (Boolean(photo) &&
         /^\d{10}$/.test(businessNEQ) &&
         PHONE_REGEX.test(businessPhone) &&
-        applicationDescription.trim().length >= 30 &&
+        
         applicationServices.length > 0 &&
         (!otherServiceEnabled || Boolean(otherService.trim()))));
 
@@ -361,7 +361,7 @@ export default function SignupForm({
         ["Contact", "Who are we speaking with?", "Enter your personal contact information."],
         ["Business", "Where is your business located?", "Tell us about your business and its address."],
         ["Verification", "Verify your business", "Provide your business credentials and a photo."],
-        ["Services", "What services do you provide?", "Select the services you offer and describe your business."],
+        ["Services", "What services do you provide?", "Select the services you offer."],
         ["Hours", "When are you open?", "Set your regular business hours."],
         ["Security", "Secure your account", "Create a password and review the terms before submitting."],
       ]
@@ -388,7 +388,7 @@ export default function SignupForm({
     if (index === 1 && (!PHONE_REGEX.test(primaryPhone) || (secondaryPhone && !PHONE_REGEX.test(secondaryPhone)))) return "Enter a valid phone number (514-555-1234).";
     if (accountType === "provider") {
       if (index === 3 && (!photo || !/^\d{10}$/.test(businessNEQ) || !PHONE_REGEX.test(businessPhone))) return "Add a valid business photo, NEQ and business phone.";
-      if (index === 4 && (applicationDescription.trim().length < 30 || !applicationServices.length || (otherServiceEnabled && !otherService.trim()))) return "Select at least one service and enter a description of at least 30 characters.";
+      if (index === 4 && (!applicationServices.length || (otherServiceEnabled && !otherService.trim()))) return "Select at least one service.";
       if (index === 5 && !validateBusinessHours(businessHours)) return "Check your opening and closing hours.";
     }
     if (index === lastStep && (!passwordValid || password !== confirmPassword)) return "Use a valid password and make sure both passwords match.";
@@ -717,7 +717,7 @@ export default function SignupForm({
             </label>
 
             <p className="mt-2 text-center text-[11px] text-[#667085]">
-              JPG, PNG or WebP · Maximum 5 MB
+              Landscape photo recommended (16:9) · JPG, PNG or WebP · Maximum 5 MB
             </p>
             {photo && (
               <p className="mt-2 break-all text-center text-[12px] font-semibold text-[#027A48]">
@@ -790,11 +790,9 @@ export default function SignupForm({
             />
 
             <div className="mt-5">
-              <Field label="Describe your business and services *">
+              <Field label="Describe your business and services (optional)">
                 <textarea
                   name="application_description"
-                  required
-                  minLength={30}
                   maxLength={1500}
                   rows={4}
                   value={applicationDescription}

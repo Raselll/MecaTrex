@@ -218,10 +218,11 @@ export default function WhenPicker() {
       <button
         type="button"
         onClick={openPicker}
+        style={activeSelection ? { paddingBottom: 32 } : undefined}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={activeSelection ? `When: ${formatSelection(activeSelection)}. Change selection` : "Choose when you need service"}
-        className={`bw-when-trigger flex min-h-[110px] w-full flex-col items-center justify-center rounded-[20px] px-4 py-4 text-center outline-none transition-transform focus-visible:ring-4 focus-visible:ring-[#FF5B13]/20 ${activeSelection ? "max-sm:-translate-y-2 sm:group-hover:-translate-y-2 sm:group-focus-within:-translate-y-2" : ""}`}
+        className={`bw-when-trigger flex min-h-[110px] w-full flex-col items-center justify-center rounded-[20px] px-4 py-4 text-center outline-none transition-transform focus-visible:ring-4 focus-visible:ring-[#FF5B13]/20 `}
       >
         <span className="bw-search-icon" aria-hidden="true">03</span>
         <span className="bw-search-field-copy">
@@ -232,7 +233,7 @@ export default function WhenPicker() {
       </button>
 
       {activeSelection && (
-        <div className="absolute inset-x-3 bottom-2 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-center opacity-100 transition-opacity sm:pointer-events-none sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 sm:group-focus-within:pointer-events-auto sm:group-focus-within:opacity-100">
+        <div className="absolute inset-x-3 bottom-1 z-10 flex items-center justify-center gap-3 opacity-100 transition-opacity sm:pointer-events-none sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 sm:group-focus-within:pointer-events-auto sm:group-focus-within:opacity-100" style={{position:"absolute",bottom:4,top:"auto",height:24}}>
           <button
             type="button"
             onClick={openPicker}
@@ -329,7 +330,7 @@ export default function WhenPicker() {
                     </div>
                   ))}
                   {calendarDays.map((day) => {
-                    const disabled = day < today || day > maxDate || day.getMonth() !== month.getMonth();
+                    const disabled = day < today || day > maxDate;
                     const iso = toIsoDate(day);
                     const selected = draftDate === iso;
                     return (
@@ -340,6 +341,7 @@ export default function WhenPicker() {
                         onClick={() => {
                           setDraftDate(iso);
                           setDraftTime("");
+                          if (day.getMonth() !== month.getMonth() || day.getFullYear() !== month.getFullYear()) setMonth(new Date(day.getFullYear(), day.getMonth(), 1));
                         }}
                         className={`h-10 rounded-[11px] text-[13px] font-semibold transition ${selected ? "bg-[#FF5B13] text-white" : disabled ? "text-[#D0D5DD]" : sameDay(day, today) ? "bg-[#FFF1E8] text-[#DD4E0D] hover:bg-[#DCE8F5]" : "text-[#344054] hover:bg-[#F2F4F7]"}`}
                       >

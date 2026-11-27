@@ -71,10 +71,10 @@ export default async function GarageBookingPage({
     <main className="bw-booking-page min-h-screen bg-[#FAF8F5] pb-20 text-[#101828]">
       <header className="border-b border-[#E4E7EC] bg-white">
         <div className="mx-auto flex max-w-[1170px] items-center justify-between gap-4 px-5 py-5">
-          <Link href="/#garage-results">
+          <Link href="/garages#garage-results">
             <Image src="/bandwhip-logo.svg" alt="BandWhip" width={230} height={65} priority className="h-[49px] w-auto" />
           </Link>
-          <Link href="/#garage-results" className="rounded-[13px] border border-[#E2D9D2] px-4 py-3 text-[13px] font-bold text-[#344054] hover:bg-[#FFF1E8]">← All garages</Link>
+          <Link href="/garages#garage-results" className="rounded-[13px] border border-[#E2D9D2] px-4 py-3 text-[13px] font-bold text-[#344054] hover:bg-[#FFF1E8]">← All garages</Link>
         </div>
       </header>
 
@@ -89,7 +89,6 @@ export default async function GarageBookingPage({
           <div className="p-6 sm:p-8">
             <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#FF5B13]">✓ Approved BandWhip garage</p>
             <h1 className="mt-2 text-[34px] font-extrabold tracking-[-0.04em]">{garage.business_name}</h1>
-            {garage.business_description && <p className="mt-2 text-[14px] leading-6 text-[#667085]">{garage.business_description}</p>}
             <div className="mt-5 space-y-2 text-[14px] text-[#475467]">
               <p>📍 {garage.address_line1}, {garage.city}, {garage.province} {garage.postal_code}</p>
               {garage.public_phone && <p>📞 <a className="font-bold text-[#DD4E0D] underline" href={`tel:${garage.public_phone.replace(/[^\d+]/g, "")}`}>{garage.public_phone}</a></p>}
@@ -117,8 +116,9 @@ export default async function GarageBookingPage({
             )}
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-5">
-            <details className="group rounded-[23px] border border-[#E2D9D2] bg-white p-5">
+          <aside className="space-y-4">
+            <section className="rounded-[23px] border border-[#E2D9D2] bg-white p-5"><h3 className="text-lg font-extrabold">Location</h3><p className="mt-2 text-sm text-[#475467]">{garage.address_line1}, {garage.city}, {garage.province} {garage.postal_code}</p><a className="mt-3 inline-block font-bold text-[#DD4E0D]" target="_blank" rel="noopener noreferrer" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${garage.address_line1}, ${garage.city}, ${garage.province} ${garage.postal_code}`)}`}>Open in Google Maps ↗</a></section>
+            <details open className="group rounded-[23px] border border-[#E2D9D2] bg-white p-5">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[17px] font-extrabold text-[#101828]">
                 <span>🕒 Business hours</span>
                 <span aria-hidden="true" className="text-[19px] text-[#FF5B13]">⌄</span>

@@ -516,6 +516,14 @@ export default function LiveGarages() {
    * without replacing the previous selection.
    */
   const [search, setSearch] = useState("");
+  const [timing, setTiming] = useState<{date:string;time:string} | null>(null);
+  const [availability, setAvailability] = useState<{key:string;ids:string[];failed:boolean} | null>(null);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("mecatrex-service-when") || "null");
+      if (saved?.mode === "scheduled" && /^\d{4}-\d{2}-\d{2}$/.test(saved.date) && /^\d{2}:\d{2}$/.test(saved.time)) setTiming({date:saved.date,time:saved.time});
+    } catch { /* no saved preference */ }
+  }, []);
 
   const [
     selectedServices,
@@ -799,7 +807,7 @@ export default function LiveGarages() {
   const query = normalizeName(search);
 
   const listedProviders = garages.filter((garage) => garage.provider_type === providerType);
-  const filtered = listedProviders.filter((garage) => {
+  const serviceFiltered = listedProviders.filter((garage) => {
     const services = activeFixedServices(garage);
 
     if (selectedServices.length > 0) {
@@ -821,6 +829,35 @@ export default function LiveGarages() {
     );
   });
 
+  const timingKey = JSON.stringify([timing, selectedServices, search, providerType, garages.map(g=>g.id)]);
+  useEffect(() => {
+    if (!timing || loading) return;
+    let active = true;
+    const date = timing.date, time = timing.time;
+    async function check() {
+      const results = await Promise.all(garages.filter(g=>g.provider_type===providerType).map(async g=>{
+        const services = activeFixedServices(g);
+        const chosen = selectedServices.length ? selectedServices.map(name=>services.find(s=>normalizeName(s.name)===normalizeName(name))) : services.filter(s=>!search || normalizeName(s.name).includes(normalizeName(search)));
+        if (!chosen.length || chosen.some(s=>!s)) return {id:g.id,ok:false,failed:false};
+        const ids = chosen.flatMap(s=>s?[s.id]:[]);
+        if (g.provider_type === "towing") {
+          const weekday = new Date(date+"T12:00:00Z").getUTCDay();
+          const entry = hours.find(h=>h.provider_id===g.id && h.weekday===weekday);
+          const minutes = (v:string)=>Number(v.slice(0,2))*60+Number(v.slice(3,5));
+          const start = minutes(time);
+          return {id:g.id,ok:!!entry?.is_open && start>=minutes(entry.open_time) && start<minutes(entry.close_time),failed:false};
+        }
+        const groups = selectedServices.length ? [ids] : ids.map(id=>[id]);
+        const slots = await Promise.all(groups.map(group=>supabase.rpc("garage_available_slots_multi",{p_provider_id:g.id,p_service_ids:group,p_day:date})));
+        return {id:g.id,ok:slots.some(r=>!r.error && Array.isArray(r.data) && r.data.some((slot:{slot_time:string})=>slot.slot_time.slice(0,5)===time)),failed:slots.some(r=>!!r.error)};
+      }));
+      if(active) setAvailability({key:timingKey,ids:results.filter(r=>r.ok).map(r=>r.id),failed:results.some(r=>r.failed)});
+    }
+    void check().catch(()=>{if(active)setAvailability({key:timingKey,ids:[],failed:true});});
+    return ()=>{active=false;};
+  },[timingKey,timing,loading,garages,providerType,selectedServices,search,supabase,hours]);
+  const filtered = timing ? serviceFiltered.filter(g=>availability?.key===timingKey && availability.ids.includes(g.id)) : serviceFiltered;
+
   const exactSearchMatch =
     serviceCatalogue.find(
       (service) =>
@@ -833,6 +870,7 @@ export default function LiveGarages() {
 
   return (
     <div>
+      {timing && <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#FFD5C0] bg-[#FFF1E8] p-4 text-sm"><span>{availability?.key !== timingKey ? "Checking availability…" : `Availability for ${timing.date} · ${timing.time}`}{availability?.key === timingKey && availability.failed && " — some availability could not be verified."}</span><button type="button" className="font-bold text-[#DD4E0D]" onClick={()=>{localStorage.removeItem("mecatrex-service-when");setTiming(null);}}>Clear date filter</button></div>}
       {/* =================================================
           SEARCH & SERVICE CATEGORIES
       ================================================= */}
@@ -1249,12 +1287,6 @@ export default function LiveGarages() {
                           {garage.postal_code}
                         </p>
 
-                        {garage.business_description && (
-                          <p className="mt-2 line-clamp-1 text-[12px] text-[#667085]">
-                            {garage.business_description}
-                          </p>
-                        )}
-
                         {/* MATCHED SERVICES */}
 
                         <div className="mt-4 rounded-[15px] bg-[#F8FAFC] p-3">
@@ -1433,13 +1465,6 @@ export default function LiveGarages() {
                           </summary>
 
                           <div className="mt-4 space-y-4">
-                            {garage.business_description && (
-                              <p className="text-[12px] leading-5 text-[#667085]">
-                                {
-                                  garage.business_description
-                                }
-                              </p>
-                            )}
 
                             <BusinessHours
                               hours={garageHours}
