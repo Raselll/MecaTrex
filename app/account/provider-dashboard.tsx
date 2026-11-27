@@ -1,7 +1,7 @@
 
 "use client";
 
-import { PAYMENT_OPTIONS, LANGUAGE_OPTIONS } from "@/components/provider/public-preferences";
+import { PAYMENT_OPTIONS, LANGUAGE_OPTIONS, PaymentMark } from "@/components/provider/public-preferences";
 import {
   type FormEvent,
   useMemo,
@@ -1100,22 +1100,29 @@ export default function ProviderDashboard({
               placeholder="https://garage.example.com"
             />
 
-            {([
-              ["payment_methods", "Payment methods", PAYMENT_OPTIONS],
-              ["spoken_languages", "Languages spoken", LANGUAGE_OPTIONS.map(label => ({label, icon: ""}))],
-            ] as const).map(([key, label, options]) => (
-              <fieldset key={key} className="sm:col-span-2">
-                <legend className="mb-2 text-[14px] font-bold">{label} *</legend>
-                <p className="mb-3 text-xs text-[#667085]">Select all that apply.</p>
-                <div className="flex flex-wrap gap-2">
-                  {options.map(({label: option, icon}) => {
-                    const current = provider[key] ?? [];
-                    const selected = current.includes(option);
-                    return <button type="button" key={option} aria-pressed={selected} onClick={() => field(key, selected ? current.filter(value => value !== option) : [...current, option])} className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${selected ? "border-[#FF5B13] bg-[#FFF1E8] text-[#DD4E0D]" : "border-[#E4E7EC] bg-[#F8FAFC] text-[#344054] hover:border-[#FF5B13]"}`}>{icon && <span aria-hidden="true" className="text-xl">{icon}</span>}{option}{selected && <span aria-hidden="true">✓</span>}</button>;
-                  })}
-                </div>
-              </fieldset>
-            ))}
+            <fieldset className="min-w-0 sm:col-span-2">
+              <legend className="mb-2 text-[14px] font-bold">Payment methods *</legend>
+              <p className="mb-3 text-xs text-[#667085]">Select all that apply.</p>
+              {(provider.payment_methods ?? []).includes("Credit") && <p className="mb-3 rounded-lg bg-[#FFF1E8] p-3 text-xs text-[#9A3412]">Your previously saved Credit selection is general. Select the specific cards you accept to replace it.</p>}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {PAYMENT_OPTIONS.map(({label})=>{
+                  const current=provider.payment_methods ?? [];
+                  const selected=current.includes(label);
+                  return <button key={label} type="button" aria-pressed={selected} onClick={()=>field("payment_methods",selected?current.filter(v=>v!==label):[...current.filter(v=>!["Visa","Mastercard","American Express"].includes(label)||v!=="Credit"),label])} className={`relative flex min-h-[88px] min-w-0 flex-col items-center justify-center gap-2 rounded-xl border p-2 text-center text-xs font-semibold transition ${selected?"border-[#FF5B13] bg-[#FFF1E8] text-[#DD4E0D]":"border-[#E4E7EC] bg-white text-[#344054] hover:border-[#FF5B13]"}`}><PaymentMark method={label}/><span>{label}</span>{selected&&<span className="absolute right-2 top-2" aria-hidden="true">✓</span>}</button>;
+                })}
+              </div>
+            </fieldset>
+            <fieldset className="min-w-0 sm:col-span-2">
+              <legend className="mb-2 text-[14px] font-bold">Languages spoken *</legend>
+              <p className="mb-3 text-xs text-[#667085]">Select all that apply.</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+                {LANGUAGE_OPTIONS.map(label=>{
+                  const current=provider.spoken_languages ?? [];
+                  const selected=current.includes(label);
+                  return <button key={label} type="button" aria-pressed={selected} onClick={()=>field("spoken_languages",selected?current.filter(v=>v!==label):[...current,label])} className={`flex min-h-[44px] min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs font-semibold transition ${selected?"border-[#FF5B13] bg-[#FFF1E8] text-[#DD4E0D]":"border-[#E4E7EC] bg-white text-[#344054] hover:border-[#FF5B13]"}`}><span aria-hidden="true" className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${selected?"border-[#FF5B13] bg-[#FF5B13] text-white":"border-[#CBD5E1] bg-white"}`}>{selected?"✓":""}</span><span className="break-words">{label}</span></button>;
+                })}
+              </div>
+            </fieldset>
             <ProviderField
               label="Address"
               value={provider.address_line1}
