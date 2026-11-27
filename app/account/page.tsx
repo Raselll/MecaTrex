@@ -8,7 +8,6 @@ import ProviderDashboard, {
   type ProviderService,
 } from "./provider-dashboard";
 import { signOut } from "./actions";
-import AccentPicker from "@/components/account/accent-picker";
 import ClientPortalOverview from "@/components/account/client-portal-overview";
 import AccountWorkspace from "@/components/account/account-workspace";
 import ClientBookings from "@/components/booking/client-bookings";
@@ -357,8 +356,7 @@ export default async function AccountPage({
       provider.status === "approved" &&
       !provider.is_removed;
 
-    const accent =
-      profile.accent_color ?? "blue";
+    const accent: AccentColor = "blue";
 
     return (
       <AccountShell wide accent={accent}>
@@ -453,13 +451,7 @@ export default async function AccountPage({
             }
             settings={
               <div className="space-y-5">
-                <section className="rounded-[20px] border border-[#E9DED5] bg-white p-5 sm:p-6">
-                  <h3 className="text-[18px] font-extrabold text-[#101828]">Dashboard appearance</h3>
-                  <p className="mt-1 text-[12px] text-[#667085]">Choose your workspace colour.</p>
-                  <div className="mt-4">
-                    <AccentPicker userId={user.id} initialAccent={accent} compact />
-                  </div>
-                </section>
+                
                 <section className="rounded-[20px] border border-[#E9DED5] bg-white p-5 sm:p-6">
                   <h3 className="text-[18px] font-extrabold text-[#101828]">Account information</h3>
                   <p className="mt-1 text-[12px] text-[#667085]">
@@ -493,7 +485,7 @@ export default async function AccountPage({
   /* CLIENT ACCOUNT */
   /* ======================================================= */
 
-  const accent = profile.accent_color ?? "blue";
+  const accent: AccentColor = "blue";
 
   const clientProps = {
     userId: user.id,
@@ -530,13 +522,7 @@ export default async function AccountPage({
           financials={<FinancialOverview ownerId={user.id} kind="client" />}
           settings={
             <div className="space-y-5">
-              <section className="rounded-[20px] border border-[#E9DED5] bg-white p-5 sm:p-6">
-                <h3 className="text-[18px] font-extrabold text-[#101828]">Dashboard appearance</h3>
-                <p className="mt-1 text-[12px] text-[#667085]">Choose your dashboard colour.</p>
-                <div className="mt-4">
-                  <AccentPicker userId={user.id} initialAccent={accent} compact />
-                </div>
-              </section>
+              
 
               <ClientPortalOverview {...clientProps} mode="settings" />
 
@@ -594,7 +580,7 @@ function AccountShell({
 
           <div className="flex items-center gap-3">
             <Link
-              href="/"
+              href="/garages#garage-results"
               className="rounded-[14px] border border-[#D0D5DD] bg-white px-4 py-3 text-[14px] font-bold text-[#344054] hover:bg-[#F9FAFB]"
             >
               Browse garages

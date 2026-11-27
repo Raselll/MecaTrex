@@ -83,14 +83,40 @@ export default function AccountWorkspace({
     }
   }, [kind]);
 
-  const sections: Section[] =
-    kind === "client"
-      ? ["overview", "appointments", "finances", "settings"]
-      : approved
-        ? (providerType === "towing"
-            ? ["overview", "calendar", "towing", "earnings", "business", "services", "settings"]
-            : ["overview", "calendar", "earnings", "business", "services", "settings"])
-        : ["overview", "settings"];
+  const sections: Section[] = kind === "client"
+    ? ["overview", "appointments", "settings"]
+    : approved ? ["overview", "calendar", "business", "settings"] : ["overview", "settings"];
+
+  const navigationLabels: Partial<Record<Section, string>> = {
+    appointments: "My bookings",
+    calendar: "Schedule & bookings",
+    business: "Business setup",
+    settings: "My account",
+  };
+  const activeSection = view === "finances" ? "appointments" : view === "earnings" ? "overview" : view === "towing" ? "calendar" : view === "services" ? "business" : view;
+  const subSections: Section[] = kind === "client" && activeSection === "appointments"
+    ? ["appointments", "finances"]
+    : kind === "provider" && approved && activeSection === "overview"
+      ? ["overview", "earnings"]
+      : kind === "provider" && approved && activeSection === "calendar" && towingRequests
+        ? ["calendar", "towing"]
+        : kind === "provider" && approved && activeSection === "business"
+          ? ["business", "services"]
+          : [];
+
+  useEffect(() => {
+    function openAnchor() {
+      if (kind !== "provider") return;
+      const hash = window.location.hash;
+      if (hash === "#application-status") setView("overview");
+      if (!approved) return;
+      if (hash === "#business-profile") setView("business");
+      if (hash === "#services") setView("services");
+    }
+    openAnchor();
+    window.addEventListener("hashchange", openAnchor);
+    return () => window.removeEventListener("hashchange", openAnchor);
+  }, [kind, approved]);
 
   function goTo(next: Section) {
     setView(next);
@@ -105,8 +131,8 @@ export default function AccountWorkspace({
 
   return (
     <div id="mecatrex-workspace-top" className="mt-7 scroll-mt-24">
-      <div className="overflow-hidden rounded-[25px] border border-[#DCE5EF] bg-[#F7F9FC] shadow-[0_16px_42px_rgba(16,24,40,0.05)] lg:grid lg:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="border-b border-[#DCE5EF] bg-white p-3 lg:border-b-0 lg:border-r lg:p-5">
+      <div className="overflow-hidden rounded-[25px] border border-[#E7E5E2] bg-[#F8F8F7] shadow-[0_16px_42px_rgba(16,24,40,0.05)] lg:grid lg:grid-cols-[210px_minmax(0,1fr)]">
+        <aside className="border-b border-[#DCE5EF] bg-white p-3 lg:border-b-0 lg:border-r lg:p-4">
           <div className="hidden lg:block">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#FF5B13]">My workspace</p>
             <p className="mt-2 truncate text-[17px] font-extrabold text-[#101828]">{firstName}</p>
@@ -117,7 +143,7 @@ export default function AccountWorkspace({
 
           <nav aria-label="Account sections" className="flex gap-1.5 overflow-x-auto pb-1 lg:mt-7 lg:flex-col lg:overflow-visible">
             {sections.map((section) => {
-              const active = view === section;
+              const active = activeSection === section;
               return (
                 <button
                   key={section}
@@ -125,19 +151,19 @@ export default function AccountWorkspace({
                   onClick={() => goTo(section)}
                   aria-current={active ? "page" : undefined}
                   className={
-                    "flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-[12px] px-4 py-3 text-left text-[13px] font-bold transition lg:w-full " +
+                    "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-[10px] px-3 py-2.5 text-left text-[12px] font-bold transition lg:w-full " +
                     (active
-                      ? "bg-[#E8F0FA] text-[#D6531B] shadow-sm"
+                      ? "bg-[#FFF1E8] text-[#D6531B]"
                       : "text-[#475467] hover:bg-[#F2F5FA] hover:text-[#101828]")
                   }
                 >
                   <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-[7px] bg-white/70 text-[17px]">{symbols[section]}</span>
-                  {titles[section]}
+                  {navigationLabels[section] ?? titles[section]}
                 </button>
               );
             })}
           </nav>
-          <div className="mt-8 hidden rounded-[14px] bg-[#EFF5FC] p-4 lg:block">
+          <div className="mt-8 hidden rounded-[14px] bg-[#FAF6F2] p-4 lg:block">
             <p className="text-[12px] font-bold text-[#D6531B]">BandWhip</p>
             <p className="mt-1 text-[11px] leading-5 text-[#667085]">
               {kind === "provider"
@@ -151,13 +177,23 @@ export default function AccountWorkspace({
           <header className="mb-6 flex items-start justify-between gap-3 border-b border-[#E4EAF1] pb-5">
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#FF5B13]">
-                {kind === "provider" ? "Garage workspace" : "Client workspace"}
+                {kind === "provider" ? (providerType === "towing" ? "Towing workspace" : "Garage workspace") : "Client workspace"}
               </p>
-              <h2 className="mt-1.5 text-[25px] font-extrabold tracking-tight text-[#101828] sm:text-[31px]">{titles[view]}</h2>
+              <h2 className="mt-1.5 text-[25px] font-extrabold tracking-tight text-[#101828] sm:text-[31px]">{navigationLabels[activeSection] ?? titles[activeSection]}</h2>
               <p className="mt-1 text-[12px] leading-5 text-[#667085]">{descriptions[view]}</p>
             </div>
             <BookingNotifications userId={userId} />
           </header>
+
+          {subSections.length > 1 && (
+            <nav aria-label="Workspace subsections" className="mb-6 flex flex-wrap gap-2 border-b border-[#EAECF0] pb-3">
+              {subSections.map((section) => (
+                <button key={section} type="button" aria-current={view === section ? "page" : undefined} onClick={() => goTo(section)} className={`rounded-lg px-4 py-2 text-[13px] font-semibold transition ${view === section ? "bg-[#FFF1E8] text-[#D6531B]" : "text-[#475467] hover:bg-[#F2F4F7]"}`}>
+                  {section === "earnings" ? "Business finances" : section === "appointments" ? "Appointments" : section === "calendar" ? "Calendar & availability" : titles[section]}
+                </button>
+              ))}
+            </nav>
+          )}
 
           <div hidden={view !== "overview"} className="workspace-content">
             {overview}

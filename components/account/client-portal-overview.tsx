@@ -195,7 +195,7 @@ export default function ClientPortalOverview({
             <h2 className="mt-2 text-[25px] font-extrabold tracking-tight text-[#101828]">Ready for your next visit?</h2>
             <p className="mt-2 text-[13px] leading-6 text-[#667085]">Book a garage, check your next appointment or view previous visits.</p>
           </div>
-          <Link href="/#garage-results" className="inline-flex items-center rounded-[13px] bg-[#FF5B13] px-5 py-3 text-[13px] font-extrabold text-white hover:bg-[#DD4E0D]">
+          <Link href="/garages#garage-results" className="inline-flex items-center rounded-[13px] bg-[#FF5B13] px-5 py-3 text-[13px] font-extrabold text-white hover:bg-[#DD4E0D]">
             + Find a garage
           </Link>
         </div>
@@ -215,7 +215,7 @@ export default function ClientPortalOverview({
         <div className="mt-4 rounded-[17px] border border-[#DFE7F1] bg-white p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-[15px] font-extrabold text-[#101828]">🚗 Next appointment</h3>
-            <span className="text-[11px] font-bold text-[#DD4E0D]">See My appointments tab</span>
+            <span className="text-[11px] font-bold text-[#DD4E0D]">See My bookings</span>
           </div>
           {!summary ? (
             <p className="mt-3 text-[13px] text-[#667085]">Loading your appointments…</p>
