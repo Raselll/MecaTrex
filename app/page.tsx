@@ -3,7 +3,6 @@
 import BrandLogo from "@/components/brand/bandwhip-logo";
 import Script from "next/script";
 import Link from "next/link";
-import LiveGarages from "@/components/home/live-garages";
 import HomeAuthActions from "@/components/home/home-auth-actions";
 import WhenPicker from "@/components/home/when-picker";
 import BrandMarquee from "@/components/home/brand-marquee";
@@ -2374,7 +2373,7 @@ export default function Home() {
           <div className="bw-shell bw-nav-inner">
             <BrandLogo href="/" />
             <nav className="bw-desktop-nav" aria-label="Main navigation">
-              <a href="#garage-results">Find a garage</a>
+              <a href="/garages#garage-results">Find a garage</a>
               <a href="#services">Services</a>
               <a href="#journey">How it works</a>
               <a href="#garages">For businesses</a>
@@ -2383,7 +2382,7 @@ export default function Home() {
             <details className="bw-mobile-nav">
               <summary aria-label="Open navigation menu"><span /><span /><span /></summary>
               <nav aria-label="Mobile navigation">
-                <a href="#garage-results">Find garages & towing</a>
+                <a href="/garages#garage-results">Find garages & towing</a>
                 <a href="#services">Services</a>
                 <a href="#journey">How it works</a>
                 <a href="#garages">For garages</a>
@@ -2403,7 +2402,7 @@ export default function Home() {
               <h1>Car care,<br /><em>minus the</em><br /><span>runaround.</span></h1>
               <p>Find nearby garages, compare listed prices and available times, then book your appointment — without the back-and-forth calls.</p>
               <div className="bw-hero-buttons">
-                <a className="bw-button bw-button-orange" href="#garage-results">Explore garages <span aria-hidden="true">↗</span></a>
+                <a className="bw-button bw-button-orange" href="/garages#garage-results">Explore garages <span aria-hidden="true">↗</span></a>
                 <a className="bw-text-link" href="#journey">See how it works <span aria-hidden="true">↗</span></a>
               </div>
               <div className="bw-hero-benefits" aria-label="BandWhip advantages">
@@ -2433,14 +2432,14 @@ export default function Home() {
             </div>
           </div>
           <div className="bw-shell bw-search-wrap">
-            <div className="bw-search-intro"><span>START HERE</span><strong>Where can we help?</strong><p>Set your preferences, then browse garages and towing providers.</p></div>
+            <div className="bw-search-intro"><span>START HERE</span><strong>Where can we help?</strong></div>
             <div className="bw-search-panel">
               <button type="button" className="bw-search-field bw-vehicle-field" onClick={() => setVehicleModalOpen(true)}>
                 <span className="bw-search-icon" aria-hidden="true">01</span>
                 <span className="bw-search-field-copy"><small>Your vehicle</small><strong>{vehicle ? [vehicle.year, vehicle.make, vehicle.model].join(" ") : "Add a vehicle"}</strong><span>{vehicle ? "Change your vehicle" : "Make your search more relevant"}</span></span>
                 <span className="bw-field-arrow" aria-hidden="true">↗</span>
               </button>
-              <a href="#garage-results" className="bw-search-field">
+              <a href="/garages#garage-results" className="bw-search-field">
                 <span className="bw-search-icon" aria-hidden="true">02</span>
                 <span className="bw-search-field-copy"><small>Service</small><strong>What do you need?</strong><span>Garage or towing</span></span><span className="bw-field-arrow" aria-hidden="true">↗</span>
               </a>
@@ -2449,7 +2448,7 @@ export default function Home() {
                 <span className="bw-search-icon" aria-hidden="true">04</span>
                 <span className="bw-search-field-copy"><small>Location</small><strong>Montréal, QC</strong><span>Launch region</span></span>
               </div>
-              <a className="bw-search-submit" href="#garage-results" aria-label="Explore garages and towing providers">Explore <span aria-hidden="true">↗</span></a>
+              <a className="bw-search-submit" href="/garages#garage-results" aria-label="Explore garages and towing providers">Explore <span aria-hidden="true">↗</span></a>
             </div>
             {vehicle && <button className="bw-clear-vehicle" type="button" onClick={handleClearVehicle}>Remove saved vehicle ×</button>}
           </div>
@@ -2571,7 +2570,7 @@ export default function Home() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {services.map(
                 (service) => (
-                  <a href={`/?service=${encodeURIComponent(service.title)}#garage-results`} key={service.title} className="group rounded-[28px] border border-[#EAECF0] bg-white p-8 text-left transition duration-300 hover:-translate-y-2 hover:border-[#FF5B13]/40 hover:shadow-[0_22px_60px_rgba(16,24,40,0.12)]"
+                  <a href={`/garages?service=${encodeURIComponent(service.title)}#garage-results`} key={service.title} className="group rounded-[28px] border border-[#EAECF0] bg-white p-8 text-left transition duration-300 hover:-translate-y-2 hover:border-[#FF5B13]/40 hover:shadow-[0_22px_60px_rgba(16,24,40,0.12)]"
                   >
                     <div className="flex h-[82px] w-[82px] items-center justify-center rounded-[24px] bg-[#EDF3FA] text-[42px]">
                       {
@@ -2600,27 +2599,21 @@ export default function Home() {
             </div>
 
             <div className="mt-10 text-center">
-              <a href="#garage-results" className="text-[18px] font-semibold text-[#475467] transition hover:text-[#FF5B13]">
+              <a href="/garages#garage-results" className="text-[18px] font-semibold text-[#475467] transition hover:text-[#FF5B13]">
                 Browse garages & towing →
               </a>
             </div>
           </div>
         </section>
 
-        {/* GARAGES */}
-
-        <section id="garage-results" data-bw-reveal className="bw-listings mx-auto max-w-[1350px] scroll-mt-28 px-8 py-24">
-          <div className="mb-12 text-center">
-            <p className="text-[17px] font-bold text-[#FF5B13]">
-              Available near you
-            </p>
-
-            <h2 className="mx-auto mt-3 max-w-[950px] text-[46px] font-bold tracking-[-0.04em] sm:text-[56px]">
-              Garages and towing ready to help.
-            </h2>
+        <section className="bw-shell bw-store-section" aria-label="Mobile app availability">
+          <span className="bw-eyebrow">BANDWHIP ON MOBILE</span>
+          <h2>Car care, wherever you go.</h2>
+          <p>Mobile apps for iPhone and Android are planned.</p>
+          <div className="bw-store-badges">
+            <div className="bw-store-badge"><svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M17.1 12.3c0-2 1.7-3 1.8-3.1-1-1.5-2.6-1.7-3.2-1.7-1.4-.2-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.6 0-3.1 1-3.9 2.4-1.7 2.9-.4 7.3 1.2 9.7.8 1.2 1.7 2.4 2.9 2.3 1.1 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.2 2.8-2.3.9-1.3 1.3-2.5 1.3-2.6-.1 0-2.5-1-2.5-4.7ZM14.8 5.9c.6-.8 1.1-1.9 1-3-.9.1-2.1.7-2.8 1.5-.6.7-1.1 1.8-1 2.9 1.1.1 2.2-.5 2.8-1.4Z"/></svg><div><small>COMING SOON</small><strong>App Store</strong></div></div>
+            <div className="bw-store-badge"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="#00C2FF" d="M3 2v20l11-10Z"/><path fill="#00D685" d="M3 2l15 8-4 2Z"/><path fill="#FFCA28" d="m18 10 4 2-4 2-4-2Z"/><path fill="#FF4757" d="M3 22l15-8-4-2Z"/></svg><div><small>COMING SOON</small><strong>Google Play</strong></div></div>
           </div>
-
-          <LiveGarages />
         </section>
 
         {/* PRODUCT-LED GARAGE WORKSPACE STORY */}
@@ -2648,11 +2641,11 @@ export default function Home() {
         </section>
 
         <section className="bw-closing" data-bw-reveal>
-          <div className="bw-shell bw-closing-inner"><span className="bw-eyebrow">THE SIMPLE WAY FORWARD</span><h2>Good service starts<br />with a <em>better booking.</em></h2><a className="bw-button bw-button-orange" href="#garage-results">Find your next garage <span aria-hidden="true">↗</span></a></div>
+          <div className="bw-shell bw-closing-inner"><span className="bw-eyebrow">THE SIMPLE WAY FORWARD</span><h2>Good service starts<br />with a <em>better booking.</em></h2><a className="bw-button bw-button-orange" href="/garages#garage-results">Find your next garage <span aria-hidden="true">↗</span></a></div>
         </section>
         <footer className="bw-footer">
           <div className="bw-shell">
-            <div className="bw-footer-top"><div><BrandLogo inverse /><p>Car care, made refreshingly simple.<br />Built for drivers and businesses in Québec.</p></div><nav aria-label="Footer navigation"><a href="#garage-results">Explore providers</a><a href="#services">Services</a><a href="#journey">How it works</a><Link href="/signup">For businesses</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></nav></div>
+            <div className="bw-footer-top"><div><BrandLogo inverse /><p>Car care, made refreshingly simple.<br />Built for drivers and businesses in Québec.</p></div><nav aria-label="Footer navigation"><a href="/garages#garage-results">Explore providers</a><a href="#services">Services</a><a href="#journey">How it works</a><Link href="/signup">For businesses</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></nav></div>
             <div className="bw-footer-word" aria-hidden="true">BandWhip</div>
             <div className="bw-footer-bottom"><span>© {new Date().getFullYear()} BandWhip.</span><span>Montréal, Québec · Canada</span><a href="#find">Back to top ↑</a></div>
           </div>

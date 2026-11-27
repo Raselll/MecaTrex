@@ -918,3 +918,13 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
  .bw-marquee-track {animation:none!important;transform:none!important;}
  .bw-phone-screen,.bw-dashboard-window {animation:none!important;transform:none!important;opacity:1!important;will-change:auto;}
 }
+
+/* Dedicated mobile availability section; existing homepage styling is unchanged. */
+.bw-store-section {padding-block:65px;text-align:center;}
+.bw-store-section h2 {font-size:clamp(30px,4vw,48px);font-weight:800;letter-spacing:-.055em;margin:12px 0;}
+.bw-store-section p {color:#667085;}
+.bw-store-badges {display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin-top:24px;}
+.bw-store-badge {display:flex;align-items:center;gap:12px;border:1px solid #d8dce1;border-radius:15px;padding:12px 22px;text-align:left;color:#171d24;background:#fff;}
+.bw-store-badge small,.bw-store-badge strong {display:block;}
+.bw-store-badge small {font-size:10px;font-weight:700;letter-spacing:.08em;color:#667085;}
+.bw-store-badge strong {font-size:20px;font-weight:800;}
