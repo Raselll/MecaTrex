@@ -1154,7 +1154,7 @@ export default function LiveGarages() {
                       <div className={`px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider ${isTowing ? "bg-[#F3C547] text-[#35290D]" : "bg-[#FF5B13] text-white"}`}>
                         {isTowing ? "🚛 Towing company" : "Garages"}
                       </div>
-                      <div className="flex items-center justify-between gap-2 border-b border-[#EAECF0] bg-white px-4 py-2.5"><span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${status==="Open now"?"bg-[#ECFDF3] text-[#027A48]":status==="Closed"?"bg-[#FEF3F2] text-[#B42318]":"bg-[#F2F4F7] text-[#667085]"}`}><span className="h-2 w-2 rounded-full bg-current"/>{status}</span><span className="text-[10px] font-medium text-[#667085]">Montréal time</span></div>
+                      <div className="flex items-center justify-between gap-2 border-b border-[#EAECF0] bg-white px-4 py-2.5"><span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${status==="Open now"?"bg-[#ECFDF3] text-[#027A48]":status==="Closed"?"bg-[#FEF3F2] text-[#B42318]":"bg-[#F2F4F7] text-[#667085]"}`}><span className="h-2 w-2 rounded-full bg-current"/>{status}</span></div>
                       <Link href={detailsHref} aria-label={`View ${garage.business_name} profile`} className="block">
 
                       <div className={`relative h-[175px] overflow-hidden bg-gradient-to-br ${isTowing ? "from-[#85621A] to-[#F3C547]" : "from-[#20262D] to-[#FF5B13]"}`}>
@@ -1358,11 +1358,7 @@ export default function LiveGarages() {
                           </Link>
                         )}
 
-                        <p className="mt-2 text-center text-[10px] text-[#98A2B3]">
-                          {isTowing
-                            ? "Towing requests currently accompany garage bookings. Pickup time and final price are confirmed separately."
-                            : <>Live availability · fixed CAD price{selectedServices.length > 1 && " · Book services individually"}</>}
-                        </p>
+                        {(isTowing || selectedServices.length > 1) && <p className="mt-2 text-center text-[10px] text-[#98A2B3]">{isTowing ? "Towing requests currently accompany garage bookings. Pickup time and final price are confirmed separately." : "Book services individually"}</p>}
 
                         <Link href={detailsHref} className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-[#E4E7EC] px-3 py-3 text-[12px] font-bold text-[#344054] transition hover:bg-[#F8FAFC]">View business profile <span aria-hidden="true">↗</span></Link>
 
