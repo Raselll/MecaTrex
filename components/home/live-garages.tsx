@@ -1,9 +1,10 @@
 
 "use client";
 
+import { businessStatus } from "@/lib/provider-status";
 import { formatDuration } from "@/components/provider/duration-input";
 import { orderServices } from "@/lib/service-display-order";
-import { PublicProviderPreferences } from "@/components/provider/public-preferences";
+import { PaymentMark } from "@/components/provider/public-preferences";
 import {
   useEffect,
   useMemo,
@@ -13,12 +14,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { TOWING_SERVICE_CATALOGUE } from "@/lib/towing-service-listing";
 import {
-  normalizeBusinessWebsite,
   ALL_SERVICE_CATALOGUE,
 } from "@/lib/service-listing";
 import {
-  formatHour,
-  WEEKDAYS,
   type BusinessHour,
 } from "@/lib/booking";
 
@@ -159,25 +157,6 @@ function closureDate(value: string) {
   }).format(new Date(value));
 }
 
-function businessStatus(hours:BusinessHour[],closures:PublicClosure[],clock:number|null) {
-  if(clock===null || !hours.length) return "Hours unavailable";
-  if(closures.some(c=>Date.parse(c.starts_at)<=clock && clock<Date.parse(c.ends_at))) return "Closed";
-  const parts=new Intl.DateTimeFormat("en-US",{timeZone:"America/Toronto",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(clock));
-  const get=(key:string)=>parts.find(p=>p.type===key)?.value ?? "";
-  const weekday=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(get("weekday"));
-  const now=Number(get("hour"))*60+Number(get("minute"));
-  const minutes=(v:string|null)=>v?Number(v.slice(0,2))*60+Number(v.slice(3,5)):NaN;
-  const today=hours.find(h=>h.weekday===weekday);
-  const previous=hours.find(h=>h.weekday===(weekday+6)%7);
-  const isOpen=(h:BusinessHour|undefined,overnight:boolean)=>{
-    if(!h?.is_open)return false;
-    const start=minutes(h.open_time),end=minutes(h.close_time);
-    if(!Number.isFinite(start)||!Number.isFinite(end))return false;
-    if(overnight)return end<start && now<end;
-    return end<start?now>=start:now>=start&&now<end;
-  };
-  return isOpen(today,false)||isOpen(previous,true)?"Open now":today?"Closed":"Hours unavailable";
-}
 function activeFixedServices(garage: Garage) {
   return orderServices((garage.provider_services ?? []).filter(
     (service) =>
@@ -192,103 +171,6 @@ function activeFixedServices(garage: Garage) {
 /* =========================================================
    BUSINESS HOURS
 ========================================================= */
-
-function BusinessHours({
-  hours,
-}: {
-  hours: BusinessHour[];
-}) {
-  const [today, setToday] = useState<number | null>(
-    null
-  );
-
-  useEffect(() => {
-    const weekdayName = new Intl.DateTimeFormat(
-      "en-US",
-      {
-        timeZone: "America/Toronto",
-        weekday: "long",
-      }
-    ).format(new Date());
-
-    setToday(
-      WEEKDAYS.findIndex(
-        (day) =>
-          day.toLowerCase() ===
-          weekdayName.toLowerCase()
-      )
-    );
-  }, []);
-
-  return (
-    <div className="rounded-[16px] border border-[#E9DED5] bg-[#F8FAFC] p-4">
-      <h4 className="text-[13px] font-extrabold text-[#344054]">
-        🕒 Business hours
-      </h4>
-
-      <p className="mt-1 text-[11px] text-[#98A2B3]">
-        Montreal time
-      </p>
-
-      <div className="mt-3 overflow-hidden rounded-[12px] border border-[#E4E7EC] bg-white">
-        {WEEKDAYS.map((day, weekday) => {
-          const entry = hours.find(
-            (hour) => hour.weekday === weekday
-          );
-
-          const isToday = weekday === today;
-
-          return (
-            <div
-              key={day}
-              className={`flex items-center justify-between gap-2 border-b border-[#EAECF0] px-3 py-2.5 last:border-b-0 ${
-                isToday
-                  ? "bg-[#FFF1E8]"
-                  : "bg-white"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`text-[12px] font-bold ${
-                    isToday
-                      ? "text-[#DD4E0D]"
-                      : "text-[#344054]"
-                  }`}
-                >
-                  {day}
-                </span>
-
-                {isToday && (
-                  <span className="rounded-full bg-[#FF5B13] px-2 py-0.5 text-[9px] font-extrabold uppercase text-white">
-                    Today
-                  </span>
-                )}
-              </div>
-
-              {entry?.is_open ? (
-                <span
-                  className={`text-right text-[11px] font-semibold ${
-                    isToday
-                      ? "text-[#DD4E0D]"
-                      : "text-[#027A48]"
-                  }`}
-                >
-                  {formatHour(entry.open_time)}
-                  {" – "}
-                  {formatHour(entry.close_time)}
-                </span>
-              ) : (
-                <span className="text-[11px] font-semibold text-[#98A2B3]">
-                  Closed
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 /* =========================================================
    MULTI-SELECT SERVICE ACCORDION
@@ -908,7 +790,7 @@ export default function LiveGarages() {
       <div className="bw-provider-search mb-7 rounded-[24px] border border-[#E2D9D2] bg-white p-5 shadow-[0_5px_18px_rgba(16,24,40,0.045)] sm:p-6">
         <div role="group" aria-label="Choose provider type" className="mb-5 grid grid-cols-2 gap-2 rounded-[16px] bg-[#F2F4F7] p-1.5">
           <button type="button" aria-pressed={!isTowing} onClick={() => changeProviderType("garage")}
-            className={`rounded-xl px-4 py-3.5 text-[14px] font-extrabold transition ${!isTowing ? "bg-[#20262D] text-white shadow-sm" : "bg-white text-[#344054] hover:bg-[#E6EDF5]"}`}>
+            className={`rounded-xl px-4 py-3.5 text-[14px] font-extrabold transition ${!isTowing ? "bg-[#FF5B13] text-white shadow-sm" : "bg-white text-[#344054] hover:bg-[#E6EDF5]"}`}>
             🔧 Garage
           </button>
           <button type="button" aria-pressed={isTowing} onClick={() => changeProviderType("towing")}
@@ -1262,21 +1144,18 @@ export default function LiveGarages() {
                       .slice(0, 6);
 
                   const status = businessStatus(garageHours, publicClosures.filter(c=>c.provider_id===garage.id), clock);
-                  const website =
-                    normalizeBusinessWebsite(
-                      garage.website ?? ""
-                    );
+                  const detailsHref = `/providers/${garage.id}`;
 
                   return (
                     <article
                       key={garage.id}
                       className="bw-provider-card min-w-0 overflow-hidden rounded-[23px] border border-[#E4E7EC] bg-white shadow-[0_8px_28px_rgba(16,24,40,0.045)] transition hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(16,24,40,0.10)]"
                     >
-                      <div className={`px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider ${isTowing ? "bg-[#F3C547] text-[#35290D]" : "bg-[#20262D] text-white"}`}>
+                      <div className={`px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider ${isTowing ? "bg-[#F3C547] text-[#35290D]" : "bg-[#FF5B13] text-white"}`}>
                         {isTowing ? "🚛 Towing company" : "Garages"}
                       </div>
                       <div className="flex items-center justify-between gap-2 border-b border-[#EAECF0] bg-white px-4 py-2.5"><span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${status==="Open now"?"bg-[#ECFDF3] text-[#027A48]":status==="Closed"?"bg-[#FEF3F2] text-[#B42318]":"bg-[#F2F4F7] text-[#667085]"}`}><span className="h-2 w-2 rounded-full bg-current"/>{status}</span><span className="text-[10px] font-medium text-[#667085]">Montréal time</span></div>
-                      {/* PROVIDER IMAGE */}
+                      <Link href={detailsHref} aria-label={`View ${garage.business_name} profile`} className="block">
 
                       <div className={`relative h-[175px] overflow-hidden bg-gradient-to-br ${isTowing ? "from-[#85621A] to-[#F3C547]" : "from-[#20262D] to-[#FF5B13]"}`}>
                         {imageUrl ? (
@@ -1297,12 +1176,13 @@ export default function LiveGarages() {
                         </span>
                       </div>
 
+                      </Link>
                       {/* GARAGE DETAILS */}
 
                       <div className="space-y-1 p-4 sm:p-5">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <h3 className="text-[22px] font-extrabold tracking-tight text-[#101828]">
-                            {garage.business_name}
+                            <Link href={detailsHref} className="hover:underline">{garage.business_name}</Link>
                           </h3>
 
                           {average && (
@@ -1319,7 +1199,7 @@ export default function LiveGarages() {
                           {garage.postal_code}
                         </p>
 
-                        <PublicProviderPreferences payments={garage.payment_methods} languages={garage.spoken_languages} />
+
                         {/* MATCHED SERVICES */}
 
                         <div className="mt-4 rounded-[15px] bg-[#F8FAFC] p-3">
@@ -1439,6 +1319,10 @@ export default function LiveGarages() {
                           )}
                         </div>
 
+                        <div className="mt-4 space-y-2 border-t border-[#EAECF0] pt-3">
+                          {!!garage.payment_methods?.length && <div className="flex flex-wrap items-center gap-1.5"><span className="mr-1 text-[10px] font-bold text-[#667085]">Payment</span>{garage.payment_methods.map(method=><span key={method} title={method} aria-label={method} className="inline-flex h-8 w-12 items-center justify-center rounded-md border border-[#EAECF0] bg-white"><span className="scale-75"><PaymentMark method={method}/></span></span>)}</div>}
+                          {!!garage.spoken_languages?.length && <p className="text-[11px] leading-5 text-[#667085]"><span className="font-bold">Languages · </span>{garage.spoken_languages.slice(0,3).join(", ")}{garage.spoken_languages.length>3 && <Link href={detailsHref} className="ml-1 font-bold underline">+{garage.spoken_languages.length-3}</Link>}</p>}
+                        </div>
                         {/* PUBLIC CLOSURES */}
 
                         {closures.length > 0 && (
@@ -1480,95 +1364,8 @@ export default function LiveGarages() {
                             : <>Live availability · fixed CAD price{selectedServices.length > 1 && " · Book services individually"}</>}
                         </p>
 
-                        {/* EXPANDABLE BUSINESS DETAILS */}
+                        <Link href={detailsHref} className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-[#E4E7EC] px-3 py-3 text-[12px] font-bold text-[#344054] transition hover:bg-[#F8FAFC]">View business profile <span aria-hidden="true">↗</span></Link>
 
-                        <details className="group mt-4 border-t border-[#E4E7EC] pt-3">
-                          <summary className="flex cursor-pointer list-none items-center justify-between text-[12px] font-bold text-[#DD4E0D] [&::-webkit-details-marker]:hidden">
-                            <span>
-                              View business details
-                            </span>
-
-                            <span className="text-[18px] transition-transform group-open:rotate-180">
-                              ⌄
-                            </span>
-                          </summary>
-
-                          <div className="mt-4 space-y-4">
-
-                            <BusinessHours
-                              hours={garageHours}
-                            />
-
-                            {closures.length > 0 && (
-                              <div className="rounded-[15px] border border-[#FEC84B] bg-[#FFFAEB] p-4">
-                                <h4 className="text-[12px] font-extrabold text-[#92400E]">
-                                  Upcoming closures
-                                </h4>
-
-                                {closures.map(
-                                  (closure) => (
-                                    <div
-                                      key={
-                                        closure.block_id
-                                      }
-                                      className="mt-3 border-t border-[#FDE68A] pt-3 first:border-t-0 first:pt-0"
-                                    >
-                                      <p className="text-[11px] font-bold text-[#92400E]">
-                                        {closureDate(
-                                          closure.starts_at
-                                        )}
-                                      </p>
-
-                                      <p className="mt-1 whitespace-pre-wrap break-words text-[12px] text-[#744210]">
-                                        {
-                                          closure.public_note
-                                        }
-                                      </p>
-                                    </div>
-                                  )
-                                )}
-                              </div>
-                            )}
-
-                            {website && (
-                              <a
-                                href={website}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block break-all text-[12px] font-bold text-[#DD4E0D] underline"
-                              >
-                                🌐 Visit website
-                              </a>
-                            )}
-
-                            {garage.public_phone && (
-                              <a
-                                href={`tel:${garage.public_phone.replace(
-                                  /[^\d+]/g,
-                                  ""
-                                )}`}
-                                className="block text-[12px] font-bold text-[#DD4E0D] underline"
-                              >
-                                📞{" "}
-                                {
-                                  garage.public_phone
-                                }
-                              </a>
-                            )}
-
-                            {garage.public_email && (
-                              <a
-                                href={`mailto:${garage.public_email}`}
-                                className="block break-all text-[12px] font-bold text-[#DD4E0D] underline"
-                              >
-                                ✉️{" "}
-                                {
-                                  garage.public_email
-                                }
-                              </a>
-                            )}
-                          </div>
-                        </details>
                       </div>
                     </article>
                   );
