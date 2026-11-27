@@ -242,7 +242,7 @@ function ServiceCategoryAccordion({
                   )
             )
           }
-          className="rounded-[9px] border border-[#D6E0ED] px-3 py-2 text-[11px] font-bold text-[#FF5B13] transition hover:bg-[#FFF1E8]"
+          className={`rounded-[9px] border px-3 py-2 text-[11px] font-bold transition ${isTowing?"border-[#E5C267] text-[#876100] hover:bg-[#FFF3C7]":"border-[#D6E0ED] text-[#FF5B13] hover:bg-[#FFF1E8]"}`}
         >
           {allExpanded
             ? "− Collapse all"
@@ -314,7 +314,7 @@ function ServiceCategoryAccordion({
                         : "services"}
 
                       {selectedCount > 0 && (
-                        <span className="font-bold text-[#FF5B13]">
+                        <span className={`font-bold ${isTowing?"text-[#876100]":"text-[#FF5B13]"}`}>
                           {" · "}
                           {selectedCount} selected
                         </span>
@@ -365,8 +365,8 @@ function ServiceCategoryAccordion({
                           }
                           className={`rounded-full border px-3 py-2 text-[11px] font-bold transition-all duration-200 disabled:pointer-events-none ${
                             selected
-                              ? "border-[#FF5B13] bg-[#FF5B13] text-white shadow-[0_3px_10px_rgba(71,113,166,0.2)]"
-                              : "border-[#D0D5DD] bg-white text-[#344054] hover:border-[#FF5B13] hover:bg-[#FFF1E8]"
+                              ? isTowing ? "border-[#F3C547] bg-[#F3C547] text-[#35290D]" : "border-[#FF5B13] bg-[#FF5B13] text-white shadow-[0_3px_10px_rgba(71,113,166,0.2)]"
+                              : isTowing ? "border-[#D0D5DD] bg-white text-[#344054] hover:border-[#E5C267] hover:bg-[#FFF3C7]" : "border-[#D0D5DD] bg-white text-[#344054] hover:border-[#FF5B13] hover:bg-[#FFF1E8]"
                           }`}
                         >
                           {selected ? "✓ " : ""}
@@ -1210,7 +1210,7 @@ export default function LiveGarages() {
                                 : "Services & prices"}
                             </p>
 
-                            <span className="text-[10px] font-bold text-[#FF5B13]">
+                            <span className={`text-[10px] font-bold ${isTowing?"text-[#876100]":"text-[#FF5B13]"}`}>
                               {services.length} listed
                             </span>
                           </div>
@@ -1246,7 +1246,7 @@ export default function LiveGarages() {
                                       </p>
                                     </div>
 
-                                    <span className="shrink-0 text-[12px] font-bold text-[#FF5B13]">
+                                    <span className={`shrink-0 text-[12px] font-bold ${isTowing?"text-[#876100]":"text-[#FF5B13]"}`}>
                                       {priceLabel(
                                         service
                                       )}
@@ -1270,7 +1270,7 @@ export default function LiveGarages() {
                           {/* Expand the complete catalogue without replacing the compact preview. */}
                           {services.length > displayed.length && (
                             <details className="group mt-3 overflow-hidden rounded-[12px] border border-[#C9D8E9] bg-white">
-                              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-[12px] font-extrabold text-[#DD4E0D] hover:bg-[#FFF1E8] [&::-webkit-details-marker]:hidden">
+                              <summary className={`flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-[12px] font-extrabold [&::-webkit-details-marker]:hidden ${isTowing?"text-[#876100] hover:bg-[#FFF3C7]":"text-[#DD4E0D] hover:bg-[#FFF1E8]"}`}>
                                 <span>
                                   <span className="group-open:hidden">+ </span>
                                   <span className="hidden group-open:inline">− </span>
@@ -1295,7 +1295,7 @@ export default function LiveGarages() {
                                           Approx. {formatDuration(service.duration_minutes)}
                                         </p>
                                       </div>
-                                      <span className="shrink-0 text-[12px] font-bold text-[#FF5B13]">
+                                      <span className={`shrink-0 text-[12px] font-bold ${isTowing?"text-[#876100]":"text-[#FF5B13]"}`}>
                                         {priceLabel(service)}
                                       </span>
                                     </div>
