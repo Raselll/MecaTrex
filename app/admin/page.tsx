@@ -12,7 +12,6 @@ import {
   resendProviderDecisionEmail,
   setProviderStatus,
 } from "./actions";
-import AccentPicker from "@/components/account/accent-picker";
 import type { AccentColor } from "@/lib/booking";
 
 export const dynamic = "force-dynamic";
@@ -785,7 +784,7 @@ export default async function AdminPage({
     ),
   ];
 
-  const accent = (profile.accent_color || "blue") as AccentColor;
+  const accent: AccentColor = "blue";
 
   const clientsCount = accounts.filter(
     (account) => account.account_type === "client"
@@ -846,7 +845,7 @@ export default async function AdminPage({
             registered accounts in one place.
           </p>
 
-          <AccentPicker userId={user.id} initialAccent={accent} />
+          
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {[

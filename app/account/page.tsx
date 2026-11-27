@@ -425,7 +425,7 @@ export default async function AccountPage({
             overview={
               <ProviderReadiness provider={provider} services={services} />
             }
-            financials={approved ? <FinancialOverview ownerId={provider.id} kind="provider" /> : undefined}
+            financials={approved ? <FinancialOverview ownerId={provider.id} kind="provider" providerType={provider.provider_type} /> : undefined}
             calendar={
               approved ? (
                 <div className="space-y-5">

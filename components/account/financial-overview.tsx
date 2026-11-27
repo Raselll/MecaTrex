@@ -1,5 +1,6 @@
 "use client";
 
+import CustomerHistory from "@/components/account/customer-history";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -25,6 +26,7 @@ type FinancialBooking = Pick<
 type Props = {
   ownerId: string;
   kind: "provider" | "client";
+  providerType?: "garage" | "towing";
 };
 
 const PAGE_SIZE = 1000;
@@ -66,7 +68,7 @@ function csvCell(value: string | number) {
   return '"' + text.replaceAll('"', '""') + '"';
 }
 
-export default function FinancialOverview({ ownerId, kind }: Props) {
+export default function FinancialOverview({ ownerId, kind, providerType }: Props) {
   const supabase = useMemo(() => createClient(), []);
   const [initialYear] = useState(() => localYear(new Date()));
   const [year, setYear] = useState(initialYear);
@@ -518,6 +520,7 @@ export default function FinancialOverview({ ownerId, kind }: Props) {
           </>
         )}
       </div>
+      {provider && <CustomerHistory providerId={ownerId} providerType={providerType ?? "garage"} year={year} />}
     </section>
   );
 }
