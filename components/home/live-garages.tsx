@@ -1,6 +1,7 @@
 
 "use client";
 
+import { PublicProviderPreferences } from "@/components/provider/public-preferences";
 import {
   useEffect,
   useMemo,
@@ -48,6 +49,8 @@ type Garage = {
   public_phone: string | null;
   website: string | null;
   image_path: string | null;
+  payment_methods: string[];
+  spoken_languages: string[];
   latitude: number | null;
   longitude: number | null;
   provider_services: Service[] | null;
@@ -608,6 +611,8 @@ export default function LiveGarages() {
           public_phone,
           website,
           image_path,
+          payment_methods,
+          spoken_languages,
           latitude,
           longitude,
           booking_suspended,
@@ -1287,6 +1292,7 @@ export default function LiveGarages() {
                           {garage.postal_code}
                         </p>
 
+                        <PublicProviderPreferences payments={garage.payment_methods} languages={garage.spoken_languages} />
                         {/* MATCHED SERVICES */}
 
                         <div className="mt-4 rounded-[15px] bg-[#F8FAFC] p-3">

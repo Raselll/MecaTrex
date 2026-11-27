@@ -1,6 +1,7 @@
 
 "use client";
 
+import { PAYMENT_OPTIONS, LANGUAGE_OPTIONS } from "@/components/provider/public-preferences";
 import {
   type FormEvent,
   useMemo,
@@ -41,6 +42,8 @@ export type ProviderRecord = {
   public_phone: string | null;
   website: string | null;
   image_path: string | null;
+  payment_methods: string[];
+  spoken_languages: string[];
   latitude: number | null;
   longitude: number | null;
   is_listing_active: boolean;
@@ -276,7 +279,10 @@ export default function ProviderDashboard({
       return "Business name, address and postal code are required.";
     }
 
-    const { error: updateError } =
+    if (!provider.payment_methods?.length || !provider.spoken_languages?.length) {
+      return "Select at least one payment method and one spoken language.";
+    }
+    const { data: savedProfile, error: updateError } =
       await supabase
         .from("service_providers")
         .update({
@@ -308,15 +314,22 @@ export default function ProviderDashboard({
             null,
 
           website,
+          payment_methods: provider.payment_methods,
+          spoken_languages: provider.spoken_languages,
         })
-        .eq("id", provider.id);
+        .eq("id", provider.id)
+        .select("payment_methods,spoken_languages")
+        .single();
 
     if (updateError) {
       return updateError.message;
     }
 
+    if (!savedProfile) return "No business profile was updated. Please check your account permissions.";
     setProvider((current) => ({
       ...current,
+      payment_methods: savedProfile.payment_methods,
+      spoken_languages: savedProfile.spoken_languages,
       website,
       city: "Montreal",
       province: "Quebec",
@@ -1087,6 +1100,22 @@ export default function ProviderDashboard({
               placeholder="https://garage.example.com"
             />
 
+            {([
+              ["payment_methods", "Payment methods", PAYMENT_OPTIONS],
+              ["spoken_languages", "Languages spoken", LANGUAGE_OPTIONS.map(label => ({label, icon: ""}))],
+            ] as const).map(([key, label, options]) => (
+              <fieldset key={key} className="sm:col-span-2">
+                <legend className="mb-2 text-[14px] font-bold">{label} *</legend>
+                <p className="mb-3 text-xs text-[#667085]">Select all that apply.</p>
+                <div className="flex flex-wrap gap-2">
+                  {options.map(({label: option, icon}) => {
+                    const current = provider[key] ?? [];
+                    const selected = current.includes(option);
+                    return <button type="button" key={option} aria-pressed={selected} onClick={() => field(key, selected ? current.filter(value => value !== option) : [...current, option])} className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${selected ? "border-[#FF5B13] bg-[#FFF1E8] text-[#DD4E0D]" : "border-[#E4E7EC] bg-[#F8FAFC] text-[#344054] hover:border-[#FF5B13]"}`}>{icon && <span aria-hidden="true" className="text-xl">{icon}</span>}{option}{selected && <span aria-hidden="true">✓</span>}</button>;
+                  })}
+                </div>
+              </fieldset>
+            ))}
             <ProviderField
               label="Address"
               value={provider.address_line1}

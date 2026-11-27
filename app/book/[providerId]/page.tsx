@@ -1,3 +1,4 @@
+import { PublicProviderPreferences } from "@/components/provider/public-preferences";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -29,7 +30,7 @@ export default async function GarageBookingPage({
   const [{ data: { user } }, { data: garage }] = await Promise.all([
     supabase.auth.getUser(),
     supabase.from("service_providers")
-      .select("id,business_name,business_description,address_line1,city,province,postal_code,public_phone,public_email,website,image_path,status,is_listing_active,provider_type,booking_suspended")
+      .select("id,business_name,business_description,address_line1,city,province,postal_code,public_phone,public_email,website,image_path,payment_methods,spoken_languages,status,is_listing_active,provider_type,booking_suspended")
       .eq("id", providerId)
       .eq("provider_type", "garage")
       .eq("status", "approved")
@@ -89,6 +90,7 @@ export default async function GarageBookingPage({
           <div className="p-6 sm:p-8">
             <p className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#FF5B13]">✓ Approved BandWhip garage</p>
             <h1 className="mt-2 text-[34px] font-extrabold tracking-[-0.04em]">{garage.business_name}</h1>
+            <PublicProviderPreferences payments={garage.payment_methods} languages={garage.spoken_languages} />
             <div className="mt-5 space-y-2 text-[14px] text-[#475467]">
               <p>📍 {garage.address_line1}, {garage.city}, {garage.province} {garage.postal_code}</p>
               {garage.public_phone && <p>📞 <a className="font-bold text-[#DD4E0D] underline" href={`tel:${garage.public_phone.replace(/[^\d+]/g, "")}`}>{garage.public_phone}</a></p>}
