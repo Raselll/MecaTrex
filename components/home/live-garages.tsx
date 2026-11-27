@@ -1,6 +1,7 @@
 
 "use client";
 
+import { formatDuration } from "@/components/provider/duration-input";
 import { orderServices } from "@/lib/service-display-order";
 import { PublicProviderPreferences } from "@/components/provider/public-preferences";
 import {
@@ -158,6 +159,25 @@ function closureDate(value: string) {
   }).format(new Date(value));
 }
 
+function businessStatus(hours:BusinessHour[],closures:PublicClosure[],clock:number|null) {
+  if(clock===null || !hours.length) return "Hours unavailable";
+  if(closures.some(c=>Date.parse(c.starts_at)<=clock && clock<Date.parse(c.ends_at))) return "Closed";
+  const parts=new Intl.DateTimeFormat("en-US",{timeZone:"America/Toronto",weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(clock));
+  const get=(key:string)=>parts.find(p=>p.type===key)?.value ?? "";
+  const weekday=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(get("weekday"));
+  const now=Number(get("hour"))*60+Number(get("minute"));
+  const minutes=(v:string|null)=>v?Number(v.slice(0,2))*60+Number(v.slice(3,5)):NaN;
+  const today=hours.find(h=>h.weekday===weekday);
+  const previous=hours.find(h=>h.weekday===(weekday+6)%7);
+  const isOpen=(h:BusinessHour|undefined,overnight:boolean)=>{
+    if(!h?.is_open)return false;
+    const start=minutes(h.open_time),end=minutes(h.close_time);
+    if(!Number.isFinite(start)||!Number.isFinite(end))return false;
+    if(overnight)return end<start && now<end;
+    return end<start?now>=start:now>=start&&now<end;
+  };
+  return isOpen(today,false)||isOpen(previous,true)?"Open now":today?"Closed":"Hours unavailable";
+}
 function activeFixedServices(garage: Garage) {
   return orderServices((garage.provider_services ?? []).filter(
     (service) =>
@@ -500,6 +520,8 @@ export default function LiveGarages() {
   const serviceCatalogue = SERVICE_ITEMS[providerType];
   const isTowing = providerType === "towing";
 
+  const [clock, setClock] = useState<number | null>(null);
+  useEffect(()=>{const tick=()=>setClock(Date.now());tick();const timer=window.setInterval(tick,30000);return ()=>window.clearInterval(timer);},[]);
   const [hours, setHours] =
     useState<BusinessHour[]>([]);
 
@@ -1239,6 +1261,7 @@ export default function LiveGarages() {
                       )
                       .slice(0, 6);
 
+                  const status = businessStatus(garageHours, publicClosures.filter(c=>c.provider_id===garage.id), clock);
                   const website =
                     normalizeBusinessWebsite(
                       garage.website ?? ""
@@ -1252,6 +1275,7 @@ export default function LiveGarages() {
                       <div className={`px-5 py-2 text-[11px] font-extrabold uppercase tracking-wider ${isTowing ? "bg-[#F3C547] text-[#35290D]" : "bg-[#20262D] text-white"}`}>
                         {isTowing ? "🚛 Towing company" : "Garages"}
                       </div>
+                      <div className="flex items-center justify-between gap-2 border-b border-[#EAECF0] bg-white px-4 py-2.5"><span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${status==="Open now"?"bg-[#ECFDF3] text-[#027A48]":status==="Closed"?"bg-[#FEF3F2] text-[#B42318]":"bg-[#F2F4F7] text-[#667085]"}`}><span className="h-2 w-2 rounded-full bg-current"/>{status}</span><span className="text-[10px] font-medium text-[#667085]">Montréal time</span></div>
                       {/* PROVIDER IMAGE */}
 
                       <div className={`relative h-[175px] overflow-hidden bg-gradient-to-br ${isTowing ? "from-[#85621A] to-[#F3C547]" : "from-[#20262D] to-[#FF5B13]"}`}>
@@ -1275,7 +1299,7 @@ export default function LiveGarages() {
 
                       {/* GARAGE DETAILS */}
 
-                      <div className="p-5">
+                      <div className="space-y-1 p-4 sm:p-5">
                         <div className="flex flex-wrap items-start justify-between gap-2">
                           <h3 className="text-[22px] font-extrabold tracking-tight text-[#101828]">
                             {garage.business_name}
@@ -1338,11 +1362,7 @@ export default function LiveGarages() {
                                       </p>
 
                                       <p className="text-[10px] text-[#98A2B3]">
-                                        Approx.{" "}
-                                        {
-                                          service.duration_minutes
-                                        }{" "}
-                                        min
+                                        Approx. {formatDuration(service.duration_minutes)}
                                       </p>
                                     </div>
 
@@ -1392,7 +1412,7 @@ export default function LiveGarages() {
                                           {catalogue?.icon ?? "🔧"} {service.name}
                                         </p>
                                         <p className="mt-0.5 text-[10px] text-[#98A2B3]">
-                                          Approx. {service.duration_minutes} min
+                                          Approx. {formatDuration(service.duration_minutes)}
                                         </p>
                                       </div>
                                       <span className="shrink-0 text-[12px] font-bold text-[#FF5B13]">

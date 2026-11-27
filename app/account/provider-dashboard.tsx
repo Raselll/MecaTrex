@@ -1,6 +1,8 @@
 
 "use client";
 
+import PhotoCropper from "@/components/provider/photo-cropper";
+import { DurationInput } from "@/components/provider/duration-input";
 import { orderServices } from "@/lib/service-display-order";
 import { PAYMENT_OPTIONS, LANGUAGE_OPTIONS, PaymentMark } from "@/components/provider/public-preferences";
 import {
@@ -163,6 +165,7 @@ export default function ProviderDashboard({
   const [savingAll, setSavingAll] =
     useState(false);
 
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] =
     useState(false);
 
@@ -1028,32 +1031,8 @@ export default function ProviderDashboard({
             )}
           </div>
 
-          <label className="mt-4 block cursor-pointer rounded-[14px] border border-dashed border-[#98A2B3] px-4 py-4 text-center text-[13px] font-bold text-[#475467] hover:bg-[#F9FAFB]">
-            {uploadingImage
-              ? "Uploading..."
-              : "Upload garage photo"}
-
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              disabled={uploadingImage}
-              onChange={(event) =>
-                void uploadImage(
-                  event.target.files?.[0]
-                )
-              }
-              className="sr-only"
-            />
-          </label>
-
-          <p className="mt-3 text-center text-[12px] text-[#667085]">
-            Recommended: 1600 × 900 px (16:9)
-          </p>
-
-          <p className="mt-1 text-center text-[11px] text-[#98A2B3]">
-            Landscape photo recommended (16:9) · JPG, PNG or WebP · maximum 5 MB.
-          </p>
-        </section>
+          <PhotoCropper file={cropFile} disabled={uploadingImage} onFile={setCropFile} onApply={async file=>{await uploadImage(file);setCropFile(null);}} />
+                </section>
 
         <form
           onSubmit={saveProfile}
@@ -1262,23 +1241,7 @@ export default function ProviderDashboard({
               placeholder="89.00"
             />
 
-            <ProviderField
-              label="Approx. duration (minutes) *"
-              type="number"
-              step="1"
-              min="1"
-              required
-              value={newService.duration}
-              onChange={(value) =>
-                setNewService(
-                  (current) => ({
-                    ...current,
-                    duration: value,
-                  })
-                )
-              }
-              placeholder="60"
-            />
+            <DurationInput value={Number(newService.duration)||0} onChange={value=>setNewService(current=>({...current,duration:value?String(value):""}))} />
 
             <label className="lg:col-span-2">
               <span className="mb-2 block text-[14px] font-bold">
@@ -1508,26 +1471,7 @@ function ServiceEditor({
           }
         />
 
-        <ProviderField
-          label="Duration (minutes) *"
-          type="number"
-          step="1"
-          min="1"
-          required
-          value={
-            service.duration_minutes?.toString() ??
-            ""
-          }
-          onChange={(value) =>
-            onChange({
-              ...service,
-              duration_minutes:
-                value === ""
-                  ? null
-                  : Number(value),
-            })
-          }
-        />
+        <DurationInput value={service.duration_minutes ?? 0} onChange={value=>onChange({...service,duration_minutes:value||null})} />
 
         <label className="flex h-[48px] items-center gap-2 rounded-[12px] bg-[#F8FAFC] px-4 text-[12px] font-bold text-[#475467]">
           <input

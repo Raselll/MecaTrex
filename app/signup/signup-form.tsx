@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import PhotoCropper from "@/components/provider/photo-cropper";
 import {
   startTransition,
   useActionState,
@@ -181,6 +182,7 @@ export default function SignupForm({
   );
   const [hoursError, setHoursError] = useState("");
 
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState("");
   const [photoError, setPhotoError] = useState("");
@@ -387,7 +389,7 @@ export default function SignupForm({
     if (invalid) return invalid.validationMessage || "Please complete the required fields.";
     if (index === 1 && (!PHONE_REGEX.test(primaryPhone) || (secondaryPhone && !PHONE_REGEX.test(secondaryPhone)))) return "Enter a valid phone number (514-555-1234).";
     if (accountType === "provider") {
-      if (index === 3 && (!photo || !/^\d{10}$/.test(businessNEQ) || !PHONE_REGEX.test(businessPhone))) return "Add a valid business photo, NEQ and business phone.";
+      if (index === 3 && (cropFile || !photo || !/^\d{10}$/.test(businessNEQ) || !PHONE_REGEX.test(businessPhone))) return "Add a valid business photo, NEQ and business phone.";
       if (index === 4 && (!applicationServices.length || (otherServiceEnabled && !otherService.trim()))) return "Select at least one service.";
       if (index === 5 && !validateBusinessHours(businessHours)) return "Check your opening and closing hours.";
     }
@@ -702,23 +704,7 @@ export default function SignupForm({
               )}
             </div>
 
-            <label className="mt-4 block cursor-pointer rounded-[12px] border border-[#FF5B13] bg-white px-4 py-3 text-center text-[13px] font-bold text-[#DD4E0D]">
-              {photo ? "Change business photo" : "Upload business photo"}
-              <input
-                name="business_photo"
-                type="file"
-                required
-                accept="image/jpeg,image/png,image/webp"
-                className="sr-only"
-                onChange={(event) =>
-                  changePhoto(event.target.files?.[0] ?? null)
-                }
-              />
-            </label>
-
-            <p className="mt-2 text-center text-[11px] text-[#667085]">
-              Landscape photo recommended (16:9) · JPG, PNG or WebP · Maximum 5 MB
-            </p>
+            <PhotoCropper file={cropFile} onFile={setCropFile} onApply={file=>{changePhoto(file);setCropFile(null);}} />
             {photo && (
               <p className="mt-2 break-all text-center text-[12px] font-semibold text-[#027A48]">
                 ✓ {photo.name}
