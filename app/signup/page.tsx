@@ -11,7 +11,7 @@ export default async function SignupPage({
 
   return (
     <main className="bw-auth-page min-h-screen bg-[#FAF8F5] px-5 py-10">
-      <div className="mx-auto max-w-[740px]">
+      <div className="mx-auto max-w-[800px]">
         <Link href="/" className="inline-flex items-center">
           <Image
             src="/bandwhip-logo.svg"
@@ -23,10 +23,10 @@ export default async function SignupPage({
           />
         </Link>
 
-        <div className="bw-auth-card mt-8 rounded-[30px] border border-[#EAECF0] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-10">
+        <div className="bw-auth-card mt-6 rounded-[30px] border border-[#EAECF0] bg-white p-7 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-10">
           <p className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#FF5B13]">Join BandWhip</p>
-          <h1 className="mt-3 text-[37px] font-bold tracking-[-0.04em] text-[#101828] sm:text-[44px]">Create your account.</h1>
-          <p className="mt-3 text-[16px] leading-7 text-[#667085]">
+          <h1 className="mt-2 text-[20px] font-bold tracking-[-0.02em] text-[#101828]">Create your account.</h1>
+          <p className="mt-2 text-[14px] leading-6 text-[#667085]">
             Book vehicle services as a client, or join BandWhip as a garage or towing provider.
           </p>
 

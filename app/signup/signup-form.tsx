@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import {
+  startTransition,
   useActionState,
   useEffect,
   useRef,
@@ -129,6 +130,10 @@ export default function SignupForm({
     error: error ?? null,
   });
 
+  const [step, setStep] = useState(0);
+  const [stepError, setStepError] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const [accountType, setAccountType] = useState<AccountType>("client");
   const [providerType, setProviderType] = useState<ProviderType>("garage");
 
@@ -325,29 +330,6 @@ export default function SignupForm({
     setPhoto(file);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    if (accountType !== "provider") return;
-
-    if (!photo) {
-      event.preventDefault();
-      setPhotoError("A business photo is required.");
-      document.getElementById("business-photo")?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-      return;
-    }
-
-    if (!validateBusinessHours(businessHours)) {
-      event.preventDefault();
-      setHoursError("Check your business hours.");
-      document.getElementById("business-hours")?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
-  }
-
   const applicationServices = [
     ...selectedServices,
     ...(otherServiceEnabled && otherService.trim()
@@ -373,8 +355,67 @@ export default function SignupForm({
         applicationServices.length > 0 &&
         (!otherServiceEnabled || Boolean(otherService.trim()))));
 
+  const steps = accountType === "provider"
+    ? [
+        ["Account type", "How will you use BandWhip?", "Choose the account and business type that fits you."],
+        ["Contact", "Who are we speaking with?", "Enter your personal contact information."],
+        ["Business", "Where is your business located?", "Tell us about your business and its address."],
+        ["Verification", "Verify your business", "Provide your business credentials and a photo."],
+        ["Services", "What services do you provide?", "Select the services you offer and describe your business."],
+        ["Hours", "When are you open?", "Set your regular business hours."],
+        ["Security", "Secure your account", "Create a password and review the terms before submitting."],
+      ]
+    : [
+        ["Account type", "How will you use BandWhip?", "Choose the account type that fits you."],
+        ["Contact", "Tell us about yourself", "Enter your name and contact information."],
+        ["Security", "Secure your account", "Create a password and review the terms before submitting."],
+      ];
+  const lastStep = steps.length - 1;
+
+  function goToStep(index: number) {
+    setStepError("");
+    setStep(index);
+    window.requestAnimationFrame(() => {
+      headingRef.current?.focus({ preventScroll: true });
+      headingRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+    });
+  }
+
+  function validateStep(index: number): string | null {
+    const panel = formRef.current?.querySelector<HTMLElement>(`[data-signup-step="${index}"]`);
+    const invalid = Array.from(panel?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>("input, textarea, select") ?? []).find((field) => field.willValidate && !field.checkValidity());
+    if (invalid) return invalid.validationMessage || "Please complete the required fields.";
+    if (index === 1 && (!PHONE_REGEX.test(primaryPhone) || (secondaryPhone && !PHONE_REGEX.test(secondaryPhone)))) return "Enter a valid phone number (514-555-1234).";
+    if (accountType === "provider") {
+      if (index === 3 && (!photo || !/^\d{10}$/.test(businessNEQ) || !PHONE_REGEX.test(businessPhone))) return "Add a valid business photo, NEQ and business phone.";
+      if (index === 4 && (applicationDescription.trim().length < 30 || !applicationServices.length || (otherServiceEnabled && !otherService.trim()))) return "Select at least one service and enter a description of at least 30 characters.";
+      if (index === 5 && !validateBusinessHours(businessHours)) return "Check your opening and closing hours.";
+    }
+    if (index === lastStep && (!passwordValid || password !== confirmPassword)) return "Use a valid password and make sure both passwords match.";
+    return null;
+  }
+
+  function advance() {
+    const message = validateStep(step);
+    if (message) { setStepError(message); return; }
+    goToStep(Math.min(step + 1, lastStep));
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+    if (step !== lastStep) { advance(); return; }
+    for (let index = 0; index <= lastStep; index++) {
+      const message = validateStep(index);
+      if (message) { goToStep(index); setStepError(message); return; }
+    }
+    const data = new FormData(event.currentTarget);
+    if (accountType === "provider" && photo) data.set("business_photo", photo);
+    startTransition(() => action(data));
+  }
+
   return (
-    <form action={action} onSubmit={handleSubmit} className="mt-7">
+    <form ref={formRef} action={action} onSubmit={handleSubmit} noValidate className="mt-7">
       <input type="hidden" name="next" value={next ?? ""} />
       <input type="hidden" name="account_type" value={accountType} />
       <input type="hidden" name="provider_type" value={providerType} />
@@ -400,12 +441,25 @@ export default function SignupForm({
         value={JSON.stringify(businessHours)}
       />
 
+      <div className="mb-7 flex items-center justify-between gap-4">
+        <span className="text-sm font-bold text-[#667085]">Step {step + 1} of {steps.length}</span>
+        <div className="flex w-[42%] gap-1.5" aria-label={`Step ${step + 1} of ${steps.length}`}>
+          {steps.map(([label], index) => <span key={label} title={label} className="h-1 flex-1 rounded-full" style={{ backgroundColor: index <= step ? "#FF5B13" : "#E4E7EC" }} />)}
+        </div>
+      </div>
+      <h2 ref={headingRef} tabIndex={-1} className="scroll-mt-8 text-[28px] font-extrabold tracking-tight text-[#101828] outline-none sm:text-[34px]">{steps[step][1]}</h2>
+      <p className="mt-2 text-[15px] leading-6 text-[#667085]">{steps[step][2]}</p>
+      {(stepError || state.error || hoursError || photoError) && (
+        <div role="alert" className="mt-5 rounded-[13px] bg-[#FEF3F2] p-4 text-[13px] font-semibold text-[#B42318]">{stepError || state.error || hoursError || photoError}</div>
+      )}
+      <div data-signup-step="0" hidden={step !== 0} style={{ display: step === 0 ? undefined : "none" }} className="mt-6">
       <div className="grid grid-cols-2 rounded-[16px] bg-[#F2F4F7] p-1">
         {(["client", "provider"] as const).map((type) => (
           <button
             key={type}
             type="button"
-            onClick={() => setAccountType(type)}
+            onClick={() => { setAccountType(type); setStepError(""); }}
+            aria-pressed={accountType === type}
             className={`rounded-[12px] px-4 py-3 text-[13px] font-bold ${
               accountType === type
                 ? "bg-white text-[#101828] shadow-sm"
@@ -451,15 +505,10 @@ export default function SignupForm({
         </div>
       )}
 
-      {(state.error || hoursError || photoError) && (
-        <div
-          role="alert"
-          className="mt-5 rounded-[13px] bg-[#FEF3F2] p-4 text-[13px] font-semibold text-[#B42318]"
-        >
-          {state.error || hoursError || photoError}
-        </div>
-      )}
+      {accountType === "provider" && <div className="mt-6 rounded-[16px] border border-[#FF5B13]/40 bg-[#FFF1E8] p-4"><div className="flex items-center gap-3"><span className="text-[28px]" aria-hidden="true">🇨🇦</span><div><strong className="block text-[#101828]">Canada</strong><span className="text-sm text-[#667085]">Currently available in Montréal, Québec.</span></div><span className="ml-auto text-[#FF5B13]" aria-hidden="true">✓</span></div></div>}
+      </div>
 
+      <div data-signup-step="1" hidden={step !== 1} style={{ display: step === 1 ? undefined : "none" }}>
       <section className="mt-7 grid gap-4 sm:grid-cols-2">
         <TextField
           label="First name *"
@@ -496,8 +545,10 @@ export default function SignupForm({
         />
       </section>
 
+      </div>
       {accountType === "provider" && (
-        <section className="mt-8 space-y-6 border-t border-[#EAECF0] pt-7">
+        <>
+        <section data-signup-step="2" hidden={step !== 2} style={{ display: step === 2 ? undefined : "none" }} className="mt-6 space-y-5">
           <div>
             <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[#FF5B13]">
               Business information
@@ -606,6 +657,8 @@ export default function SignupForm({
             />
           </div>
 
+        </section>
+        <section data-signup-step="3" hidden={step !== 3} style={{ display: step === 3 ? undefined : "none" }} className="mt-6 space-y-5">
           <div
             id="business-photo"
             className="scroll-mt-20 rounded-[20px] border border-[#B7CDE4] bg-[#F7FAFE] p-5"
@@ -719,6 +772,9 @@ export default function SignupForm({
               </Field>
             </div>
 
+          </div>
+        </section>
+        <section data-signup-step="4" hidden={step !== 4} style={{ display: step === 4 ? undefined : "none" }} className="mt-6 space-y-5">
             <ServiceCategorySelector
               key={providerType}
               providerType={providerType}
@@ -753,8 +809,8 @@ export default function SignupForm({
                 {applicationDescription.length}/1500 characters
               </p>
             </div>
-          </div>
-
+        </section>
+        <section data-signup-step="5" hidden={step !== 5} style={{ display: step === 5 ? undefined : "none" }} className="mt-6 space-y-5">
           <div
             id="business-hours"
             className="scroll-mt-20 rounded-[20px] border border-[#D6E0ED] bg-[#F8FAFC] p-5"
@@ -828,9 +884,11 @@ export default function SignupForm({
             Prices and publication become available after approval.
           </p>
         </section>
+        </>
       )}
 
-      <section className="mt-7 grid gap-4 border-t border-[#EAECF0] pt-7 sm:grid-cols-2">
+      <div data-signup-step={lastStep} hidden={step !== lastStep} style={{ display: step === lastStep ? undefined : "none" }}>
+      <section className="mt-7 grid gap-4 sm:grid-cols-2">
         <TextField
           label="Password *"
           name="password"
@@ -887,17 +945,22 @@ export default function SignupForm({
         </span>
       </label>
 
+      </div>
+      <div className="mt-8 flex items-center gap-3 border-t border-[#EAECF0] pt-5">
+        {step > 0 && <button type="button" disabled={pending} onClick={() => goToStep(step - 1)} className="rounded-[14px] border border-[#D0D5DD] px-6 py-4 text-[15px] font-bold text-[#475467] hover:bg-[#F2F4F7]">Back</button>}
+        {step < lastStep ? <button type="button" onClick={advance} className="flex-1 rounded-[14px] bg-[#FF5B13] px-5 py-4 text-[15px] font-bold text-white hover:bg-[#DD4E0D]">Continue <span aria-hidden="true">→</span></button> :
       <button
         type="submit"
         disabled={!signupReady || pending}
-        className="mt-7 w-full rounded-[14px] bg-[#FF5B13] px-5 py-4 text-[15px] font-bold text-white hover:bg-[#DD4E0D] disabled:cursor-not-allowed disabled:bg-[#B8C6D8]"
+        className="flex-1 rounded-[14px] bg-[#FF5B13] px-5 py-4 text-[15px] font-bold text-white hover:bg-[#DD4E0D] disabled:cursor-not-allowed disabled:bg-[#B8C6D8]"
       >
         {pending
           ? "Submitting application..."
           : accountType === "provider"
             ? "Submit provider application"
             : "Create client account"}
-      </button>
+      </button>}
+      </div>
     </form>
   );
 }
