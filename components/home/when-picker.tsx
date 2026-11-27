@@ -223,7 +223,7 @@ export default function WhenPicker() {
         aria-label={activeSelection ? `When: ${formatSelection(activeSelection)}. Change selection` : "Choose when you need service"}
         className={`flex min-h-[110px] w-full flex-col items-center justify-center rounded-[20px] px-4 py-4 text-center outline-none transition-transform focus-visible:ring-4 focus-visible:ring-[#FF5B13]/20 ${activeSelection ? "max-sm:-translate-y-2 sm:group-hover:-translate-y-2 sm:group-focus-within:-translate-y-2" : ""}`}
       >
-        <span className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">When</span>
+        <span className="bw-when-heading flex items-center gap-2"><span className="bw-search-icon" aria-hidden="true">03</span><span className="text-[13px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">When</span></span>
         <span className="mt-2 max-w-full truncate text-[19px] font-semibold text-[#101828]">
           {activeSelection ? formatSelection(activeSelection) : "Choose when"}
         </span>

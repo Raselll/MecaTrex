@@ -2606,21 +2606,23 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bw-shell bw-store-section" aria-label="Mobile app availability">
+        <section className="bw-shell bw-store-section mx-auto py-16 text-center" style={{ paddingBlock: 64, textAlign: "center" }} aria-label="Mobile app availability">
           <span className="bw-eyebrow">BANDWHIP ON MOBILE</span>
-          <h2>Car care, wherever you go.</h2>
-          <p>Mobile apps for iPhone and Android are planned.</p>
-          <div className="bw-store-badges">
-            <div className="bw-store-badge"><svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M17.1 12.3c0-2 1.7-3 1.8-3.1-1-1.5-2.6-1.7-3.2-1.7-1.4-.2-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.6 0-3.1 1-3.9 2.4-1.7 2.9-.4 7.3 1.2 9.7.8 1.2 1.7 2.4 2.9 2.3 1.1 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.2 2.8-2.3.9-1.3 1.3-2.5 1.3-2.6-.1 0-2.5-1-2.5-4.7ZM14.8 5.9c.6-.8 1.1-1.9 1-3-.9.1-2.1.7-2.8 1.5-.6.7-1.1 1.8-1 2.9 1.1.1 2.2-.5 2.8-1.4Z"/></svg><div><small>COMING SOON</small><strong>App Store</strong></div></div>
-            <div className="bw-store-badge"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="#00C2FF" d="M3 2v20l11-10Z"/><path fill="#00D685" d="M3 2l15 8-4 2Z"/><path fill="#FFCA28" d="m18 10 4 2-4 2-4-2Z"/><path fill="#FF4757" d="M3 22l15-8-4-2Z"/></svg><div><small>COMING SOON</small><strong>Google Play</strong></div></div>
+          <h2 style={{ fontSize: "clamp(30px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.055em", margin: "12px 0" }}>Car care, wherever you go.</h2>
+          <p style={{ color: "#667085" }}>Mobile apps for iPhone and Android are planned.</p>
+          <div className="bw-store-badges" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 14, marginTop: 24 }}>
+            <div className="bw-store-badge" style={{ display: "flex", alignItems: "center", gap: 12, border: "1px solid #d8dce1", borderRadius: 15, padding: "12px 22px", textAlign: "left", background: "#fff", color: "#171d24", minWidth: 185 }}><svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M17.1 12.3c0-2 1.7-3 1.8-3.1-1-1.5-2.6-1.7-3.2-1.7-1.4-.2-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.6 0-3.1 1-3.9 2.4-1.7 2.9-.4 7.3 1.2 9.7.8 1.2 1.7 2.4 2.9 2.3 1.1 0 1.6-.7 3-.7s1.8.7 3 .7c1.3 0 2.1-1.2 2.8-2.3.9-1.3 1.3-2.5 1.3-2.6-.1 0-2.5-1-2.5-4.7ZM14.8 5.9c.6-.8 1.1-1.9 1-3-.9.1-2.1.7-2.8 1.5-.6.7-1.1 1.8-1 2.9 1.1.1 2.2-.5 2.8-1.4Z"/></svg><div><small style={{ display: "block", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#667085" }}>COMING SOON</small><strong style={{ display: "block", fontSize: 20, fontWeight: 800 }}>App Store</strong></div></div>
+            <div className="bw-store-badge" style={{ display: "flex", alignItems: "center", gap: 12, border: "1px solid #d8dce1", borderRadius: 15, padding: "12px 22px", textAlign: "left", background: "#fff", color: "#171d24", minWidth: 185 }}><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="#00C2FF" d="M3 2v20l11-10Z"/><path fill="#00D685" d="M3 2l15 8-4 2Z"/><path fill="#FFCA28" d="m18 10 4 2-4 2-4-2Z"/><path fill="#FF4757" d="M3 22l15-8-4-2Z"/></svg><div><small style={{ display: "block", fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", color: "#667085" }}>COMING SOON</small><strong style={{ display: "block", fontSize: 20, fontWeight: 800 }}>Google Play</strong></div></div>
           </div>
         </section>
 
         {/* PRODUCT-LED GARAGE WORKSPACE STORY */}
-        <GarageDashboardStory />
+        <div id="garages" className="bw-provider-zone" style={{ background: "#f1f3f5", borderTop: "1px solid #dfe3e7", borderBottom: "1px solid #dfe3e7", scrollMarginTop: 100 }}>
+          <div className="bw-shell" style={{ paddingTop: 48, textAlign: "center" }}><span className="bw-eyebrow">FOR BUSINESS OWNERS</span><h2 style={{ fontSize: "clamp(30px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.05em", marginTop: 10 }}>BandWhip for garages &amp; towing providers</h2><p style={{ color: "#667085", marginTop: 10 }}>Manage your business, availability and appointments.</p></div>
+          <GarageDashboardStory />
 
         {/* THE BUSINESS PROMISE */}
-        <section id="garages" className="bw-business" data-bw-reveal>
+        <section className="bw-business" style={{ background: "transparent" }} data-bw-reveal>
           <div className="bw-shell">
             <div className="bw-business-card">
               <div className="bw-business-copy">
@@ -2639,6 +2641,8 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        </div>
 
         <section className="bw-closing" data-bw-reveal>
           <div className="bw-shell bw-closing-inner"><span className="bw-eyebrow">THE SIMPLE WAY FORWARD</span><h2>Good service starts<br />with a <em>better booking.</em></h2><a className="bw-button bw-button-orange" href="/garages#garage-results">Find your next garage <span aria-hidden="true">↗</span></a></div>

@@ -928,3 +928,13 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
 .bw-store-badge small,.bw-store-badge strong {display:block;}
 .bw-store-badge small {font-size:10px;font-weight:700;letter-spacing:.08em;color:#667085;}
 .bw-store-badge strong {font-size:20px;font-weight:800;}
+
+/* Equal search columns and clearly separated provider audience. */
+.bw-page .bw-search-panel {grid-template-columns:repeat(4,minmax(0,1fr)) auto;}
+.bw-page .bw-search-field,.bw-page .bw-search-date {min-width:0;}
+.bw-page .bw-search-date>div {border-radius:9px;}
+.bw-page .bw-search-date>div>button:first-child {align-items:flex-start;text-align:left;padding-left:14px;padding-right:14px;}
+.bw-page .bw-search-date .bw-when-heading {display:flex;align-items:center;gap:10px;}
+.bw-page .bw-search-date>div>button:first-child>span:not(:first-child) {margin-left:39px;max-width:calc(100% - 39px);font-size:13px;}
+.bw-page .bw-provider-zone .bw-dashboard-story {background:transparent;padding-top:52px;}
+@media(max-width:1100px){.bw-page .bw-search-panel{grid-template-columns:repeat(2,minmax(0,1fr));}.bw-page .bw-search-location{display:flex;}.bw-page .bw-search-submit{grid-column:1/-1;}}
