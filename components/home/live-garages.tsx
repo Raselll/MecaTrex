@@ -4,7 +4,7 @@
 import { businessStatus } from "@/lib/provider-status";
 import { formatDuration } from "@/components/provider/duration-input";
 import { orderServices } from "@/lib/service-display-order";
-import { PaymentMark } from "@/components/provider/public-preferences";
+import { PaymentMark, paymentLabel } from "@/components/provider/public-preferences";
 import {
   useEffect,
   useMemo,
@@ -1320,7 +1320,7 @@ export default function LiveGarages() {
                         </div>
 
                         <div className="mt-4 space-y-2 border-t border-[#EAECF0] pt-3">
-                          {!!garage.payment_methods?.length && <div className="flex flex-wrap items-center gap-1.5"><span className="mr-1 text-[10px] font-bold text-[#667085]">Payment</span>{garage.payment_methods.map(method=><span key={method} title={method} aria-label={method} className="inline-flex h-8 w-12 items-center justify-center rounded-md border border-[#EAECF0] bg-white"><span className="scale-75"><PaymentMark method={method}/></span></span>)}</div>}
+                          {!!garage.payment_methods?.length && <div className="flex flex-wrap items-center gap-1.5"><span className="mr-1 text-[10px] font-bold text-[#667085]">Payment</span>{garage.payment_methods.map(method=><span key={method} title={method==="Credit"?"Card network not specified":method} className="inline-flex min-w-[48px] flex-col items-center justify-center rounded-md border border-[#EAECF0] bg-white px-1 py-1"><span className="flex h-6 items-center justify-center [&_svg]:h-6 [&_svg]:w-9"><PaymentMark method={method}/></span><span className="text-center text-[9px] font-semibold leading-3 text-[#475467]">{paymentLabel(method)}</span></span>)}</div>}
                           {!!garage.spoken_languages?.length && <p className="text-[11px] leading-5 text-[#667085]"><span className="font-bold">Languages · </span>{garage.spoken_languages.slice(0,3).join(", ")}{garage.spoken_languages.length>3 && <Link href={detailsHref} className="ml-1 font-bold underline">+{garage.spoken_languages.length-3}</Link>}</p>}
                         </div>
                         {/* PUBLIC CLOSURES */}

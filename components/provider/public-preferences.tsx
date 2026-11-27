@@ -1,3 +1,4 @@
+export function paymentLabel(method:string) { return method==="Interac e-Transfer"?"Interac":method==="American Express"?"Amex":method==="Credit"?"Unspecified":method; }
 export const PAYMENT_OPTIONS = [
   {label:"Cash"}, {label:"Debit"}, {label:"Visa"}, {label:"Mastercard"}, {label:"American Express"}, {label:"Interac e-Transfer"},
 ];
@@ -13,7 +14,7 @@ export function PaymentMark({method}:{method:string}) {
 export const LANGUAGE_OPTIONS = ["English","French","Arabic","Spanish","Mandarin","Cantonese","Italian","Portuguese","Greek","Hindi","Punjabi","Urdu","Russian","Vietnamese","Korean","German"];
 export function PublicProviderPreferences({payments,languages}:{payments?:string[] | null;languages?:string[] | null}) {
   return <div className="mt-4 space-y-3 border-t border-[#EAECF0] pt-3 text-xs">
-    <div className="flex flex-wrap items-center gap-2"><span className="w-[72px] shrink-0 font-extrabold uppercase tracking-wide text-[#667085]">Payment</span><div className="flex flex-1 flex-wrap gap-1.5">{payments?.length ? payments.map(value=><span key={value} className="inline-flex flex-col items-center justify-center gap-1 rounded-lg border border-[#E4E7EC] bg-[#F8FAFC] px-2 py-1.5 text-[10px] font-semibold text-[#475467]"><PaymentMark method={value}/>{value}</span>) : <span className="text-[#667085]">Not specified</span>}</div></div>
+    <div className="flex flex-wrap items-center gap-2"><span className="w-[72px] shrink-0 font-extrabold uppercase tracking-wide text-[#667085]">Payment</span><div className="flex flex-1 flex-wrap gap-1.5">{payments?.length ? payments.map(value=><span key={value} className="inline-flex flex-col items-center justify-center gap-1 rounded-lg border border-[#E4E7EC] bg-[#F8FAFC] px-2 py-1.5 text-[10px] font-semibold text-[#475467]"><PaymentMark method={value}/>{paymentLabel(value)}</span>) : <span className="text-[#667085]">Not specified</span>}</div></div>
     <div className="flex flex-wrap items-center gap-2"><span className="w-[72px] shrink-0 font-extrabold uppercase tracking-wide text-[#667085]">Language</span><div className="flex flex-1 flex-wrap gap-1.5">{languages?.length ? languages.map(value=><span key={value} className="rounded-lg border border-[#E4E7EC] bg-[#F8FAFC] px-2 py-1.5 font-semibold text-[#475467]">{value}</span>) : <span className="text-[#667085]">Not specified</span>}</div></div>
   </div>;
 }
