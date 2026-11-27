@@ -1,7 +1,8 @@
-export function paymentLabel(method:string) { return method==="Interac e-Transfer"?"Interac":method==="American Express"?"Amex":method==="Credit"?"Unspecified":method; }
+export function paymentLabel(method:string) { return method==="Interac e-Transfer"?"Interac":method==="American Express"?"Amex":method; }
 export const PAYMENT_OPTIONS = [
   {label:"Cash"}, {label:"Debit"}, {label:"Visa"}, {label:"Mastercard"}, {label:"American Express"}, {label:"Interac e-Transfer"},
 ];
+export function visiblePaymentMethods(methods?:string[]|null) { return (methods??[]).filter(method=>PAYMENT_OPTIONS.some(option=>option.label===method)); }
 export function PaymentMark({method}:{method:string}) {
   if(method==="Cash") return <svg aria-hidden="true" viewBox="0 0 48 32" className="h-8 w-12"><rect x="2" y="5" width="44" height="22" rx="3" fill="#D1FAE5" stroke="#16A34A" strokeWidth="2"/><rect x="6" y="9" width="36" height="14" rx="2" fill="none" stroke="#16A34A"/><circle cx="24" cy="16" r="8" fill="#16A34A"/><text x="24" y="20" textAnchor="middle" fontSize="12" fontWeight="bold" fill="white">$</text></svg>;
   if(method==="Debit") return <svg aria-hidden="true" viewBox="0 0 48 32" className="h-8 w-12"><rect x="1" y="2" width="46" height="28" rx="5" fill="#0891B2"/><path d="M1 8h46v5H1z" fill="#164E63"/><rect x="6" y="17" width="9" height="6" rx="1" fill="#FDE68A"/><path d="M20 21h20" stroke="white" strokeWidth="2"/></svg>;
@@ -9,12 +10,13 @@ export function PaymentMark({method}:{method:string}) {
   if(method==="Visa") return <svg aria-hidden="true" viewBox="0 0 48 32" className="h-8 w-12"><rect x="1" y="2" width="46" height="28" rx="4" fill="white" stroke="#CBD5E1"/><text x="24" y="21" textAnchor="middle" fill="#1434CB" fontSize="15" fontStyle="italic" fontWeight="900">VISA</text></svg>;
   if(method==="American Express") return <svg aria-hidden="true" viewBox="0 0 48 32" className="h-8 w-12"><rect x="1" y="2" width="46" height="28" rx="4" fill="#006FCF"/><text x="24" y="14" textAnchor="middle" fill="white" fontSize="8" fontWeight="900">AMERICAN</text><text x="24" y="23" textAnchor="middle" fill="white" fontSize="9" fontWeight="900">EXPRESS</text></svg>;
   if(method==="Interac e-Transfer") return <svg aria-hidden="true" viewBox="0 0 48 32" className="h-8 w-12"><rect x="1" y="2" width="46" height="28" rx="4" fill="#FFBF00"/><text x="24" y="15" textAnchor="middle" fontSize="12" fontWeight="bold" fontStyle="italic" fill="#161616">Interac</text><text x="24" y="24" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#161616">e-Transfer</text></svg>;
-  return <svg aria-hidden="true" viewBox="0 0 48 32" className="h-8 w-12 shrink-0"><rect x="1" y="2" width="46" height="28" rx="5" fill="#7955D9"/><rect x="6" y="9" width="10" height="7" rx="2" fill="#FDE68A"/><path d="M6 23h20m5 0h10" stroke="white" strokeWidth="2" strokeLinecap="round"/><circle cx="36" cy="11" r="4" fill="#C4B5FD"/></svg>;
+  return null;
 }
 export const LANGUAGE_OPTIONS = ["English","French","Arabic","Spanish","Mandarin","Cantonese","Italian","Portuguese","Greek","Hindi","Punjabi","Urdu","Russian","Vietnamese","Korean","German"];
 export function PublicProviderPreferences({payments,languages}:{payments?:string[] | null;languages?:string[] | null}) {
+  const supportedPayments=visiblePaymentMethods(payments);
   return <div className="mt-4 space-y-3 border-t border-[#EAECF0] pt-3 text-xs">
-    <div className="flex flex-wrap items-center gap-2"><span className="w-[72px] shrink-0 font-extrabold uppercase tracking-wide text-[#667085]">Payment</span><div className="flex flex-1 flex-wrap gap-1.5">{payments?.length ? payments.map(value=><span key={value} className="inline-flex flex-col items-center justify-center gap-1 rounded-lg border border-[#E4E7EC] bg-[#F8FAFC] px-2 py-1.5 text-[10px] font-semibold text-[#475467]"><PaymentMark method={value}/>{paymentLabel(value)}</span>) : <span className="text-[#667085]">Not specified</span>}</div></div>
+    <div className="flex flex-wrap items-center gap-2"><span className="w-[72px] shrink-0 font-extrabold uppercase tracking-wide text-[#667085]">Payment</span><div className="flex flex-1 flex-wrap gap-1.5">{supportedPayments.length ? supportedPayments.map(value=><span key={value} className="inline-flex flex-col items-center justify-center gap-1 rounded-lg border border-[#E4E7EC] bg-[#F8FAFC] px-2 py-1.5 text-[10px] font-semibold text-[#475467]"><PaymentMark method={value}/>{paymentLabel(value)}</span>) : <span className="text-[#667085]">Not specified</span>}</div></div>
     <div className="flex flex-wrap items-center gap-2"><span className="w-[72px] shrink-0 font-extrabold uppercase tracking-wide text-[#667085]">Language</span><div className="flex flex-1 flex-wrap gap-1.5">{languages?.length ? languages.map(value=><span key={value} className="rounded-lg border border-[#E4E7EC] bg-[#F8FAFC] px-2 py-1.5 font-semibold text-[#475467]">{value}</span>) : <span className="text-[#667085]">Not specified</span>}</div></div>
   </div>;
 }
