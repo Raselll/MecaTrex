@@ -61,7 +61,7 @@ export default function GarageDashboardStory() {
   }, []);
 
   return (
-    <section className="bw-dashboard-story" aria-labelledby="bw-dashboard-heading">
+    <section className="bw-dashboard-story" style={{ background: "transparent" }} aria-labelledby="bw-dashboard-heading">
       <div className="bw-shell">
         <div className="bw-dashboard-story-heading">
           <span className="bw-eyebrow">FOR THE PEOPLE BEHIND THE GARAGE</span>

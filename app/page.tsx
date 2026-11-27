@@ -2433,7 +2433,7 @@ export default function Home() {
           </div>
           <div className="bw-shell bw-search-wrap">
             <div className="bw-search-intro"><span>START HERE</span><strong>Where can we help?</strong></div>
-            <div className="bw-search-panel">
+            <div id="bw-home-search" className="bw-search-panel">
               <button type="button" className="bw-search-field bw-vehicle-field" onClick={() => setVehicleModalOpen(true)}>
                 <span className="bw-search-icon" aria-hidden="true">01</span>
                 <span className="bw-search-field-copy"><small>Your vehicle</small><strong>{vehicle ? [vehicle.year, vehicle.make, vehicle.model].join(" ") : "Add a vehicle"}</strong><span>{vehicle ? "Change your vehicle" : "Make your search more relevant"}</span></span>
@@ -2617,8 +2617,7 @@ export default function Home() {
         </section>
 
         {/* PRODUCT-LED GARAGE WORKSPACE STORY */}
-        <div id="garages" className="bw-provider-zone" style={{ background: "#f1f3f5", borderTop: "1px solid #dfe3e7", borderBottom: "1px solid #dfe3e7", scrollMarginTop: 100 }}>
-          <div className="bw-shell" style={{ paddingTop: 48, textAlign: "center" }}><span className="bw-eyebrow">FOR BUSINESS OWNERS</span><h2 style={{ fontSize: "clamp(30px, 4vw, 48px)", fontWeight: 800, letterSpacing: "-0.05em", marginTop: 10 }}>BandWhip for garages &amp; towing providers</h2><p style={{ color: "#667085", marginTop: 10 }}>Manage your business, availability and appointments.</p></div>
+        <div id="garages" className="bw-provider-zone" style={{ background: "#f5f5f4", scrollMarginTop: 100 }}>
           <GarageDashboardStory />
 
         {/* THE BUSINESS PROMISE */}
@@ -2654,6 +2653,7 @@ export default function Home() {
             <div className="bw-footer-bottom"><span>© {new Date().getFullYear()} BandWhip.</span><span>Montréal, Québec · Canada</span><a href="#find">Back to top ↑</a></div>
           </div>
         </footer>
+        <style>{" \n#bw-home-search.bw-search-panel { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)) minmax(110px,auto); gap:0; align-items:stretch; }\n#bw-home-search > .bw-search-field, #bw-home-search > .bw-search-date { box-sizing:border-box; width:100%; min-width:0; max-width:none; border:0; border-right:1px solid #eeece8; border-radius:9px; padding:0; min-height:100px; }\n#bw-home-search > .bw-search-field { padding:13px 14px; }\n#bw-home-search > .bw-search-location { display:flex; }\n#bw-home-search > .bw-search-date > div { width:100%; min-width:0; height:100%; min-height:100px; border-radius:9px; }\n#bw-home-search .bw-when-trigger { display:flex; flex-direction:row; align-items:center; justify-content:flex-start; gap:10px; width:100%; height:100%; min-height:100px!important; padding:13px 14px; text-align:left; }\n#bw-home-search .bw-when-trigger > .bw-search-field-copy { margin:0; max-width:none; }\n#bw-home-search .bw-when-trigger > .bw-search-icon { margin:0; max-width:none; flex-shrink:0; }\n#bw-home-search .bw-when-trigger .bw-search-field-copy > strong { font-size:13px; }\n#bw-home-search .bw-when-trigger .bw-search-field-copy > span { color:#ff5b13; font-weight:700; }\n#bw-home-search .bw-search-field-copy > span { white-space:normal; }\n#bw-home-search .bw-search-submit { margin-left:10px; }\n.bw-store-section .bw-store-badge { width:220px; box-sizing:border-box; justify-content:center; transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease; box-shadow:0 5px 14px rgba(16,24,40,.06); }\n@media (hover:hover) { .bw-store-section .bw-store-badge:hover { transform:translateY(-7px); box-shadow:0 18px 35px rgba(16,24,40,.15); border-color:#aab4c2!important; } }\n@media (max-width:1160px) { #bw-home-search.bw-search-panel { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; } #bw-home-search > .bw-search-field, #bw-home-search > .bw-search-date {border:1px solid #eeece8;} #bw-home-search .bw-search-submit {grid-column:1/-1; margin:0; min-height:58px;} }\n@media (max-width:600px) { #bw-home-search.bw-search-panel {grid-template-columns:minmax(0,1fr);} }\n@media (prefers-reduced-motion:reduce) { .bw-store-section .bw-store-badge {transition:none;} .bw-store-section .bw-store-badge:hover {transform:none;} }\n"}</style>
       </main>
     </>
   );
