@@ -1,23 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-export async function GET(req:NextRequest){
- const make=req.nextUrl.searchParams.get("make")?.trim()||"",model=req.nextUrl.searchParams.get("model")?.trim()||"",year=req.nextUrl.searchParams.get("year")||"";
- if(!make||!model||make.length>50||model.length>60||!/^\d{4}$/.test(year))return NextResponse.json({photo:null},{status:400});
- const clean=(x:string)=>x.replace(/<[^>]*>/g,"").replace(/&amp;/g,"&").trim();
- try{
- for (const term of [make+" "+model+" "+year, make+" "+model]) {
- const query=new URLSearchParams({action:"query",format:"json",generator:"search",gsrsearch:term+" filetype:bitmap",gsrnamespace:"6",gsrlimit:"20",prop:"imageinfo",iiprop:"url|extmetadata|mime",iiurlwidth:"800"});
- const res=await fetch("https://commons.wikimedia.org/w/api.php?"+query,{headers:{"User-Agent":"BandWhip/1.0 vehicle reference photos"},next:{revalidate:86400}});
- if(!res.ok){console.warn("Vehicle photo lookup failed",res.status);continue;}
- const data=await res.json();
- for(const page of (Object.values(data.query?.pages??{}) as any[]).sort((a,b)=>a.index-b.index)){
- const info=page.imageinfo?.[0],m=info?.extmetadata,license=m?.LicenseShortName?.value||"",licenseUrl=m?.LicenseUrl?.value||"";
- const title=String(page.title||"").toLowerCase().replace(/[^a-z0-9]/g,"");
- if(!title.includes(make.toLowerCase().replace(/[^a-z0-9]/g,""))||!title.includes(model.toLowerCase().replace(/[^a-z0-9]/g,"")))continue;
- if(!info?.thumburl||!/^https:\/\/(upload|thumb)\.wikimedia\.org\//.test(info.thumburl)||!/^image\/(jpeg|png|webp)$/.test(info.mime||"")||!(/^(CC BY(-SA)? [234]\.\d|CC0|Public domain)$/i.test(license)))continue;
- if(!/^https?:\/\//.test(licenseUrl)||!m?.Artist?.value)continue;
- return NextResponse.json({photo:{url:info.thumburl,author:clean(m.Artist.value),license,licenseUrl,source:info.descriptionurl}});
- }
- }
- }catch(error){console.warn("Vehicle photo lookup failed",error);}
- return NextResponse.json({photo:null});
+
+export async function GET(req: NextRequest) {
+  const p = req.nextUrl.searchParams;
+  const make = p.get("make")?.trim() || "";
+  const model = p.get("model")?.trim() || "";
+  const year = p.get("year") || "";
+  const color = p.get("color") || "silver";
+  const empty = () => NextResponse.json({ photo: null }, { headers: { "Cache-Control": "no-store" } });
+  if (!make || !model || make.length > 50 || model.length > 60 || !/^\d{4}$/.test(year)) {
+    return NextResponse.json({ photo: null }, { status: 400 });
+  }
+  // Explicit opt-in: free accounts are for evaluation only, not commercial deployment.
+  const key = process.env.CAR_IMAGE_API_KEY;
+  if (!key || process.env.CAR_IMAGE_API_ENABLED !== "true") return empty();
+  const params = new URLSearchParams({ make, model, year, view: "front-3-4", color: /^[a-fA-F0-9]{6}$/.test(color) ? color : "silver", w: "600", h: "400", trim: "1", padding: "8", background: "white", format: "webp" });
+  try {
+    const res = await fetch("https://carimage.dev/api/v1/images/car?" + params, {
+      headers: { Authorization: "Bearer " + key, Accept: "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(120000),
+    });
+    if (!res.ok) { console.warn("Studio vehicle image unavailable", res.status); return empty(); }
+    const data = await res.json();
+    const url = new URL(data.data?.url);
+    if (url.protocol !== "https:" || url.hostname !== "carimage.dev") return empty();
+    return NextResponse.json({ photo: { url: url.href } }, { headers: { "Cache-Control": "no-store" } });
+  } catch { return empty(); }
 }
