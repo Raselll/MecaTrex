@@ -89,7 +89,7 @@ async function notifyAvailableTowingProviders(bookingId: string) {
         email: recipient.email,
         name: recipient.company_name,
         subject: "BandWhip · New towing opportunity",
-        message: `A client needs towing for ${recipient.service_name} at ${recipient.garage_name} on ${appointment(recipient.appointment_at)}. Pickup address: ${recipient.pickup_address}. Open Towing jobs to accept or decline. The first eligible company to accept gets the job.`,
+        message: `A client needs towing for ${recipient.service_name} at ${recipient.garage_name} on ${appointment(recipient.appointment_at)}. Pickup address: ${recipient.pickup_address}. Sign in to BandWhip and open Towing jobs to accept or decline. The first eligible company to accept gets the job.`,
         accountPath: "/account",
       })
     ));
@@ -216,8 +216,8 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
   // confirmation or make a saved booking appear to have failed.
   after(async () => {
     try {
-      await notifyParticipants(data, "confirmed", { towingPending: wantsTowing });
-      if (wantsTowing) await notifyAvailableTowingProviders(data);
+      const results=await Promise.allSettled([notifyParticipants(data,"confirmed",{towingPending:wantsTowing}),...(wantsTowing?[notifyAvailableTowingProviders(data)]:[])]);
+      for(const result of results)if(result.status==="rejected")console.error("Booking notification failed:",result.reason);
     } catch (notificationError) {
       console.error("Booking saved, email delivery unavailable:", notificationError);
     }

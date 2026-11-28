@@ -55,19 +55,19 @@ async function sendPartyNotices(
     ]
     : [
       { email: data.client_email, name: data.client_name, subject: "BandWhip · Garage and towing confirmed",
-        message: `${data.towing_name} has accepted your towing request. Your full garage-and-towing booking is confirmed. Contact the towing company to agree on pickup time and towing charges. ${details}` },
+        message: `${data.towing_name} has accepted your towing request. Your full garage-and-towing booking is confirmed. Contact the towing company to coordinate pickup. The agreed fee is recorded in your booking. ${details}` },
       { email: data.garage_email, name: data.garage_name, subject: "BandWhip · Towing confirmed for your booking",
         message: `${data.towing_name} accepted the towing job for ${data.client_name}. The full booking is now confirmed. ${details}` },
       { email: data.towing_email, name: data.towing_name, subject: "BandWhip · Your towing job is confirmed",
-        message: `You accepted towing for ${data.client_name}. Coordinate pickup and your towing price with the client. ${details}` },
+        message: `You accepted towing for ${data.client_name}. Coordinate pickup with the client. The agreed fee is recorded. ${details}` },
     ];
 
   const outcomes = await Promise.allSettled(messages.map((item) =>
     sendMecatrexNotice({ ...item, accountPath: "/account" })
   ));
-  if (outcomes.some((item) => item.status === "rejected")) {
-    console.error("Some BandWhip towing participant emails could not be delivered.");
-  }
+  const failed=outcomes.filter(item=>item.status==="rejected");
+  if(failed.length)console.error("Towing email delivery failed:",failed.map(item=>item.reason instanceof Error?item.reason.message:"Unknown error"));
+  return failed.length===0;
 }
 
 async function notifyAvailableCompanies(bookingId: string) {
@@ -98,20 +98,21 @@ async function notifyAvailableCompanies(bookingId: string) {
   }
 }
 
-export async function acceptTowingJob(requestId: string): Promise<ActionResult> {
+export async function acceptTowingJob(requestId: string, feeCents:number): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Log in to your towing account." };
 
-  const { error } = await supabase.rpc("accept_towing_request", { p_request_id: requestId });
+  if(!Number.isInteger(feeCents)||feeCents<0||feeCents>10000000)return {ok:false,message:"Invalid towing fee."};
+  const { error } = await supabase.rpc("accept_towing_request", { p_request_id: requestId,p_fee_cents:feeCents });
   if (error) return { ok: false, message: error.message };
 
   const { data: details, error: detailsError } = await supabase
     .rpc("towing_party_email_details", { p_request_id: requestId }).maybeSingle();
   if (detailsError) console.error("Could not retrieve accepted towing participants:", detailsError.message);
-  if (details) await sendPartyNotices(details as TowingParticipants, "accepted");
+  const emailsSent=details?await sendPartyNotices(details as TowingParticipants, "accepted"):false;
   revalidatePath("/account");
-  return { ok: true, message: "Towing accepted. The client, garage and towing company have been notified; the full booking is confirmed." };
+  return { ok: true, message: emailsSent?"Towing accepted. Booking confirmed; in-app notifications recorded and emails submitted.":"Towing accepted. Booking confirmed; in-app notifications recorded. Email delivery could not be confirmed." };
 }
 
 export async function declineTowingJob(requestId: string): Promise<ActionResult> {

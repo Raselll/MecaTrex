@@ -57,13 +57,14 @@ export default function TowingOpportunities({
   }, [load]);
 
   async function accept(job: Job) {
-    if (!window.confirm(
-      "Accept this towing trip? The garage time is reserved. You must coordinate pickup time and towing charges with the client."
-    )) return;
+    const fee=window.prompt("Enter the towing fee in CAD already agreed with the customer (e.g. 75.00).");
+    if(fee===null)return;
+    if(!/^\d+(\.\d{1,2})?$/.test(fee.trim()) || Number(fee)>100000){setError("Enter a valid towing fee.");return;}
+    if(!window.confirm("Confirm the agreed towing fee of $"+Number(fee).toFixed(2)+"?"))return;
     setBusyId(job.request_id);
     setError("");
     setNotice("");
-    const result = await acceptTowingJob(job.request_id);
+    const result = await acceptTowingJob(job.request_id,Math.round(Number(fee)*100));
     setBusyId("");
     if (!result.ok) { setError(result.message); await load(); return; }
     setNotice(result.message);

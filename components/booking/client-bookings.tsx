@@ -8,7 +8,7 @@ import VehicleVisitCard from "./vehicle-visit-card";
 import { formatMontrealDateTime, formatPriceCents, type GarageBooking } from "@/lib/booking";
 
 type Review = { booking_id: string; stars: number; comment: string };
-type TowingStatus = { booking_id: string; status: "pending" | "accepted" | "cancelled"; towing_provider_id: string | null };
+type TowingStatus = { booking_id: string; status: "pending" | "accepted" | "cancelled"; towing_provider_id: string | null; towing_fee_cents: number | null };
 type TowingCompany = { id: string; business_name: string; public_phone: string | null };
 
 function ReviewForm({ bookingId, onDone }: { bookingId: string; onDone: () => void }) {
@@ -63,7 +63,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
       supabase.from("garage_bookings").select("*")
         .eq("client_id", userId).order("starts_at", { ascending: false }).limit(150),
       supabase.from("garage_reviews").select("booking_id,stars,comment").eq("client_id", userId),
-      supabase.from("towing_requests").select("booking_id,status,towing_provider_id").eq("client_id", userId),
+      supabase.from("towing_requests").select("booking_id,status,towing_provider_id,towing_fee_cents").eq("client_id", userId),
       supabase.from("client_booking_penalties").select("charged_cancellations,booking_banned").eq("client_id", userId).maybeSingle(),
     ]);
     if (bookingError) setError(bookingError.message);
@@ -188,7 +188,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
                 <VehicleVisitCard booking={booking} mode="client" />
               )}
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#EEF2F6] pt-4">
-              <p className="text-[15px] font-extrabold text-[#101828]">{formatPriceCents(booking.price_cents)} <span className="text-[11px] font-normal text-[#667085]">· Pay at garage</span></p>
+              <div className="space-y-1 text-sm"><p>Garage service: <strong>{formatPriceCents(booking.price_cents)}</strong></p>{towing && towing.status!=="cancelled" && <p>Towing: <strong>{towing.status==="accepted" && towing.towing_fee_cents!=null?formatPriceCents(towing.towing_fee_cents):"Fee pending"}</strong></p>}<p className="text-[15px] font-extrabold">{towing && towing.status!=="cancelled" && (towing.status!=="accepted"||towing.towing_fee_cents==null)?"Total pending":"Total: "+formatPriceCents(booking.price_cents+(towing?.status==="accepted"?(towing.towing_fee_cents??0):0))}</p></div>
               {booking.status === "confirmed" && !ended && <button type="button" disabled={pendingId === booking.id} onClick={() => void cancel(booking)} className="rounded-[12px] border border-[#FDA29B] px-4 py-2.5 text-[12px] font-bold text-[#B42318] hover:bg-[#FEF3F2] disabled:opacity-50">{pendingId === booking.id ? "Cancelling…" : "Cancel booking"}</button>}
             </div>
             {booking.status === "confirmed" && ended && (review ?

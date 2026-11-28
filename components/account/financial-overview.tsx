@@ -74,7 +74,8 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState<number | null>(null);
   const [rows, setRows] = useState<FinancialBooking[]>([]);
-  const [nextBookings, setNextBookings] = useState<FinancialBooking[]>([]);
+  const [customer,setCustomer]=useState("");
+  const [quarter,setQuarter]=useState("");
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [refreshCount, setRefreshCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -97,6 +98,12 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
           "id,client_name,garage_name,garage_address,service_name,vehicle_description,starts_at,ends_at,price_cents,status";
 
         const collected: FinancialBooking[] = [];
+        if(provider && providerType==="towing") {
+          const {data,error}=await supabase.rpc("my_towing_finances",{p_from:from,p_to:to});
+          if(error)throw error;
+          if(active){setRows((data??[]) as FinancialBooking[]);setNowMs(Date.now());setError("");}
+          return;
+        }
         let complete = false;
 
         for (let page = 0; page < MAX_PAGES; page++) {
@@ -122,28 +129,19 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
           throw new Error("There are too many records to display safely. Please contact BandWhip support.");
         }
 
-        // The nearest appointments are shown even if they fall in another year.
-        const currentTime = new Date();
-        const { data: upcoming, error: upcomingError } = await supabase
-          .from("garage_bookings")
-          .select(selectFields)
-          .eq(ownerColumn, ownerId)
-          .eq("status", "confirmed")
-          .gt("ends_at", currentTime.toISOString())
-          .order("starts_at", { ascending: true })
-          .limit(3);
-
-        if (upcomingError) throw upcomingError;
+        if (!provider && collected.length) {
+          for(let i=0;i<collected.length;i+=100){
+            const batch=collected.slice(i,i+100);const {data:fees,error:feeError}=await supabase.from("towing_requests").select("booking_id,towing_fee_cents").eq("status","accepted").in("booking_id",batch.map(x=>x.id));if(feeError)throw feeError;
+            for(const item of batch){const fee=fees?.find(x=>x.booking_id===item.id)?.towing_fee_cents;if(typeof fee==="number")item.price_cents+=fee;}
+          }
+        }
         if (!active) return;
-
         setRows(collected);
-        setNextBookings((upcoming ?? []) as FinancialBooking[]);
-        setNowMs(currentTime.getTime());
+        setNowMs(Date.now());
         setError("");
       } catch (cause) {
         if (!active) return;
         setRows([]);
-        setNextBookings([]);
         setError(
           cause instanceof Error
             ? cause.message
@@ -158,11 +156,11 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
     return () => {
       active = false;
     };
-  }, [supabase, ownerId, year, refreshCount, provider]);
+  }, [supabase, ownerId, year, refreshCount, provider, providerType]);
 
   const confirmed = useMemo(
-    () => rows.filter((booking) => booking.status === "confirmed"),
-    [rows]
+    () => rows.filter((booking) => booking.status === "confirmed" && (!provider || booking.client_name.toLowerCase().includes(customer.toLowerCase())) && (!quarter || Math.floor(localMonth(booking.starts_at)/3)===Number(quarter))),
+    [rows,provider,customer,quarter]
   );
 
   const monthly = useMemo(() => {
@@ -238,7 +236,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
     ];
     const lines = [header.map(csvCell).join(",")];
 
-    for (const booking of confirmed) {
+    for (const booking of details) {
       const fields = [
         formatMontrealDateTime(booking.starts_at),
         provider ? booking.client_name : booking.garage_name,
@@ -246,7 +244,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
         booking.service_name,
         booking.vehicle_description,
         booking.garage_address,
-        (booking.price_cents / 100).toFixed(2),
+        booking.price_cents == null ? "" : (booking.price_cents / 100).toFixed(2),
         booking.status,
         new Date(booking.ends_at).getTime() > nowMs ? "Upcoming" : "Past",
       ];
@@ -275,7 +273,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
               {provider ? "Business insights" : "Your finances"}
             </p>
             <h3 className="mt-2 text-[27px] font-extrabold tracking-tight text-[#101828] sm:text-[33px]">
-              {provider ? "Booking revenue overview" : "Your garage spending"}
+              {provider ? "Booking revenue overview" : "Your service spending"}
             </h3>
             <p className="mt-2 max-w-[600px] text-[13px] leading-6 text-[#667085]">
               {provider
@@ -284,6 +282,8 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {provider && <><input aria-label="Customer" placeholder="Search customer" value={customer} onChange={event=>{setCustomer(event.target.value);setShowAll(false)}} className="rounded-xl border border-[#C8D4E1] px-3 py-3 text-sm"/><select aria-label="Quarter" value={quarter} onChange={event=>{setQuarter(event.target.value);setMonth(null)}} className="rounded-xl border border-[#C8D4E1] px-3 py-3 text-sm"><option value="">All quarters</option>{[0,1,2,3].map(q=><option key={q} value={q}>Q{q+1}</option>)}</select></>}
+            <select aria-label="Month" value={month??""} onChange={event=>chooseMonth(event.target.value===""?null:Number(event.target.value))} className="rounded-xl border border-[#C8D4E1] px-3 py-3 text-sm"><option value="">All months</option>{MONTHS.map((m,i)=><option key={m} value={i}>{m}</option>)}</select>
             <label className="sr-only" htmlFor="mecatrex-financial-year">Select year</label>
             <select
               id="mecatrex-financial-year"
@@ -426,39 +426,6 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
           <p className="mt-4 rounded-xl bg-[#F8FAFC] px-4 py-5 text-center text-[13px] text-[#667085]">
             No confirmed bookings found for {year}. Your chart will update as reservations are made.
           </p>
-        )}
-      </div>
-
-      <div className="rounded-[22px] border border-[#E9DED5] bg-white p-5 shadow-sm sm:p-7">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#FF5B13]">Coming up</p>
-            <h4 className="mt-1 text-[20px] font-extrabold text-[#101828]">Upcoming reservations</h4>
-            <p className="mt-1 text-[12px] text-[#667085]">Your next confirmed appointments, including those in another year.</p>
-          </div>
-        </div>
-        {loading ? (
-          <p className="mt-5 text-[13px] text-[#667085]">Loading reservations…</p>
-        ) : nextBookings.length === 0 ? (
-          <p className="mt-5 rounded-xl bg-[#F8FAFC] p-5 text-[13px] text-[#667085]">No upcoming reservations.</p>
-        ) : (
-          <div className="mt-5 space-y-3">
-            {nextBookings.map((booking) => (
-              <article key={booking.id} className="flex flex-col gap-3 rounded-[16px] border border-[#E4EAF1] bg-[#FAFBFD] p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-[12px] font-extrabold text-[#FF5B13]">{formatMontrealDateTime(booking.starts_at)}</p>
-                  <p className="mt-1 text-[15px] font-extrabold text-[#101828]">{booking.service_name}</p>
-                  <p className="mt-1 text-[12px] text-[#667085]">
-                    {provider ? booking.client_name : booking.garage_name}
-                  </p>
-                </div>
-                <div className="shrink-0 text-left sm:text-right">
-                  <p className="text-[18px] font-extrabold text-[#101828]">{formatPriceCents(booking.price_cents)}</p>
-                  <span className="mt-1 inline-block rounded-full bg-[#F3EDFF] px-2.5 py-1 text-[11px] font-bold text-[#7150A8]">Scheduled</span>
-                </div>
-              </article>
-            ))}
-          </div>
         )}
       </div>
 

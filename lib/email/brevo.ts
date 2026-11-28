@@ -415,7 +415,7 @@ export async function sendMecatrexNotice({
 }: {
   email: string; name: string; subject: string; message: string; accountPath?: string;
 }) {
-  if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) return;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid notification recipient email.");
   await sendBrevoEmail({
     toEmail: email,
     toName: name,
