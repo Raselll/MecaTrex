@@ -359,12 +359,12 @@ export default async function AccountPage({
     const accent: AccentColor = "blue";
 
     return (
-      <AccountShell wide accent={accent}>
+      <AccountShell wide accent={accent} towing={provider.provider_type === "towing"}>
         <main
           className="portal-main-card rounded-[30px] border border-[#EAECF0] bg-white p-4 sm:p-6"
           style={{
             borderTopColor:
-              (ACCENT_COLORS[accent] ??
+              provider.provider_type === "towing" ? "#F4C542" : (ACCENT_COLORS[accent] ??
                 ACCENT_COLORS.blue).hex,
           }}
         >
@@ -545,15 +545,18 @@ function AccountShell({
   children,
   wide = false,
   accent = "blue",
+  towing = false,
 }: {
   children: React.ReactNode;
   wide?: boolean;
   accent?: AccentColor;
+  towing?: boolean;
 }) {
   return (
     <main
       className="min-h-screen bg-[#F6F7F9] px-4 py-6 sm:px-6"
       data-portal-theme={accent}
+      data-provider-theme={towing ? "towing" : undefined}
     >
       <div
         className={`mx-auto ${
