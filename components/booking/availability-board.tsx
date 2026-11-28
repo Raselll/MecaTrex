@@ -800,7 +800,7 @@ export default function AvailabilityBoard({
           </p>
 
           <h3 className="mt-1 text-[24px] font-extrabold text-[#101828]">
-            Manage blocked time
+            Calendar & blocked time
           </h3>
 
           <p className="mt-1 text-[13px] text-[#667085]">
@@ -858,7 +858,7 @@ export default function AvailabilityBoard({
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid xl:grid-cols-[minmax(0,1fr)_300px]">
         {/* =================================================
             CALENDAR LEFT SIDE
         ================================================= */}
@@ -1203,11 +1203,7 @@ export default function AvailabilityBoard({
           </div>
 
           <p className="mt-3 text-[12px] leading-5 text-[#98A2B3]">
-            Montreal time. Orange sections
-            represent manually blocked dates.
-            Blue markers represent confirmed
-            reservations. Existing bookings
-            cannot be overwritten by a new block.
+            Blocked time never overrides a confirmed booking.
           </p>
 
           {loading && (

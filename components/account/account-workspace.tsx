@@ -86,7 +86,7 @@ export default function AccountWorkspace({
 
   const sections: Section[] = kind === "client"
     ? ["overview", "appointments", "finances"]
-    : approved ? ["overview", "calendar", "earnings", "business"] : ["overview"];
+    : approved ? ["overview", "calendar", ...(towingRequests ? ["towing" as const] : []), "earnings", "business"] : ["overview"];
 
   const navigationLabels: Partial<Record<Section, string>> = {
     appointments: "My bookings",
@@ -94,8 +94,8 @@ export default function AccountWorkspace({
     business: "Business setup",
     settings: "My account",
   };
-  const activeSection = view === "towing" ? "calendar" : view === "services" ? "business" : view;
-  const subSections: Section[] = kind === "provider" && approved && activeSection === "calendar" && towingRequests ? ["calendar", "towing"] : kind === "provider" && approved && activeSection === "business" ? ["business","services"] : [];
+  const activeSection = view === "services" ? "business" : view;
+  const subSections: Section[] = kind === "provider" && approved && activeSection === "business" ? ["business","services"] : [];
 
   useEffect(() => {
     function openAnchor() {
@@ -125,8 +125,8 @@ export default function AccountWorkspace({
   return (
     <div id="mecatrex-workspace-top" className="mt-7 scroll-mt-24">
       <SuccessToasts/>
-      <div className="overflow-hidden rounded-[20px] border border-[#E7E5E2] bg-[#F7F8FA] lg:grid lg:grid-cols-[218px_minmax(0,1fr)]">
-        <aside className="border-b border-[#DCE5EF] bg-white p-3 lg:border-b-0 lg:border-r lg:p-4">
+      <div className="rounded-[20px] border border-[#E7E5E2] bg-[#F7F8FA] lg:grid lg:grid-cols-[200px_minmax(0,1fr)]">
+        <aside className="border-b border-[#DCE5EF] bg-white p-3 lg:border-b-0 lg:border-r lg:p-4 lg:sticky lg:top-4 lg:self-start">
           <div className="hidden lg:block">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#FF5B13]">My workspace</p>
             <p className="mt-2 truncate text-[17px] font-extrabold text-[#101828]">{firstName}</p>
@@ -159,7 +159,7 @@ export default function AccountWorkspace({
           </nav>
         </aside>
 
-        <div className="min-w-0 p-4 sm:p-6">
+        <div className="min-w-0 space-y-4 p-3 sm:p-5">
           <header className="mb-6 flex items-start justify-between gap-3 border-b border-[#E4EAF1] pb-5">
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#FF5B13]">
@@ -218,7 +218,7 @@ export default function AccountWorkspace({
             </div>
           )}
 
-          <div hidden={view !== "overview"} className="workspace-content mt-5">
+          <div hidden={view !== "overview"} className="workspace-content">
             {settings}
           </div>
         </div>

@@ -62,8 +62,6 @@ export default function ProviderCalendar({
   const [bookings, setBookings] =
     useState<GarageBooking[]>([]);
 
-  const [towingStatuses, setTowingStatuses] =
-    useState<{ booking_id: string; status: "pending" | "accepted" | "cancelled" }[]>([]);
 
   const [blocks, setBlocks] =
     useState<CalendarBlock[]>([]);
@@ -91,7 +89,6 @@ export default function ProviderCalendar({
         blockResult,
         providerResult,
         hourResult,
-        towingResult,
       ] = await Promise.all([
         supabase
           .from("garage_bookings")
@@ -125,15 +122,8 @@ export default function ProviderCalendar({
               .eq("provider_id", providerId)
               .order("weekday")
           : Promise.resolve({ data: null, error: null }),
-        providerType === "garage"
-          ? supabase.from("towing_requests").select("booking_id,status")
-              .eq("garage_provider_id", providerId)
-          : Promise.resolve({ data: null, error: null }),
       ]);
 
-      if (!towingResult.error && towingResult.data) {
-        setTowingStatuses(towingResult.data as { booking_id: string; status: "pending" | "accepted" | "cancelled" }[]);
-      }
 
       if (bookingResult.error) {
         setError(bookingResult.error.message);
@@ -298,7 +288,7 @@ export default function ProviderCalendar({
   async function removeBlock(blockId: string) {
     if (
       !window.confirm(
-        "Remove this block and reopen the time if the garage is operating?"
+        "Remove this block and reopen the time if your business is operating?"
       )
     ) {
       return;
@@ -390,7 +380,7 @@ export default function ProviderCalendar({
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[12px] font-bold uppercase tracking-wider text-[#FF5B13]">
-              Included with BandWhip · basic availability
+              Availability
             </p>
 
             <h2 className="mt-1 text-[27px] font-extrabold tracking-[-0.04em]">
@@ -401,8 +391,8 @@ export default function ProviderCalendar({
 
             <p className="mt-1 text-[14px] text-[#667085]">
               {providerType === "garage"
-                ? "Manage available and unavailable times in Montreal time."
-                : "Manage business hours and view assigned towing jobs."}
+                ? "Manage your appointments and blocked time."
+                : "Manage business hours and blocked time."}
             </p>
           </div>
 
@@ -465,31 +455,7 @@ export default function ProviderCalendar({
           </div>
         )}
 
-        {providerType === "garage" && towingStatuses.some((request) => request.status !== "cancelled") && (
-          <div className="mt-5 rounded-[16px] border border-[#D7E4F0] bg-[#F7FAFD] p-4">
-            <p className="text-[13px] font-extrabold text-[#101828]">🚛 Towing requests on your calendar</p>
-            <div className="mt-3 space-y-2">
-              {towingStatuses.filter((request) => request.status !== "cancelled")
-                .map((request) => {
-                  const linkedBooking = bookings.find((booking) => booking.id === request.booking_id);
-                  if (!linkedBooking || linkedBooking.status !== "confirmed") return null;
-                  return (
-                    <div key={request.booking_id} className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-[#E1E9F2] bg-white px-3 py-3 text-[12px]">
-                      <div>
-                        <p className="font-bold text-[#344054]">{linkedBooking.client_name} · {linkedBooking.service_name}</p>
-                        <p className="mt-1 text-[#667085]">{formatMontrealDateTime(linkedBooking.starts_at)}</p>
-                      </div>
-                      <span className={"rounded-full px-3 py-1.5 font-bold " +
-                        (request.status === "accepted" ? "bg-[#ECFDF3] text-[#027A48]" : "bg-[#FFF7E9] text-[#92400E]")}>
-                        {request.status === "accepted" ? "✓ Fully confirmed · towing accepted" : "⏳ Garage reserved · towing pending"}
-                      </span>
-                    </div>
-                  );
-                })}
-            </div>
-            <p className="mt-2 text-[11px] text-[#667085]">The garage time remains reserved. With towing selected, the complete booking is only confirmed when a towing company accepts.</p>
-          </div>
-        )}
+
 
         {suspended && providerType === "garage" && (
           <p
@@ -514,6 +480,24 @@ export default function ProviderCalendar({
 
         
       </div>
+
+      {(
+        <AvailabilityBoard
+          providerId={providerId}
+          bookings={bookings}
+          jumpToBooking={bookingJump}
+          blocks={blocks}
+          hours={hours}
+          loading={loading}
+          busy={busy}
+          remaining={remaining}
+          suspended={suspended}
+          nowMs={nowMs}
+          onRefresh={() => refresh()}
+          onRemoveBlock={removeBlock}
+          onCancelBooking={cancelBooking}
+        />
+      )}
 
       <div className="rounded-[25px] border border-[#E2D9D2] bg-white p-6 sm:p-8">
         <h3 className="text-[22px] font-extrabold text-[#101828]">
@@ -629,23 +613,7 @@ export default function ProviderCalendar({
         </div>
       )}
 
-      {providerType === "garage" && (
-        <AvailabilityBoard
-          providerId={providerId}
-          bookings={bookings}
-          jumpToBooking={bookingJump}
-          blocks={blocks}
-          hours={hours}
-          loading={loading}
-          busy={busy}
-          remaining={remaining}
-          suspended={suspended}
-          nowMs={nowMs}
-          onRefresh={() => refresh()}
-          onRemoveBlock={removeBlock}
-          onCancelBooking={cancelBooking}
-        />
-      )}
+
     </section>
   );
 }
