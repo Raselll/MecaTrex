@@ -1,5 +1,6 @@
 
 "use client";
+import {useSuccessToast} from "@/components/account/success-toasts";
 
 import {
   useEffect,
@@ -275,6 +276,7 @@ export default function AvailabilityBoard({
 
   const [notice, setNotice] =
     useState("");
+  useSuccessToast(notice);
 
   const [error, setError] =
     useState("");

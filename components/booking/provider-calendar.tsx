@@ -1,5 +1,6 @@
 
 "use client";
+import {useSuccessToast} from "@/components/account/success-toasts";
 
 import {
   useCallback,
@@ -10,7 +11,6 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { cancelGarageBooking } from "@/app/book/actions";
 import AvailabilityBoard from "./availability-board";
-import DetailedCalendar from "./detailed-calendar";
 import VehicleVisitCard from "./vehicle-visit-card";
 import {
   BOOKING_CANCEL_LIMIT,
@@ -58,8 +58,7 @@ export default function ProviderCalendar({
   const [hours, setHours] =
     useState<BusinessHour[]>(EMPTY_HOURS);
 
-  const [towingEvents,setTowingEvents]=useState<{id:string;starts_at:string;title:string;detail:string}[]>([]);
-  const [detailed,setDetailed]=useState(false);
+  const [savedHours,setSavedHours]=useState<BusinessHour[]>(EMPTY_HOURS);
   const [bookings, setBookings] =
     useState<GarageBooking[]>([]);
 
@@ -74,6 +73,7 @@ export default function ProviderCalendar({
   const [busy, setBusy] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [message, setMessage] = useState("");
+  useSuccessToast(message);
   const [bookingJump, setBookingJump] = useState<{ date: string; token: number } | null>(null);
   const [error, setError] = useState("");
 
@@ -131,7 +131,6 @@ export default function ProviderCalendar({
           : Promise.resolve({ data: null, error: null }),
       ]);
 
-      if(providerType==="towing"){const {data,error}=await supabase.rpc("list_my_towing_opportunities");if(error)setError(error.message);else setTowingEvents(((data??[]) as {request_id:string;appointment_at:string;client_name:string;garage_name:string;request_status:string;accepted_by_me:boolean}[]).filter(j=>j.accepted_by_me&&j.request_status==="accepted").map(j=>({id:j.request_id,starts_at:j.appointment_at,title:j.client_name+" · Towing",detail:"Garage appointment at "+j.garage_name+" (pickup time to arrange)"})));}
       if (!towingResult.error && towingResult.data) {
         setTowingStatuses(towingResult.data as { booking_id: string; status: "pending" | "accepted" | "cancelled" }[]);
       }
@@ -230,6 +229,7 @@ export default function ProviderCalendar({
 
       if (withHours && hourResult.data) {
         setHours(hourResult.data as BusinessHour[]);
+        setSavedHours(hourResult.data as BusinessHour[]);
       }
 
       setLoading(false);
@@ -264,6 +264,7 @@ export default function ProviderCalendar({
   async function saveHours() {
     if (hours.length !== 7) return;
 
+    const changed = hours.filter(h=>{const prev=savedHours.find(x=>x.weekday===h.weekday);return !prev||prev.is_open!==h.is_open||prev.open_time.slice(0,5)!==h.open_time.slice(0,5)||prev.close_time.slice(0,5)!==h.close_time.slice(0,5)}).map(h=>WEEKDAYS[h.weekday]);
     setSavingHours(true);
     setMessage("");
     setError("");
@@ -287,7 +288,7 @@ export default function ProviderCalendar({
       setError(saveError.message);
     } else {
       setMessage(
-        "Business hours saved. Customers can now book only during these hours."
+        changed.length===1 ? `${changed[0]} availability updated successfully.` : changed.length>1 ? `Availability updated successfully for ${changed.join(", ")}.` : "Business hours saved successfully."
       );
 
       await refresh(true);
@@ -412,7 +413,6 @@ export default function ProviderCalendar({
           >
             ↻ Refresh calendar
           </button>
-          <button type="button" onClick={()=>setDetailed(true)} className="rounded-xl bg-[#FF5B13] px-4 py-3 text-sm font-bold text-white">Detailed calendar ↗</button>
         </div>
 
         {providerType === "garage" && (
@@ -521,14 +521,7 @@ export default function ProviderCalendar({
           </p>
         )}
 
-        {message && (
-          <p
-            role="status"
-            className="mt-4 rounded-[13px] bg-[#ECFDF3] p-4 text-[13px] font-semibold text-[#027A48]"
-          >
-            {message}
-          </p>
-        )}
+        
       </div>
 
       <div className="rounded-[25px] border border-[#E2D9D2] bg-white p-6 sm:p-8">
@@ -645,7 +638,6 @@ export default function ProviderCalendar({
         </div>
       )}
 
-      {detailed && <DetailedCalendar onClose={()=>setDetailed(false)} hours={hours} blocks={blocks} events={providerType==="towing"?towingEvents:bookings.filter(b=>b.status==="confirmed").map(b=>({id:b.id,starts_at:b.starts_at,title:b.client_name+" · "+b.service_name,detail:b.vehicle_description}))} towing={providerType==="towing"}/>}
       {providerType === "garage" && (
         <AvailabilityBoard
           providerId={providerId}

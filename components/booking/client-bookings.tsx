@@ -1,4 +1,5 @@
 "use client";
+import {useSuccessToast} from "@/components/account/success-toasts";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -55,6 +56,7 @@ export default function ClientBookings({ userId }: { userId: string }) {
   const [tab, setTab] = useState<"upcoming" | "history">("upcoming");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  useSuccessToast(notice);
   const [pendingId, setPendingId] = useState("");
   const [nowMs, setNowMs] = useState(() => Date.now());
 

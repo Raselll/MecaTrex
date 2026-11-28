@@ -1,4 +1,5 @@
 "use client";
+import {useSuccessToast} from "@/components/account/success-toasts";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -67,6 +68,7 @@ export default function ClientPortalOverview({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveNotice, setSaveNotice] = useState("");
+  useSuccessToast(saveNotice);
   const [contact, setContact] = useState<Contact>({
     first_name: firstName,
     last_name: lastName,

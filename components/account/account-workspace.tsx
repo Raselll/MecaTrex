@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import SuccessToasts from "./success-toasts";
 import BookingNotifications from "@/components/booking/booking-notifications";
 
 type Section = "overview" | "appointments" | "calendar" | "business" | "services" | "settings" | "earnings" | "finances" | "towing";
@@ -84,8 +85,8 @@ export default function AccountWorkspace({
   }, [kind]);
 
   const sections: Section[] = kind === "client"
-    ? ["overview", "appointments", "finances", "settings"]
-    : approved ? ["overview", "calendar", "earnings", "business", "settings"] : ["overview", "settings"];
+    ? ["overview", "appointments", "finances"]
+    : approved ? ["overview", "calendar", "earnings", "business"] : ["overview"];
 
   const navigationLabels: Partial<Record<Section, string>> = {
     appointments: "My bookings",
@@ -123,6 +124,7 @@ export default function AccountWorkspace({
 
   return (
     <div id="mecatrex-workspace-top" className="mt-7 scroll-mt-24">
+      <SuccessToasts/>
       <div className="overflow-hidden rounded-[20px] border border-[#E7E5E2] bg-[#F7F8FA] lg:grid lg:grid-cols-[218px_minmax(0,1fr)]">
         <aside className="border-b border-[#DCE5EF] bg-white p-3 lg:border-b-0 lg:border-r lg:p-4">
           <div className="hidden lg:block">
@@ -216,7 +218,7 @@ export default function AccountWorkspace({
             </div>
           )}
 
-          <div hidden={view !== "settings"} className="workspace-content">
+          <div hidden={view !== "overview"} className="workspace-content mt-5">
             {settings}
           </div>
         </div>

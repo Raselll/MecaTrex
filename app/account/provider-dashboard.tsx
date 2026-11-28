@@ -1,5 +1,6 @@
 
 "use client";
+import {useSuccessToast} from "@/components/account/success-toasts";
 
 import AddressAutocomplete from "@/components/provider/address-autocomplete";
 import PhotoCropper from "@/components/provider/photo-cropper";
@@ -172,6 +173,7 @@ export default function ProviderDashboard({
     useState(false);
 
   const [message, setMessage] = useState("");
+  useSuccessToast(message);
   const [error, setError] = useState("");
 
   const [

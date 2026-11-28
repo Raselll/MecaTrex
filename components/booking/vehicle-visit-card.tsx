@@ -1,4 +1,5 @@
 "use client";
+import {useSuccessToast} from "@/components/account/success-toasts";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -38,6 +39,7 @@ export default function VehicleVisitCard({ booking, mode }: Props) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  useSuccessToast(notice);
   const [error, setError] = useState("");
 
   const refresh = useCallback(async (includePhotos = true) => {

@@ -1,4 +1,5 @@
 "use client";
+import {useSuccessToast} from "@/components/account/success-toasts";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -31,6 +32,7 @@ export default function TowingOpportunities({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  useSuccessToast(notice);
   const [busyId, setBusyId] = useState("");
 
   const load = useCallback(async () => {

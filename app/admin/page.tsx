@@ -1,4 +1,5 @@
 
+import AdminSuccessToast from "@/components/account/admin-success-toast";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -880,6 +881,7 @@ export default async function AdminPage({
             ))}
           </div>
 
+          <AdminSuccessToast message={params.success??""}/>
           {params.success && (
             <div
               role="status"
