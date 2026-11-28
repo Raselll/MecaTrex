@@ -940,51 +940,105 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
 @media(max-width:1100px){.bw-page .bw-search-panel{grid-template-columns:repeat(2,minmax(0,1fr));}.bw-page .bw-search-location{display:flex;}.bw-page .bw-search-submit{grid-column:1/-1;}}
 
 
-/* Towing workspace: yellow accents, independent of garage/client branding. */
-[data-provider-theme="towing"] { --portal-accent: #F4C542; --portal-accent-deep: #805900; --portal-soft: #FFF7D9; --portal-border: #E9D28A; }
-[data-provider-theme="towing"] [class~="bg-[#FF5B13]"],
-[data-provider-theme="towing"] [class~="bg-[#DD4E0D]"],
-[data-provider-theme="towing"] [class~="bg-[#C8450B]"],
-[data-provider-theme="towing"] [class~="bg-[#F97316]"],
-[data-provider-theme="towing"] [class~="bg-[#EA580C]"],
-[data-provider-theme="towing"] [class~="bg-[#D6531B]"],
-[data-provider-theme="towing"] [class~="bg-[#FF5B13]"] { background-color: #F4C542 !important; color: #332500 !important; }
-[data-provider-theme="towing"] [class~="bg-[#FFF1E8]"],
-[data-provider-theme="towing"] [class~="bg-[#FFF0E5]"],
-[data-provider-theme="towing"] [class~="bg-[#FFF0E6]"],
-[data-provider-theme="towing"] [class~="bg-[#FFF1E9]"],
-[data-provider-theme="towing"] [class~="bg-[#FFF4ED]"],
-[data-provider-theme="towing"] [class~="bg-[#FFF7ED]"],
-[data-provider-theme="towing"] [class~="bg-[#FFF0E8]"],
-[data-provider-theme="towing"] [class~="bg-[#FFF3EB]"],
-[data-provider-theme="towing"] [class~="bg-[#FFEDD5]"],
-[data-provider-theme="towing"] [class~="bg-[#FFF5EE]"] { background-color: #FFF7D9 !important; }
-[data-provider-theme="towing"] [class~="text-[#FF5B13]"],
-[data-provider-theme="towing"] [class~="text-[#DD4E0D]"],
-[data-provider-theme="towing"] [class~="text-[#D6531B]"],
-[data-provider-theme="towing"] [class~="text-[#B33D00]"],
-[data-provider-theme="towing"] [class~="text-[#C8450B]"],
-[data-provider-theme="towing"] [class~="text-[#EA580C]"],
-[data-provider-theme="towing"] [class~="text-[#F97316]"],
-[data-provider-theme="towing"] [class~="text-[#C2410C]"],
-[data-provider-theme="towing"] [class~="text-[#B54708]"],
-[data-provider-theme="towing"] [class~="text-[#D9480F]"],
-[data-provider-theme="towing"] [class~="text-[#E65100]"] { color: #805900 !important; }
-[data-provider-theme="towing"] [class~="border-[#FF5B13]"],
-[data-provider-theme="towing"] [class~="border-[#FFB58E]"],
-[data-provider-theme="towing"] [class~="border-[#FFC9A8]"],
-[data-provider-theme="towing"] [class~="border-[#FED7AA]"],
-[data-provider-theme="towing"] [class~="border-[#FDBA74]"],
-[data-provider-theme="towing"] [class~="border-[#F4B183]"] { border-color: #E9C34C !important; }
-[data-provider-theme="towing"] [class~="accent-[#FF5B13]"],
-[data-provider-theme="towing"] [class~="accent-[#DD4E0D]"] { accent-color: #D6A600 !important; }
-[data-provider-theme="towing"] .portal-kicker {color:#805900!important;}
+
+/* Role-scoped towing palette. Match marketplace towing gold; preserve semantic red/green. */
+[data-provider-theme="towing"] { --portal-accent:#F4C542; --portal-accent-deep:#805900; --portal-soft:#FFF7D9; --portal-border:#E9D28A; --bw-orange:#F4C542; --bw-orange-deep:#805900; accent-color:#D6A600; }
+[data-provider-theme="towing"] :is(input,select,textarea) { accent-color:#D6A600 !important; }
+[data-provider-theme="towing"] [class~="bg-[#FF5B13]" i],
+[data-provider-theme="towing"] [class~="bg-[#DD4E0D]" i],
+[data-provider-theme="towing"] [class~="bg-[#C8450B]" i],
+[data-provider-theme="towing"] [class~="bg-[#F97316]" i],
+[data-provider-theme="towing"] [class~="bg-[#EA580C]" i],
+[data-provider-theme="towing"] [class~="bg-[#D6531B]" i],
+[data-provider-theme="towing"] [class~="bg-[#E65314]" i],
+[data-provider-theme="towing"] [class~="bg-[#E74803]" i] {background-color:#F4C542!important;color:#332500!important;}
+[data-provider-theme="towing"] [class~="bg-[#FFF1E8]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF0E5]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF0E6]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF1E9]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF4ED]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF7ED]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF0E8]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF3EB]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFEDD5]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF5EE]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF3E4]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF4E5]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF2EB]" i],
+[data-provider-theme="towing"] [class~="bg-[#FFF0E7]" i] {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="text-[#FF5B13]" i],
+[data-provider-theme="towing"] [class~="text-[#DD4E0D]" i],
+[data-provider-theme="towing"] [class~="text-[#D6531B]" i],
+[data-provider-theme="towing"] [class~="text-[#B33D00]" i],
+[data-provider-theme="towing"] [class~="text-[#C8450B]" i],
+[data-provider-theme="towing"] [class~="text-[#EA580C]" i],
+[data-provider-theme="towing"] [class~="text-[#F97316]" i],
+[data-provider-theme="towing"] [class~="text-[#C2410C]" i],
+[data-provider-theme="towing"] [class~="text-[#B54708]" i],
+[data-provider-theme="towing"] [class~="text-[#D9480F]" i],
+[data-provider-theme="towing"] [class~="text-[#E65100]" i],
+[data-provider-theme="towing"] [class~="text-[#E74803]" i],
+[data-provider-theme="towing"] [class~="text-[#9A4D10]" i] {color:#805900!important;}
+[data-provider-theme="towing"] [class~="border-[#FF5B13]" i],
+[data-provider-theme="towing"] [class~="border-[#FFB58E]" i],
+[data-provider-theme="towing"] [class~="border-[#FFC9A8]" i],
+[data-provider-theme="towing"] [class~="border-[#FED7AA]" i],
+[data-provider-theme="towing"] [class~="border-[#FDBA74]" i],
+[data-provider-theme="towing"] [class~="border-[#F4B183]" i] {border-color:#E9C34C!important;}
+[data-provider-theme="towing"] [class~="ring-[#FF5B13]" i],
+[data-provider-theme="towing"] [class~="ring-[#DD4E0D]" i] {--tw-ring-color:#D6A600!important;}
+[data-provider-theme="towing"] [class~="outline-[#FF5B13]" i],
+[data-provider-theme="towing"] [class~="outline-[#DD4E0D]" i] {outline-color:#D6A600!important;}
+[data-provider-theme="towing"] [class~="to-[#FF5B13]" i] {--tw-gradient-to:#F4C542!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FF5B13]" i]:hover {background-color:#F4C542!important;color:#332500!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#DD4E0D]" i]:hover {background-color:#F4C542!important;color:#332500!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#C8450B]" i]:hover {background-color:#F4C542!important;color:#332500!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#F97316]" i]:hover {background-color:#F4C542!important;color:#332500!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#EA580C]" i]:hover {background-color:#F4C542!important;color:#332500!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#D6531B]" i]:hover {background-color:#F4C542!important;color:#332500!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#E65314]" i]:hover {background-color:#F4C542!important;color:#332500!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#E74803]" i]:hover {background-color:#F4C542!important;color:#332500!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF1E8]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF0E5]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF0E6]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF1E9]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF4ED]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF7ED]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF0E8]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF3EB]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFEDD5]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF5EE]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF3E4]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF4E5]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF2EB]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[#FFF0E7]" i]:hover {background-color:#FFF7D9!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#FF5B13]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#DD4E0D]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#D6531B]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#B33D00]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#C8450B]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#EA580C]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#F97316]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#C2410C]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#B54708]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#D9480F]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#E65100]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#E74803]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:text-[#9A4D10]" i]:hover {color:#805900!important;}
+[data-provider-theme="towing"] [class~="hover:border-[#FF5B13]" i]:hover {border-color:#E9C34C!important;}
+[data-provider-theme="towing"] [class~="hover:border-[#FFB58E]" i]:hover {border-color:#E9C34C!important;}
+[data-provider-theme="towing"] [class~="hover:border-[#FFC9A8]" i]:hover {border-color:#E9C34C!important;}
+[data-provider-theme="towing"] [class~="hover:border-[#FED7AA]" i]:hover {border-color:#E9C34C!important;}
+[data-provider-theme="towing"] [class~="hover:border-[#FDBA74]" i]:hover {border-color:#E9C34C!important;}
+[data-provider-theme="towing"] [class~="hover:border-[#F4B183]" i]:hover {border-color:#E9C34C!important;}
+[data-provider-theme="towing"] [class~="group-hover:bg-[#DD4E0D]" i]:is(.group:hover *) {background-color:#E7B62D!important;}
+[data-provider-theme="towing"] [class~="focus:border-[#FF5B13]" i]:focus {border-color:#D6A600!important;}
 [data-provider-theme="towing"] :is(button,a,input,select,textarea):focus-visible {outline-color:#D6A600!important;}
-[data-provider-theme="towing"] [class~="hover:bg-[#DD4E0D]"]:hover {background-color:#E7B62D!important;}
-[data-provider-theme="towing"] [class~="hover:bg-[#FFF1E8]"]:hover {background-color:#FFF0B5!important;}
-[data-provider-theme="towing"] [class~="hover:border-[#FF5B13]"]:hover {border-color:#D6A600!important;}
-[data-provider-theme="towing"] [class~="hover:text-[#FF5B13]"]:hover {color:#805900!important;}
 [data-provider-theme="towing"] [class~="bg-orange-500"] {background-color:#F4C542!important;color:#332500!important;}
 [data-provider-theme="towing"] [class~="bg-orange-50"] {background-color:#FFF7D9!important;}
-[data-provider-theme="towing"] [class~="text-orange-600"], [data-provider-theme="towing"] [class~="text-orange-700"] {color:#805900!important;}
+[data-provider-theme="towing"] [class~="text-orange-600"],[data-provider-theme="towing"] [class~="text-orange-700"] {color:#805900!important;}
 [data-provider-theme="towing"] [class~="border-orange-200"] {border-color:#E9D28A!important;}
+
+[data-provider-theme="towing"] {--bw-role-accent:#F4C542;--bw-role-deep:#805900;--bw-role-soft:#FFF7D9;}
+[data-provider-theme="towing"] [class*="bg-[var(--bw-role-accent,"] {color:#332500;}
+[data-provider-theme="towing"] button[class*="bg-[var(--bw-role-accent,"] {color:#332500!important;}

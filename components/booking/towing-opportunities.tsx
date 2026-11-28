@@ -110,7 +110,7 @@ export default function TowingOpportunities({
     <section className="rounded-[24px] border border-[#CBD9E8] bg-white p-5 shadow-sm sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#FF5B13]">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--bw-role-accent,#FF5B13)]">
             {scheduleOnly ? "Your towing calendar" : "Towing dispatch"}
           </p>
           <h3 className="mt-2 text-[24px] font-extrabold text-[#101828]">
@@ -125,7 +125,7 @@ export default function TowingOpportunities({
         <button
           type="button"
           onClick={() => { setLoading(true); void load(); }}
-          className="rounded-xl border border-[#CBD9E8] bg-[#F7FAFD] px-4 py-2.5 text-[12px] font-bold text-[#DD4E0D] hover:bg-[#FFF1E8]"
+          className="rounded-xl border border-[#CBD9E8] bg-[#F7FAFD] px-4 py-2.5 text-[12px] font-bold text-[var(--bw-role-deep,#DD4E0D)] hover:bg-[var(--bw-role-soft,#FFF1E8)]"
         >
           ↻ Refresh
         </button>
@@ -136,13 +136,13 @@ export default function TowingOpportunities({
           <button type="button" onClick={() => setView("pending")}
             aria-pressed={view === "pending"}
             className={"rounded-xl px-4 py-2.5 text-[13px] font-bold " +
-              (view === "pending" ? "bg-[#FF5B13] text-white" : "bg-[#F3F6FA] text-[#475467]")}>
+              (view === "pending" ? "bg-[var(--bw-role-accent,#FF5B13)] text-white" : "bg-[#F3F6FA] text-[#475467]")}>
             Available ({pending.length})
           </button>
           <button type="button" onClick={() => setView("accepted")}
             aria-pressed={view === "accepted"}
             className={"rounded-xl px-4 py-2.5 text-[13px] font-bold " +
-              (view === "accepted" ? "bg-[#FF5B13] text-white" : "bg-[#F3F6FA] text-[#475467]")}>
+              (view === "accepted" ? "bg-[var(--bw-role-accent,#FF5B13)] text-white" : "bg-[#F3F6FA] text-[#475467]")}>
             My accepted jobs ({accepted.length})
           </button>
         </div>
@@ -170,7 +170,7 @@ export default function TowingOpportunities({
             <article key={job.request_id} className="rounded-[17px] border border-[#D6E1ED] bg-[#FAFCFF] p-4 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#FF5B13]">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wide text-[var(--bw-role-accent,#FF5B13)]">
                     🚛 {job.request_status === "accepted" ? "Accepted towing job" : "Open request"}
                   </p>
                   <h4 className="mt-1 text-[17px] font-extrabold text-[#101828]">

@@ -385,7 +385,7 @@ export default function ProviderCalendar({
               aria-label={nextBooking
                 ? `Show next reservation on ${formatMontrealDateTime(nextBooking.starts_at)} in the calendar`
                 : "No upcoming reservations"}
-              className="group rounded-[15px] bg-[#FFF1E8] p-5 text-left transition hover:bg-[#DCEBFA] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF5B13] disabled:cursor-default disabled:opacity-70"
+              className="group rounded-[15px] bg-[var(--bw-role-soft,#FFF1E8)] p-5 text-left transition hover:bg-[#DCEBFA] hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--bw-role-accent,#FF5B13)] disabled:cursor-default disabled:opacity-70"
             >
               <p className="text-[12px] font-bold text-[#667085]">
                 Upcoming bookings
@@ -393,7 +393,7 @@ export default function ProviderCalendar({
               <p className="mt-1 text-[28px] font-extrabold">
                 {upcoming.length}
               </p>
-              <p className="mt-2 text-[12px] font-bold text-[#DD4E0D]">
+              <p className="mt-2 text-[12px] font-bold text-[var(--bw-role-deep,#DD4E0D)]">
                 {nextBooking
                   ? `Next: ${formatMontrealDateTime(nextBooking.starts_at)} →`
                   : "No upcoming reservations"}
@@ -498,7 +498,7 @@ export default function ProviderCalendar({
                         is_open: event.target.checked,
                       })
                     }
-                    className="h-5 w-5 accent-[#FF5B13]"
+                    className="h-5 w-5 accent-[var(--bw-role-accent,#FF5B13)]"
                   />
                   {day}
                 </label>
@@ -543,7 +543,7 @@ export default function ProviderCalendar({
           type="button"
           disabled={savingHours || hours.length !== 7}
           onClick={() => void saveHours()}
-          className="mt-5 rounded-[13px] bg-[#FF5B13] px-6 py-3.5 text-[14px] font-bold text-white hover:bg-[#DD4E0D] disabled:opacity-50"
+          className="mt-5 rounded-[13px] bg-[var(--bw-role-accent,#FF5B13)] px-6 py-3.5 text-[14px] font-bold text-white hover:bg-[var(--bw-role-deep,#DD4E0D)] disabled:opacity-50"
         >
           {savingHours
             ? "Saving…"

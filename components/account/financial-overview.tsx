@@ -269,7 +269,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
       <div className="rounded-[22px] border border-[#E9DED5] bg-white p-5 shadow-sm sm:p-7">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#FF5B13]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--bw-role-accent,#FF5B13)]">
               {provider ? "Business insights" : "Your finances"}
             </p>
             <h3 className="mt-2 text-[27px] font-extrabold tracking-tight text-[#101828] sm:text-[33px]">
@@ -299,7 +299,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
               type="button"
               onClick={downloadCsv}
               disabled={loading || confirmed.length === 0}
-              className="rounded-xl border border-[#C8D4E1] bg-white px-4 py-3 text-[13px] font-bold text-[#344054] transition hover:bg-[#FFF1E8] disabled:opacity-50"
+              className="rounded-xl border border-[#C8D4E1] bg-white px-4 py-3 text-[13px] font-bold text-[#344054] transition hover:bg-[var(--bw-role-soft,#FFF1E8)] disabled:opacity-50"
             >
               <span aria-hidden="true">↓ </span>Download CSV
             </button>
@@ -310,7 +310,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
                 setRefreshCount((count) => count + 1);
               }}
               disabled={loading}
-              className="rounded-xl bg-[#FFF1E8] px-4 py-3 text-[13px] font-bold text-[#DD4E0D] hover:bg-[#DCEBFA] disabled:opacity-50"
+              className="rounded-xl bg-[var(--bw-role-soft,#FFF1E8)] px-4 py-3 text-[13px] font-bold text-[var(--bw-role-deep,#DD4E0D)] hover:bg-[#DCEBFA] disabled:opacity-50"
             >
               ↻ Refresh
             </button>
@@ -371,7 +371,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
             aria-pressed={month === null}
             className={"rounded-xl border px-3 py-2 text-[12px] font-bold transition " + (
               month === null
-                ? "border-[#FF5B13] bg-[#FFF1E8] text-[#DD4E0D]"
+                ? "border-[var(--bw-role-accent,#FF5B13)] bg-[var(--bw-role-soft,#FFF1E8)] text-[var(--bw-role-deep,#DD4E0D)]"
                 : "border-[#D0D5DD] bg-white text-[#475467] hover:bg-[#F8FAFC]"
             )}
           >
@@ -381,7 +381,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
 
         <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[12px] font-semibold text-[#475467]">
           <span className="inline-flex items-center gap-2">
-            <span className="h-3 w-3 rounded-sm bg-[#FF5B13]" />
+            <span className="h-3 w-3 rounded-sm bg-[var(--bw-role-accent,#FF5B13)]" />
             Past booked value
           </span>
           <span className="inline-flex items-center gap-2">
@@ -400,13 +400,13 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
                 aria-label={entry.label + " " + year + ", " + entry.count + " bookings. Past " + formatPriceCents(entry.past) + ", upcoming " + formatPriceCents(entry.future)}
                 aria-pressed={month === entry.index}
                 onClick={() => chooseMonth(entry.index)}
-                className={"group flex min-w-0 flex-col items-center rounded-t-[12px] px-1 pt-3 transition hover:bg-[#F3F7FC] focus-visible:outline-[#FF5B13] " + (
-                  month === entry.index ? "bg-[#FFF1E8] ring-1 ring-inset ring-[#B4C9E5]" : ""
+                className={"group flex min-w-0 flex-col items-center rounded-t-[12px] px-1 pt-3 transition hover:bg-[#F3F7FC] focus-visible:outline-[var(--bw-role-accent,#FF5B13)] " + (
+                  month === entry.index ? "bg-[var(--bw-role-soft,#FFF1E8)] ring-1 ring-inset ring-[#B4C9E5]" : ""
                 )}
               >
                 <div className="flex h-[176px] w-full items-end justify-center gap-1.5">
                   <span
-                    className="w-[18px] rounded-t-md bg-[#FF5B13] transition-all group-hover:bg-[#DD4E0D]"
+                    className="w-[18px] rounded-t-md bg-[var(--bw-role-accent,#FF5B13)] transition-all group-hover:bg-[var(--bw-role-deep,#DD4E0D)]"
                     style={{ height: (entry.past ? Math.max(4, (entry.past / chartMax) * 164) : 2) + "px" }}
                   />
                   <span
@@ -432,7 +432,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
       <div className="rounded-[22px] border border-[#E9DED5] bg-white p-5 shadow-sm sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] font-extrabold uppercase tracking-wider text-[#FF5B13]">Detailed activity</p>
+            <p className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--bw-role-accent,#FF5B13)]">Detailed activity</p>
             <h4 className="mt-1 text-[20px] font-extrabold text-[#101828]">
               {month === null ? "All reservations in " + year : MONTHS[month] + " " + year}
             </h4>
@@ -442,7 +442,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
                 : "Garage, service, date and estimated cost."}
             </p>
           </div>
-          <span className="rounded-full bg-[#FFF1E8] px-3 py-2 text-[12px] font-bold text-[#DD4E0D]">
+          <span className="rounded-full bg-[var(--bw-role-soft,#FFF1E8)] px-3 py-2 text-[12px] font-bold text-[var(--bw-role-deep,#DD4E0D)]">
             {details.length} reservations
           </span>
         </div>
@@ -467,7 +467,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
                     </div>
                     <div className="shrink-0 text-left sm:text-right">
                       <p className="text-[17px] font-extrabold text-[#101828]">{formatPriceCents(booking.price_cents)}</p>
-                      <p className={"mt-1 text-[11px] font-bold " + (future ? "text-[#7150A8]" : "text-[#FF5B13]")}>
+                      <p className={"mt-1 text-[11px] font-bold " + (future ? "text-[#7150A8]" : "text-[var(--bw-role-accent,#FF5B13)]")}>
                         {future ? "Upcoming" : "Past appointment"}
                       </p>
                     </div>
@@ -479,7 +479,7 @@ export default function FinancialOverview({ ownerId, kind, providerType }: Props
               <button
                 type="button"
                 onClick={() => setShowAll(true)}
-                className="mt-4 w-full rounded-xl border border-[#C8D4E1] bg-white px-4 py-3 text-[13px] font-bold text-[#DD4E0D] hover:bg-[#FFF1E8]"
+                className="mt-4 w-full rounded-xl border border-[#C8D4E1] bg-white px-4 py-3 text-[13px] font-bold text-[var(--bw-role-deep,#DD4E0D)] hover:bg-[var(--bw-role-soft,#FFF1E8)]"
               >
                 Show all {details.length} reservations
               </button>
