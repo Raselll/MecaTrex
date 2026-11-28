@@ -1042,3 +1042,14 @@ body { background: var(--bw-cream); color:var(--bw-ink); font-family: Geist, Ari
 [data-provider-theme="towing"] {--bw-role-accent:#F4C542;--bw-role-deep:#805900;--bw-role-soft:#FFF7D9;}
 [data-provider-theme="towing"] [class*="bg-[var(--bw-role-accent,"] {color:#332500;}
 [data-provider-theme="towing"] button[class*="bg-[var(--bw-role-accent,"] {color:#332500!important;}
+
+/* Explicit declarations for arbitrary-value utilities (including fallback syntax). */
+[data-provider-theme="towing"] [class~="bg-[var(--bw-role-accent,#FF5B13)]"] { background-color:#F4C542!important; color:#332500!important; }
+[data-provider-theme="towing"] [class~="bg-[var(--bw-role-soft,#FFF1E8)]"] { background-color:#FFF7D9!important; }
+[data-provider-theme="towing"] [class~="bg-[var(--bw-role-deep,#DD4E0D)]"] { background-color:#D6A600!important; color:#332500!important; }
+[data-provider-theme="towing"] [class~="text-[var(--bw-role-accent,#FF5B13)]"], [data-provider-theme="towing"] [class~="text-[var(--bw-role-deep,#DD4E0D)]"] { color:#805900!important; }
+[data-provider-theme="towing"] input[type="checkbox"], [data-provider-theme="towing"] input[type="radio"] { accent-color:#D6A600!important; }
+[data-provider-theme="towing"] [class~="ring-[var(--bw-role-accent,#FF5B13)]"] { --tw-ring-color:#D6A600!important; }
+
+[data-provider-theme="towing"] [class~="hover:bg-[var(--bw-role-deep,#DD4E0D)]"]:hover {background-color:#E7B62D!important;color:#332500!important;}
+[data-provider-theme="towing"] [class~="hover:bg-[var(--bw-role-soft,#FFF1E8)]"]:hover {background-color:#FFF0B5!important;}

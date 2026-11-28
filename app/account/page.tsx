@@ -557,6 +557,7 @@ function AccountShell({
       className="min-h-screen bg-[#F6F7F9] px-4 py-6 sm:px-6"
       data-portal-theme={accent}
       data-provider-theme={towing ? "towing" : undefined}
+      style={towing ? ({ "--bw-role-accent": "#F4C542", "--bw-role-deep": "#805900", "--bw-role-soft": "#FFF7D9", "--portal-accent": "#F4C542", "--portal-accent-deep": "#805900", "--portal-soft": "#FFF7D9", "--portal-border": "#E9D28A", accentColor: "#D6A600" } as React.CSSProperties) : undefined}
     >
       <div
         className={`mx-auto ${

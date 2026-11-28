@@ -123,7 +123,7 @@ export default function AccountWorkspace({
   }
 
   return (
-    <div id="mecatrex-workspace-top" className="mt-7 scroll-mt-24">
+    <div id="mecatrex-workspace-top" data-provider-theme={kind === "provider" && providerType === "towing" ? "towing" : undefined} className="mt-7 scroll-mt-24">
       <SuccessToasts/>
       <div className="rounded-[20px] border border-[#E7E5E2] bg-[#F7F8FA] lg:grid lg:grid-cols-[200px_minmax(0,1fr)]">
         <aside className="border-b border-[#DCE5EF] bg-white p-3 lg:border-b-0 lg:border-r lg:p-4 lg:sticky lg:top-4 lg:self-start">
