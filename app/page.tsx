@@ -1,7 +1,6 @@
 "use client";
 
 import BrandLogo from "@/components/brand/bandwhip-logo";
-import Script from "next/script";
 import Link from "next/link";
 import HomeAuthActions from "@/components/home/home-auth-actions";
 import WhenPicker from "@/components/home/when-picker";
@@ -26,8 +25,6 @@ type Vehicle = {
 
 const VEHICLE_STORAGE_KEY = "mecatrex-selected-vehicle";
 
-const CAR_IMAGES_API_KEY =
-  process.env.NEXT_PUBLIC_CAR_IMAGES_API_KEY ?? "";
 
 const years = Array.from(
   { length: 38 },
@@ -90,7 +87,7 @@ const colorSwatches: Record<string, string> = {
   White: "#FFFFFF",
   Silver: "#C0C5CC",
   Grey: "#667085",
-  Blue: "#FF5B13",
+  Blue: "#4771A6",
   Red: "#D92D20",
   Green: "#2F855A",
   Brown: "#7C4A32",
@@ -405,294 +402,32 @@ const services = SERVICE_CATALOGUE.map((service) => ({
 /* CARIMAGESAPI 3D VIEWER */
 /* ========================================================= */
 
-function Vehicle3DViewer({
-  year,
-  make,
-  model,
-  color,
-  loaderReady,
-  loaderError,
-}: {
-  year: string;
-  make: string;
-  model: string;
-  color: string;
-  loaderReady: boolean;
-  loaderError: boolean;
-}) {
-  const containerRef =
-    useRef<HTMLDivElement | null>(null);
-
-  const [
-    stableVehicle,
-    setStableVehicle,
-  ] =
-    useState<Vehicle | null>(null);
-
-  const canLoad =
-    year.trim().length === 4 &&
-    make.trim().length >= 2 &&
-    model.trim().length >= 1;
-
-  useEffect(() => {
-    if (!canLoad) {
-      setStableVehicle(null);
-      return;
-    }
-
-    const timer =
-      window.setTimeout(() => {
-        setStableVehicle({
-          year: year.trim(),
-          make: make.trim(),
-          model: model.trim(),
-          color:
-            color.trim() ||
-            undefined,
-        });
-      }, 500);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [
-    year,
-    make,
-    model,
-    color,
-    canLoad,
-  ]);
-
-  useEffect(() => {
-    if (
-      !stableVehicle ||
-      !loaderReady ||
-      loaderError ||
-      !CAR_IMAGES_API_KEY ||
-      !containerRef.current
-    ) {
-      return;
-    }
-
-    const container =
-      containerRef.current;
-
-    container.innerHTML = "";
-
-    const viewer =
-      document.createElement(
-        "model-viewer"
-      );
-
-    viewer.setAttribute(
-      "data-ci-type",
-      "car"
-    );
-
-    viewer.setAttribute(
-      "data-ci-make",
-      stableVehicle.make
-    );
-
-    viewer.setAttribute(
-      "data-ci-model",
-      stableVehicle.model
-    );
-
-    viewer.setAttribute(
-      "data-ci-year",
-      stableVehicle.year
-    );
-
-    viewer.setAttribute(
-      "data-ci-view",
-      "front34"
-    );
-
-    viewer.setAttribute(
-      "data-ci-speed",
-      "18"
-    );
-
-    viewer.setAttribute(
-      "data-ci-light",
-      "5"
-    );
-
-    viewer.setAttribute(
-      "data-ci-backdrop",
-      "#F6F8FB"
-    );
-
-    viewer.setAttribute(
-      "camera-controls",
-      ""
-    );
-
-    viewer.setAttribute(
-      "auto-rotate",
-      ""
-    );
-
-    viewer.setAttribute(
-      "interaction-prompt",
-      "none"
-    );
-
-    viewer.setAttribute(
-      "shadow-intensity",
-      "1"
-    );
-
-    viewer.setAttribute(
-      "aria-label",
-      `${stableVehicle.year} ${stableVehicle.make} ${stableVehicle.model} 3D model`
-    );
-
-    viewer.style.width = "100%";
-    viewer.style.height = "100%";
-    viewer.style.display = "block";
-    viewer.style.background =
-      "#F6F8FB";
-    viewer.style.borderRadius =
-      "24px";
-    viewer.style.overflow =
-      "hidden";
-
-    container.appendChild(viewer);
-
-    return () => {
-      container.innerHTML = "";
-    };
-  }, [
-    stableVehicle,
-    loaderReady,
-    loaderError,
-  ]);
-
-  if (!CAR_IMAGES_API_KEY) {
-    return (
-      <div className="flex min-h-[330px] flex-col items-center justify-center rounded-[26px] bg-[#F6F8FB] px-8 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FFF4ED] text-[25px]">
-          ⚠️
-        </div>
-
-        <p className="mt-5 text-[18px] font-bold text-[#101828]">
-          CarImagesAPI key missing
-        </p>
-
-        <p className="mt-2 max-w-[360px] text-[14px] leading-6 text-[#667085]">
-          Add
-          NEXT_PUBLIC_CAR_IMAGES_API_KEY
-          to .env.local and restart the
-          development server.
-        </p>
-      </div>
-    );
-  }
-
-  if (!canLoad) {
-    return (
-      <div className="flex min-h-[330px] flex-col items-center justify-center rounded-[26px] bg-[#F6F8FB] px-8 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-[20px] bg-white text-[32px] shadow-sm">
-          🚙
-        </div>
-
-        <p className="mt-5 text-[19px] font-bold text-[#101828]">
-          Your vehicle will appear here
-        </p>
-
-        <p className="mt-2 max-w-[330px] text-[15px] leading-6 text-[#667085]">
-          Choose the year, make and model
-          to see your car in 3D.
-        </p>
-      </div>
-    );
-  }
-
-  if (loaderError) {
-    return (
-      <div className="flex min-h-[330px] flex-col items-center justify-center rounded-[26px] bg-[#F6F8FB] px-8 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FFF4ED] text-[25px]">
-          ⚠️
-        </div>
-
-        <p className="mt-5 text-[18px] font-bold text-[#101828]">
-          3D viewer unavailable
-        </p>
-
-        <p className="mt-2 max-w-[360px] text-[14px] leading-6 text-[#667085]">
-          BandWhip could not load the
-          CarImagesAPI viewer.
-        </p>
-      </div>
-    );
-  }
-
-  if (
-    !loaderReady ||
-    !stableVehicle
-  ) {
-    return (
-      <div className="flex min-h-[330px] flex-col items-center justify-center rounded-[26px] bg-[#F6F8FB]">
-        <div className="h-12 w-12 animate-spin rounded-full border-[4px] border-[#DCE4EE] border-t-[#FF5B13]" />
-
-        <p className="mt-5 text-[17px] font-bold text-[#101828]">
-          Loading your vehicle…
-        </p>
-
-        <p className="mt-1 text-[14px] text-[#667085]">
-          {year} {make} {model}
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="relative min-h-[330px] overflow-hidden rounded-[26px] bg-[#F6F8FB]">
-        <div className="pointer-events-none absolute left-5 top-5 z-20 rounded-full border border-[#E4E7EC] bg-white/90 px-3.5 py-2 text-[12px] font-bold text-[#475467] shadow-sm backdrop-blur-md">
-          360° 3D
-        </div>
-
-        <div
-          ref={containerRef}
-          className="absolute inset-0"
-        />
-
-        <div className="pointer-events-none absolute bottom-4 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/90 px-4 py-2 text-[12px] font-semibold text-[#667085] shadow-sm backdrop-blur-md">
-          Drag to rotate
-        </div>
-      </div>
-
-      <div className="mt-3 text-center">
-        <p className="text-[13px] font-semibold text-[#475467]">
-          {stableVehicle.year}{" "}
-          {stableVehicle.make}{" "}
-          {stableVehicle.model}
-        </p>
-
-        {stableVehicle.color && (
-          <div className="mt-1.5 flex items-center justify-center gap-2 text-[12px] text-[#98A2B3]">
-            <span
-              className="h-2.5 w-2.5 rounded-full border border-black/10"
-              style={{
-                background:
-                  colorSwatches[
-                    stableVehicle
-                      .color
-                  ] || "#D0D5DD",
-              }}
-            />
-
-            {
-              stableVehicle.color
-            }
-          </div>
-        )}
-      </div>
+function VehiclePreview({year,make,model,color}:{year:string;make:string;model:string;color:string}) {
+  const [photo,setPhoto]=useState<{url:string;author:string;license:string;licenseUrl:string;source:string}|null>(null);
+  const [loading,setLoading]=useState(false);
+  const ready=!!(year&&make&&model);
+  useEffect(()=>{
+    setPhoto(null);setLoading(false);
+    if(!ready)return;
+    const controller=new AbortController();
+    setLoading(true);
+    const timer=setTimeout(async()=>{
+      try{
+        const res=await fetch("/api/vehicle-photo?"+new URLSearchParams({make,model,year}),{signal:controller.signal});
+        if(res.ok){const data=await res.json();if(!controller.signal.aborted)setPhoto(data.photo??null);}
+      }catch{}finally{if(!controller.signal.aborted)setLoading(false);}
+    },350);
+    return()=>{clearTimeout(timer);controller.abort();};
+  },[year,make,model,ready]);
+  return <div>
+    <div className="relative flex min-h-[330px] flex-col items-center justify-center overflow-hidden rounded-[26px] bg-[#F6F8FB] p-5 text-center">
+      {photo?<><img src={photo.url} alt={make+" "+model+" reference photograph"} onError={()=>setPhoto(null)} className="max-h-[270px] w-full rounded-xl object-contain"/><p className="mt-2 text-xs text-[#667085]">Reference photo · model year and color may differ</p></>:<>
+      <svg viewBox="0 0 320 150" className="w-full max-w-[300px]" aria-label="Generic vehicle illustration"><ellipse cx="160" cy="127" rx="137" ry="8" fill="#DCE3EB"/><path d="M25 88 43 66 82 59 115 28 Q121 23 138 23 H207 Q222 23 232 37 L259 65 287 74 Q299 78 300 94 V111 H20 V99 Q20 92 25 88Z" fill={colorSwatches[color]||"#AAB5C4"} stroke="#344054" strokeWidth="2"/><path d="M91 59 121 32 H168 V59ZM178 32 H207 Q216 32 224 43 L239 59 H178Z" fill="#DCE8F2" stroke="#344054" strokeWidth="2"/><path d="M28 86 H47 V94 H23M280 81 H295 V91 H282" fill="#F8FAFC"/>{[76,248].map(x=><g key={x}><circle cx={x} cy="110" r="23" fill="#243142"/><circle cx={x} cy="110" r="13" fill="#AAB5C4"/><circle cx={x} cy="110" r="5" fill="#65758B"/></g>)}</svg>
+      <p className="mt-3 text-sm text-[#667085]">{loading?"Finding a vehicle photo…":ready?"Generic illustration · exact photo unavailable":"Choose year, make and model"}</p></>}
     </div>
-  );
+    {ready&&<div className="mt-3 text-center"><p className="text-sm font-bold">{year} {make} {model}</p>{color&&<p className="mt-1 flex items-center justify-center gap-2 text-xs text-[#667085]"><span className="h-3 w-3 rounded-full border" style={{background:colorSwatches[color]||"#D0D5DD"}}/>{color}</p>}</div>}
+    {photo&&<p className="mt-2 text-center text-[11px] text-[#667085]"><a href={photo.source} target="_blank" rel="noreferrer">{photo.author||"Wikimedia Commons"}</a> · <a href={photo.licenseUrl} target="_blank" rel="noreferrer">{photo.license}</a></p>}
+  </div>;
 }
 
 /* ========================================================= */
@@ -705,8 +440,6 @@ function VehicleModal({
   onClose,
   onSave,
   onClear,
-  loaderReady,
-  loaderError,
 }: {
   open: boolean;
   vehicle: Vehicle | null;
@@ -715,8 +448,6 @@ function VehicleModal({
     vehicle: Vehicle
   ) => void;
   onClear: () => void;
-  loaderReady: boolean;
-  loaderError: boolean;
 }) {
   const [year, setYear] =
     useState("");
@@ -1091,8 +822,7 @@ function VehicleModal({
 
                   <p className="mt-2 text-[12px] leading-5 text-[#98A2B3]">
                     Used to help identify
-                    your vehicle. The 3D
-                    preview color may differ.
+                    your vehicle. The reference photo color may differ.
                   </p>
                 </div>
               </div>
@@ -1141,19 +871,13 @@ function VehicleModal({
                 )}
             </div>
 
-            {/* 3D PREVIEW */}
+            {/* VEHICLE PREVIEW */}
 
-            <Vehicle3DViewer
+            <VehiclePreview
               year={year}
               make={make}
               model={model}
               color={color}
-              loaderReady={
-                loaderReady
-              }
-              loaderError={
-                loaderError
-              }
             />
           </div>
 
@@ -2237,15 +1961,7 @@ export default function Home() {
   ] =
     useState<Vehicle | null>(null);
 
-  const [
-    carImagesReady,
-    setCarImagesReady,
-  ] = useState(false);
 
-  const [
-    carImagesLoadError,
-    setCarImagesLoadError,
-  ] = useState(false);
 
   useEffect(() => {
     try {
@@ -2312,36 +2028,6 @@ export default function Home() {
 
   return (
     <>
-      {/* CARIMAGESAPI */}
-
-      {CAR_IMAGES_API_KEY && (
-        <Script
-          id="carimages-api-loader"
-          src="https://carimagesapi.com/assets/js/carimages.js"
-          data-api-key={
-            CAR_IMAGES_API_KEY
-          }
-          strategy="afterInteractive"
-          onReady={() => {
-            setCarImagesReady(
-              true
-            );
-
-            setCarImagesLoadError(
-              false
-            );
-          }}
-          onError={() => {
-            setCarImagesReady(
-              false
-            );
-
-            setCarImagesLoadError(
-              true
-            );
-          }}
-        />
-      )}
 
       <VehicleModal
         open={
@@ -2358,12 +2044,6 @@ export default function Home() {
         }
         onClear={
           handleClearVehicle
-        }
-        loaderReady={
-          carImagesReady
-        }
-        loaderError={
-          carImagesLoadError
         }
       />
 

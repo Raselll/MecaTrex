@@ -1,3 +1,4 @@
+import OfferPreferences from "@/components/account/offer-preferences";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -524,6 +525,7 @@ export default async function AccountPage({
               
 
               <ClientPortalOverview {...clientProps} mode="settings" />
+              <OfferPreferences />
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <SummaryCard label="Email" value={profile.email} />

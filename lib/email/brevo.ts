@@ -428,3 +428,5 @@ export async function sendMecatrexNotice({
     </div>`,
   });
 }
+
+export async function sendCustomerOffer(data:{email:string;name:string;businessName:string;address:string;contact:string;message:string;unsubscribeUrl:string}){return sendBrevoEmail({toEmail:data.email,toName:data.name,subject:"An offer from "+data.businessName,html:`<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#101828"><h2>${escapeHtml(data.businessName)}</h2><p style="white-space:pre-wrap">${escapeHtml(data.message)}</p><hr/><p>Sent by BandWhip on behalf of ${escapeHtml(data.businessName)}.<br/>${escapeHtml(data.address)}<br/>${escapeHtml(data.contact)}</p><p><a href="${escapeHtml(data.unsubscribeUrl)}">Unsubscribe from promotional emails</a></p></div>`});}
