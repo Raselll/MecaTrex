@@ -120,20 +120,30 @@ export async function createGarageBooking(formData: FormData): Promise<BookingRe
   const note = formValue(formData, "note");
   const vehicle = formValue(formData, "vehicle").slice(0, 120);
   const wantsTowing = formValue(formData, "wants_towing") === "yes";
-  const pickupAddress = formValue(formData, "pickup_address");
+  let pickupAddress = formValue(formData, "pickup_address");
+  const pickupPlaceId = formValue(formData, "pickup_place_id");
   const towingNote = formValue(formData, "towing_note");
   if (!providerId || serviceIds.length === 0 || !/^\d{4}-\d{2}-\d{2}$/.test(day)
       || !/^([01]\d|2[0-3]):(00|30)$/.test(time) || note.length > 500) {
     return { ok: false, error: "Choose a valid garage, service, date, time and a note shorter than 500 characters." };
   }
 
-  if (wantsTowing && (pickupAddress.length < 8 || pickupAddress.length > 240 || towingNote.length > 500)) {
+  if (wantsTowing && (!pickupPlaceId || pickupAddress.length < 8 || pickupAddress.length > 240 || towingNote.length > 500)) {
     return { ok: false, error: "Enter a towing pickup address (8–240 characters) and keep the towing note under 500 characters." };
   }
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Please log in with a client account before confirming a booking." };
+
+  if (wantsTowing) {
+    try {
+      const { verifyGoogleAddress } = await import("@/lib/google-address");
+      const address = await verifyGoogleAddress(pickupPlaceId);
+      pickupAddress = address.formattedAddress;
+      if (pickupAddress.length < 8 || pickupAddress.length > 240) throw Error("Invalid pickup address.");
+    } catch { return {ok:false,error:"Select a valid Montreal pickup address from Google Maps and try again."}; }
+  }
 
   // Atomically reserve the combined duration and snapshot every item.
   // When towing is requested, the same transaction also creates its pending dispatch.

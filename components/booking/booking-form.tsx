@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import AddressAutocomplete from "@/components/provider/address-autocomplete";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createGarageBooking } from "@/app/book/actions";
@@ -118,6 +119,7 @@ export default function BookingForm({
   const [vehicleColor, setVehicleColor] = useState("");
   const [wantsTowing, setWantsTowing] = useState<boolean | null>(null);
   const [pickupAddress, setPickupAddress] = useState("");
+  const [pickupPlaceId,setPickupPlaceId]=useState("");
   const [towingNote, setTowingNote] = useState("");
   const [stepError, setStepError] = useState("");
 
@@ -439,7 +441,7 @@ export default function BookingForm({
       !canConfirm ||
       !validVehicle ||
       wantsTowing === null ||
-      (wantsTowing && pickupAddress.trim().length < 8)
+      (wantsTowing && (!pickupPlaceId || pickupAddress.trim().length < 8))
     ) {
       return;
     }
@@ -457,6 +459,7 @@ export default function BookingForm({
     form.set("vehicle", vehicleDescription);
     form.set("wants_towing", wantsTowing ? "yes" : "no");
     form.set("pickup_address", wantsTowing ? pickupAddress.trim() : "");
+    form.set("pickup_place_id", wantsTowing ? pickupPlaceId : "");
     form.set("towing_note", wantsTowing ? towingNote.trim() : "");
 
     try {
@@ -975,9 +978,7 @@ export default function BookingForm({
           <div className="mt-5 space-y-4 rounded-[16px] border border-[#BDD0E4] bg-[#F7FAFE] p-4">
             <label className="block text-[13px] font-bold text-[#344054]">
               Pickup address <span className="text-[#B42318]">*</span>
-              <input value={pickupAddress} maxLength={240} onChange={(event) => setPickupAddress(event.target.value)}
-                placeholder="Street address, city, province and postal code"
-                className="mt-2 w-full rounded-xl border border-[#E2D9D2] bg-white px-4 py-3 text-[14px] outline-none focus:border-[#FF5B13]"/>
+              <AddressAutocomplete label="Pickup address" value={pickupAddress} verified={!!pickupPlaceId} onChange={value=>{setPickupAddress(value);setPickupPlaceId("");}} onSelect={address=>{setPickupAddress(address.formattedAddress);setPickupPlaceId(address.placeId);}} />
             </label>
             <label className="block text-[13px] font-bold text-[#344054]">
               Extra towing information (optional)
@@ -1067,7 +1068,7 @@ export default function BookingForm({
               !slot ||
               loading ||
               wantsTowing === null ||
-              (wantsTowing && pickupAddress.trim().length < 8)
+              (wantsTowing && (!pickupPlaceId || pickupAddress.trim().length < 8))
             }
             onClick={submit}
             className="mt-5 w-full rounded-[15px] bg-[#FF5B13] px-6 py-4 text-[17px] font-extrabold text-white shadow-[0_8px_20px_rgba(71,113,166,0.17)] hover:bg-[#DD4E0D] disabled:cursor-not-allowed disabled:opacity-50"
@@ -1078,8 +1079,8 @@ export default function BookingForm({
                 ? "Choose a time to continue"
                 : wantsTowing === null
                   ? "Choose a towing option to continue"
-                  : wantsTowing && pickupAddress.trim().length < 8
-                    ? "Enter the towing pickup address"
+                  : wantsTowing && (!pickupPlaceId || pickupAddress.trim().length < 8)
+                    ? "Select a verified pickup address"
                     : wantsTowing ? "Reserve garage · request towing" : "Confirm garage booking"}
           </button>
         )}

@@ -1,6 +1,7 @@
 
 "use client";
 
+import AddressAutocomplete from "@/components/provider/address-autocomplete";
 import PhotoCropper from "@/components/provider/photo-cropper";
 import { DurationInput } from "@/components/provider/duration-input";
 import { orderServices } from "@/lib/service-display-order";
@@ -152,6 +153,7 @@ export default function ProviderDashboard({
 
   const [provider, setProvider] =
     useState(initialProvider);
+  const [addressVerified,setAddressVerified]=useState(true);
 
   const [services, setServices] =
     useState(initialServices);
@@ -293,6 +295,7 @@ export default function ProviderDashboard({
   async function persistProfile(): Promise<
     string | null
   > {
+    if (!addressVerified) return "Select a verified address from Google Maps.";
     const website = normalizeBusinessWebsite(
       provider.website ?? ""
     );
@@ -331,6 +334,8 @@ export default function ProviderDashboard({
 
           city: "Montreal",
           province: "Quebec",
+          latitude: provider.latitude,
+          longitude: provider.longitude,
 
           postal_code:
             provider.postal_code
@@ -1132,14 +1137,7 @@ export default function ProviderDashboard({
                 })}
               </div>
             </fieldset>
-            <ProviderField
-              label="Address"
-              value={provider.address_line1}
-              onChange={(value) =>
-                field("address_line1", value)
-              }
-              className="sm:col-span-2"
-            />
+            <div className="sm:col-span-2"><p className="text-sm font-bold">Address</p><AddressAutocomplete value={provider.address_line1} verified={addressVerified} onChange={value=>{setAddressVerified(false);setProvider(current=>({...current,address_line1:value,postal_code:"",latitude:null,longitude:null}));}} onSelect={address=>{setProvider(current=>({...current,address_line1:address.streetAddress,postal_code:address.postalCode,latitude:address.latitude,longitude:address.longitude}));setAddressVerified(true);}} /></div>
 
             <ProviderField
               label="City"
@@ -1155,16 +1153,7 @@ export default function ProviderDashboard({
               disabled
             />
 
-            <ProviderField
-              label="Postal code"
-              value={provider.postal_code}
-              onChange={(value) =>
-                field(
-                  "postal_code",
-                  value.toUpperCase()
-                )
-              }
-            />
+            <ProviderField label="Postal code" value={provider.postal_code} onChange={()=>{}} disabled />
           </div>
 
           <button
