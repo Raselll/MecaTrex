@@ -376,35 +376,6 @@ export default function ProviderCalendar({
       id="garage-calendar"
       className="scroll-mt-24 space-y-6"
     >
-      <div className="rounded-[25px] border border-[#E2D9D2] bg-white p-6 sm:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-[12px] font-bold uppercase tracking-wider text-[#FF5B13]">
-              Availability
-            </p>
-
-            <h2 className="mt-1 text-[27px] font-extrabold tracking-[-0.04em]">
-              {providerType === "garage"
-                ? "📅 Booking availability"
-                : "🚚 Towing calendar"}
-            </h2>
-
-            <p className="mt-1 text-[14px] text-[#667085]">
-              {providerType === "garage"
-                ? "Manage your appointments and blocked time."
-                : "Manage business hours and blocked time."}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            className="rounded-[12px] border border-[#E2D9D2] px-4 py-3 text-[13px] font-bold text-[#DD4E0D] hover:bg-[#FFF1E8]"
-          >
-            ↻ Refresh calendar
-          </button>
-        </div>
-
         {providerType === "garage" && (
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <button
@@ -457,12 +428,12 @@ export default function ProviderCalendar({
 
 
 
-        {suspended && providerType === "garage" && (
+        {suspended && (
           <p
             role="alert"
             className="mt-4 rounded-[13px] border border-[#FDA29B] bg-[#FEF3F2] p-4 text-[13px] font-bold text-[#B42318]"
           >
-            Your garage reached its provider cancellation
+            Your business reached its provider cancellation
             limit. New bookings are suspended until reviewed
             by an administrator. Existing bookings must still
             be honoured.
@@ -479,8 +450,6 @@ export default function ProviderCalendar({
         )}
 
         
-      </div>
-
       {(
         <AvailabilityBoard
           providerId={providerId}

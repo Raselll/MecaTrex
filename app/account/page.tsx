@@ -429,7 +429,6 @@ export default async function AccountPage({
             calendar={
               approved ? (
                 <div className="space-y-5">
-                  {provider.provider_type === "towing" && <TowingOpportunities scheduleOnly />}
                   <ProviderCalendar
                     providerId={provider.id}
                     providerType={provider.provider_type}
