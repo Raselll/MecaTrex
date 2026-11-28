@@ -275,7 +275,7 @@ export async function cancelGarageBooking(bookingId: string):
   revalidatePath("/account");
   revalidatePath("/");
   return { ok: true, message: actualProviderCancellation
-    ? remaining === 0 ? "Third garage cancellation: your listing is suspended. Contact BandWhip." : `Garage cancellation warning. ${remaining} of 3 cancellations remaining.`
+    ? remaining === 0 ? "Third garage cancellation: your listing is suspended. Contact BandWhip." : "Booking cancelled. Warning: repeated cancellations will suspend your listing. Under the provider terms, a third cancellation triggers suspension."
     : freeCancellation ? "Booking cancelled within the 24-hour grace period. No strike was counted."
     : remaining === 0 ? "Cancellation warning 3/3. Your account is now suspended from making new bookings."
     : `Cancellation warning. ${remaining} of 3 late cancellations remain.`,

@@ -329,7 +329,7 @@ export default function ProviderCalendar({
     if (remaining === 0 || suspended) return;
 
     const approved = window.confirm(
-      `Garage cancellations are limited to three. You have ${remaining} remaining.\n\nCancel this customer's booking?`
+      "Cancel this customer’s booking? This action cannot be undone."
     );
 
     if (!approved) return;
@@ -416,7 +416,7 @@ export default function ProviderCalendar({
         </div>
 
         {providerType === "garage" && (
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <button
               type="button"
               onClick={showNextBooking}
@@ -438,15 +438,6 @@ export default function ProviderCalendar({
                   : "No upcoming reservations"}
               </p>
             </button>
-
-            <div className="rounded-[15px] bg-[#F2F4F7] p-5">
-              <p className="text-[12px] font-bold text-[#667085]">
-                Cancellations remaining
-              </p>
-              <p className="mt-1 text-[28px] font-extrabold">
-                {remaining} / 3
-              </p>
-            </div>
 
             <div
               className={`rounded-[15px] p-5 ${

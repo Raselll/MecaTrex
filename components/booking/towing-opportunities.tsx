@@ -88,7 +88,7 @@ export default function TowingOpportunities({
 
   async function cancelAccepted(job: Job) {
     if (!window.confirm(
-      "WARNING: cancelling an ACCEPTED towing trip counts against your company. After three cancellations, towing access is suspended. The garage appointment stays reserved while we find another towing company. Cancel this trip?"
+      "Cancel this accepted towing trip? The garage appointment stays reserved while we find another towing company."
     )) return;
     setBusyId(job.request_id);
     setError("");

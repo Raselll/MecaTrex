@@ -275,7 +275,7 @@ export async function sendBookingEmailNotifications(
 
   const providerMessage = cancelled
     ? data.event === "provider_cancelled"
-      ? `Cancellation warning: you cancelled a booking. ${data.cancellationRemaining ?? 0} out of 3 cancellations remain. ${data.cancellationRemaining === 0 ? "Your listing is suspended." : ""}`
+      ? `Cancellation warning: you cancelled a booking. ${data.cancellationRemaining === 0 ? "Your listing is suspended." : "Repeated cancellations will suspend your listing after the third cancellation under the provider terms."}`
       : `${data.clientName} cancelled their appointment.`
     : data.towingPending
       ? `Garage slot reserved for ${data.clientName} and ${data.serviceName}; towing confirmation is still pending.`

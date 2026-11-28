@@ -51,7 +51,7 @@ async function sendPartyNotices(
       { email: data.garage_email, name: data.garage_name, subject: "BandWhip · Towing company withdrew",
         message: `${data.towing_name} withdrew the accepted towing trip for ${data.client_name}. The garage booking stays reserved while dispatch reopens. ${details}` },
       { email: data.towing_email, name: data.towing_name, subject: "BandWhip · Towing cancellation warning",
-        message: `Your towing cancellation has been counted. ${remaining ?? 0} cancellation(s) remain before suspension. ${remaining === 0 ? "Your towing listing is now suspended. Contact BandWhip." : ""} ${details}` },
+        message: `Your towing cancellation has been counted. A third cancellation triggers suspension under the provider terms. ${remaining === 0 ? "Your towing listing is now suspended. Contact BandWhip." : ""} ${details}` },
     ]
     : [
       { email: data.client_email, name: data.client_name, subject: "BandWhip · Garage and towing confirmed",
@@ -150,6 +150,6 @@ export async function cancelAcceptedTowingJob(requestId: string): Promise<Action
     remaining: typeof remaining === "number" ? remaining : undefined,
     message: remaining === 0
       ? "Third towing cancellation: your listing is suspended. Contact BandWhip."
-      : `Towing cancellation warning. ${remaining} cancellation(s) remain before suspension. The job was reopened to other companies.`,
+      : "Towing cancelled. Warning: a third cancellation suspends your listing. The job was reopened to other companies.",
   };
 }

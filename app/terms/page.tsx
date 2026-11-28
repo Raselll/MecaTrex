@@ -21,7 +21,7 @@ const sections = [
   },
   {
     title: "5. Bookings and availability",
-    body: "BandWhip may let clients request ASAP service or choose a future date and time. A displayed opening or availability is not a guarantee until a booking is accepted or confirmed through the platform. Providers must manage their availability responsibly. BandWhip may introduce cancellation, no-show, late-arrival, refusal, and rescheduling rules as the booking system evolves; any applicable rule will be presented before it applies to a transaction.",
+    body: "BandWhip may let clients request ASAP service or choose a future date and time. A displayed opening or availability is not a guarantee until a booking is accepted or confirmed through the platform. Providers must manage their availability responsibly. Cancelling a confirmed garage booking or an accepted towing assignment counts as a provider cancellation. Providers receive a warning after each such cancellation. A third provider cancellation suspends new bookings pending administrator review; existing commitments must still be honoured. BandWhip may introduce cancellation, no-show, late-arrival, refusal, and rescheduling rules as the booking system evolves; any applicable rule will be presented before it applies to a transaction.",
   },
   {
     title: "6. Estimates, repairs and vehicle condition",

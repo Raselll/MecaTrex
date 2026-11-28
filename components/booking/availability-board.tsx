@@ -950,6 +950,7 @@ export default function AvailabilityBoard({
                   const fullDay =
                     dayIsFullyBlocked(day);
 
+                  const cancelled = dayBookings(day).filter(booking => booking.status === "provider_cancelled" || booking.status === "client_cancelled");
                   const confirmed =
                     currentBookings.filter(
                       (booking) =>
@@ -1074,6 +1075,7 @@ export default function AvailabilityBoard({
                           </span>
                         )}
 
+                        {cancelled.length > 0 && <span className="block rounded-[6px] bg-[#FEE4E2] px-1.5 py-1 text-center text-[10px] font-bold text-[#B42318]">{cancelled.length} cancelled</span>}
                         {confirmed.length >
                           0 && (
                           <span className="block rounded-[6px] bg-[#DDEAFB] px-1.5 py-1 text-center text-[10px] font-bold text-[#DD4E0D]">
@@ -1155,6 +1157,7 @@ export default function AvailabilityBoard({
                   {days.map((day) => {
                     const booked =
                       dayHasBooking(day);
+                    const cancelled = dayBookings(day).some(b=>b.status==="provider_cancelled"||b.status==="client_cancelled");
 
                     return (
                       <div
@@ -1169,9 +1172,8 @@ export default function AvailabilityBoard({
                             : "No confirmed booking"
                         }
                       >
-                        {booked && (
-                          <span className="h-[6px] w-[70%] rounded-full bg-[#FF5B13]" />
-                        )}
+                        {booked && <span className="h-[6px] w-[35%] rounded-full bg-[#FF5B13]" />}
+                        {cancelled && <span title="Cancelled booking" className="ml-1 h-[6px] w-[35%] rounded-full bg-[#D92D20]" />}
                       </div>
                     );
                   })}
@@ -1197,6 +1199,7 @@ export default function AvailabilityBoard({
               <span className="h-2.5 w-2.5 rounded-full bg-[#F59E0B]" />
               Unavailable
             </span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#D92D20]"/>Cancelled</span>
           </div>
 
           <p className="mt-3 text-[12px] leading-5 text-[#98A2B3]">
@@ -1570,7 +1573,7 @@ export default function AvailabilityBoard({
               ).map((booking) => (
                 <div
                   key={booking.id}
-                  className="mt-3 rounded-[12px] border border-[#D0D5DD] bg-white p-3"
+                  className={`mt-3 rounded-[12px] border p-3 ${booking.status==="provider_cancelled"||booking.status==="client_cancelled"?"border-[#FDA29B] bg-[#FEF3F2]":"border-[#D0D5DD] bg-white"}`}
                 >
                   <p className="text-[12px] font-bold text-[#101828]">
                     📅{" "}
@@ -1596,10 +1599,7 @@ export default function AvailabilityBoard({
                   </p>
 
                   <p className="mt-1 text-[11px] text-[#667085]">
-                    {booking.status.replaceAll(
-                      "_",
-                      " "
-                    )}
+                    {booking.status==="provider_cancelled"||booking.status==="client_cancelled" ? <strong className="text-[#B42318]">Cancelled · {booking.status==="provider_cancelled"?"by garage":"by client"}</strong> : booking.status.replaceAll("_"," ")}
                   </p>
 
                   {booking.status ===
@@ -1622,8 +1622,7 @@ export default function AvailabilityBoard({
                         }
                         className="mt-3 rounded-[9px] border border-[#FDA29B] bg-[#FEF3F2] px-3 py-2 text-[11px] font-bold text-[#B42318] disabled:opacity-40"
                       >
-                        Cancel booking (
-                        {remaining} left)
+                        Cancel booking
                       </button>
                     )}
                 </div>
