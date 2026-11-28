@@ -399,11 +399,11 @@ const services = SERVICE_CATALOGUE.map((service) => ({
 }));
 
 /* ========================================================= */
-/* CARIMAGESAPI 3D VIEWER */
+/* STUDIO VEHICLE PREVIEW */
 /* ========================================================= */
 
 function VehiclePreview({year,make,model,color}:{year:string;make:string;model:string;color:string}) {
-  const [photo,setPhoto]=useState<{url:string;author:string;license:string;licenseUrl:string;source:string}|null>(null);
+  const [photo,setPhoto]=useState<{url:string}|null>(null);
   const [loading,setLoading]=useState(false);
   const ready=!!(year&&make&&model);
   useEffect(()=>{
@@ -413,20 +413,17 @@ function VehiclePreview({year,make,model,color}:{year:string;make:string;model:s
     setLoading(true);
     const timer=setTimeout(async()=>{
       try{
-        const res=await fetch("/api/vehicle-photo?"+new URLSearchParams({make,model,year}),{signal:controller.signal});
+        const res=await fetch("/api/vehicle-photo?"+new URLSearchParams({make,model,year,color:(colorSwatches[color]||"#C0C5CC").slice(1)}),{signal:controller.signal});
         if(res.ok){const data=await res.json();if(!controller.signal.aborted)setPhoto(data.photo??null);}
       }catch{}finally{if(!controller.signal.aborted)setLoading(false);}
     },350);
     return()=>{clearTimeout(timer);controller.abort();};
-  },[year,make,model,ready]);
+  },[year,make,model,color,ready]);
   return <div>
-    <div className="relative flex min-h-[330px] flex-col items-center justify-center overflow-hidden rounded-[26px] bg-[#F6F8FB] p-5 text-center">
-      {photo?<><img src={photo.url} alt={make+" "+model+" reference photograph"} onError={()=>setPhoto(null)} className="max-h-[270px] w-full rounded-xl object-contain"/><p className="mt-2 text-xs text-[#667085]">Reference photo · model year and color may differ</p></>:<>
-      <svg viewBox="0 0 320 150" className="w-full max-w-[300px]" aria-label="Generic vehicle illustration"><ellipse cx="160" cy="127" rx="137" ry="8" fill="#DCE3EB"/><path d="M25 88 43 66 82 59 115 28 Q121 23 138 23 H207 Q222 23 232 37 L259 65 287 74 Q299 78 300 94 V111 H20 V99 Q20 92 25 88Z" fill={colorSwatches[color]||"#AAB5C4"} stroke="#344054" strokeWidth="2"/><path d="M91 59 121 32 H168 V59ZM178 32 H207 Q216 32 224 43 L239 59 H178Z" fill="#DCE8F2" stroke="#344054" strokeWidth="2"/><path d="M28 86 H47 V94 H23M280 81 H295 V91 H282" fill="#F8FAFC"/>{[76,248].map(x=><g key={x}><circle cx={x} cy="110" r="23" fill="#243142"/><circle cx={x} cy="110" r="13" fill="#AAB5C4"/><circle cx={x} cy="110" r="5" fill="#65758B"/></g>)}</svg>
-      <p className="mt-3 text-sm text-[#667085]">{loading?"Finding a vehicle photo…":ready?"Generic illustration · exact photo unavailable":"Choose year, make and model"}</p></>}
+    <div className="relative flex min-h-[330px] flex-col items-center justify-center overflow-hidden rounded-[26px] border border-[#E5E7EB] bg-white p-5 text-center">
+      {photo ? <><img src={photo.url} alt={make+" "+model+" studio illustration"} onError={()=>setPhoto(null)} className="max-h-[290px] w-full object-contain"/><p className="mt-2 text-xs text-[#667085]">Studio illustration · appearance may vary</p></> : <div className="flex flex-col items-center gap-3"><span className="text-xs font-semibold uppercase tracking-widest text-[#667085]">Your vehicle</span><p className="text-2xl font-bold text-[#101828]">{ready ? make+" "+model : "Select your vehicle"}</p>{ready&&<p className="text-sm text-[#667085]">{year}{color?" · "+color:""}</p>}{loading&&<p role="status" className="text-xs text-[#667085]">Loading vehicle preview…</p>}</div>}
     </div>
     {ready&&<div className="mt-3 text-center"><p className="text-sm font-bold">{year} {make} {model}</p>{color&&<p className="mt-1 flex items-center justify-center gap-2 text-xs text-[#667085]"><span className="h-3 w-3 rounded-full border" style={{background:colorSwatches[color]||"#D0D5DD"}}/>{color}</p>}</div>}
-    {photo&&<p className="mt-2 text-center text-[11px] text-[#667085]"><a href={photo.source} target="_blank" rel="noreferrer">{photo.author||"Wikimedia Commons"}</a> · <a href={photo.licenseUrl} target="_blank" rel="noreferrer">{photo.license}</a></p>}
   </div>;
 }
 
