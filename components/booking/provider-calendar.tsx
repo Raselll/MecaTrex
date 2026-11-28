@@ -10,6 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { cancelGarageBooking } from "@/app/book/actions";
 import AvailabilityBoard from "./availability-board";
+import DetailedCalendar from "./detailed-calendar";
 import VehicleVisitCard from "./vehicle-visit-card";
 import {
   BOOKING_CANCEL_LIMIT,
@@ -57,6 +58,8 @@ export default function ProviderCalendar({
   const [hours, setHours] =
     useState<BusinessHour[]>(EMPTY_HOURS);
 
+  const [towingEvents,setTowingEvents]=useState<{id:string;starts_at:string;title:string;detail:string}[]>([]);
+  const [detailed,setDetailed]=useState(false);
   const [bookings, setBookings] =
     useState<GarageBooking[]>([]);
 
@@ -128,6 +131,7 @@ export default function ProviderCalendar({
           : Promise.resolve({ data: null, error: null }),
       ]);
 
+      if(providerType==="towing"){const {data,error}=await supabase.rpc("list_my_towing_opportunities");if(error)setError(error.message);else setTowingEvents(((data??[]) as {request_id:string;appointment_at:string;client_name:string;garage_name:string;request_status:string;accepted_by_me:boolean}[]).filter(j=>j.accepted_by_me&&j.request_status==="accepted").map(j=>({id:j.request_id,starts_at:j.appointment_at,title:j.client_name+" · Towing",detail:"Garage appointment at "+j.garage_name+" (pickup time to arrange)"})));}
       if (!towingResult.error && towingResult.data) {
         setTowingStatuses(towingResult.data as { booking_id: string; status: "pending" | "accepted" | "cancelled" }[]);
       }
@@ -391,13 +395,13 @@ export default function ProviderCalendar({
             <h2 className="mt-1 text-[27px] font-extrabold tracking-[-0.04em]">
               {providerType === "garage"
                 ? "📅 Booking availability"
-                : "🚚 Towing business hours"}
+                : "🚚 Towing calendar"}
             </h2>
 
             <p className="mt-1 text-[14px] text-[#667085]">
               {providerType === "garage"
                 ? "Manage available and unavailable times in Montreal time."
-                : "Update your towing business hours. Accepted jobs appear above in your towing schedule."}
+                : "Manage business hours and view assigned towing jobs."}
             </p>
           </div>
 
@@ -408,6 +412,7 @@ export default function ProviderCalendar({
           >
             ↻ Refresh calendar
           </button>
+          <button type="button" onClick={()=>setDetailed(true)} className="rounded-xl bg-[#FF5B13] px-4 py-3 text-sm font-bold text-white">Detailed calendar ↗</button>
         </div>
 
         {providerType === "garage" && (
@@ -640,6 +645,7 @@ export default function ProviderCalendar({
         </div>
       )}
 
+      {detailed && <DetailedCalendar onClose={()=>setDetailed(false)} hours={hours} blocks={blocks} events={providerType==="towing"?towingEvents:bookings.filter(b=>b.status==="confirmed").map(b=>({id:b.id,starts_at:b.starts_at,title:b.client_name+" · "+b.service_name,detail:b.vehicle_description}))} towing={providerType==="towing"}/>}
       {providerType === "garage" && (
         <AvailabilityBoard
           providerId={providerId}

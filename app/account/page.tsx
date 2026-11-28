@@ -361,7 +361,7 @@ export default async function AccountPage({
     return (
       <AccountShell wide accent={accent}>
         <main
-          className="portal-main-card rounded-[30px] border border-[#EAECF0] border-t-[5px] bg-white p-5 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-9"
+          className="portal-main-card rounded-[30px] border border-[#EAECF0] bg-white p-4 sm:p-6"
           style={{
             borderTopColor:
               (ACCENT_COLORS[accent] ??
@@ -498,7 +498,7 @@ export default async function AccountPage({
   return (
     <AccountShell wide accent={accent}>
       <div
-        className="portal-main-card rounded-[30px] border border-[#EAECF0] border-t-[5px] bg-white p-4 shadow-[0_18px_60px_rgba(16,24,40,0.08)] sm:p-7"
+        className="portal-main-card rounded-[30px] border border-[#EAECF0] bg-white p-4 sm:p-6"
         style={{ borderTopColor: (ACCENT_COLORS[accent] ?? ACCENT_COLORS.blue).hex }}
       >
         <div className="px-1 pt-2 sm:px-2">
@@ -553,13 +553,13 @@ function AccountShell({
 }) {
   return (
     <main
-      className="portal-theme min-h-screen px-5 py-10"
+      className="min-h-screen bg-[#F6F7F9] px-4 py-6 sm:px-6"
       data-portal-theme={accent}
     >
       <div
         className={`mx-auto ${
           wide
-            ? "max-w-[1280px]"
+            ? "max-w-[1440px]"
             : "max-w-[820px]"
         }`}
       >

@@ -36,7 +36,7 @@ const titles: Record<Section, string> = {
   overview: "Overview",
   appointments: "My appointments",
   calendar: "Calendar & availability",
-  earnings: "Business",
+  earnings: "Finances",
   finances: "Finances",
   towing: "Towing jobs",
   business: "Business profile",
@@ -84,25 +84,17 @@ export default function AccountWorkspace({
   }, [kind]);
 
   const sections: Section[] = kind === "client"
-    ? ["overview", "appointments", "settings"]
-    : approved ? ["overview", "calendar", "business", "settings"] : ["overview", "settings"];
+    ? ["overview", "appointments", "finances", "settings"]
+    : approved ? ["overview", "calendar", "earnings", "business", "settings"] : ["overview", "settings"];
 
   const navigationLabels: Partial<Record<Section, string>> = {
     appointments: "My bookings",
-    calendar: "Schedule & bookings",
+    calendar: "Calendar",
     business: "Business setup",
     settings: "My account",
   };
-  const activeSection = view === "finances" ? "appointments" : view === "earnings" ? "overview" : view === "towing" ? "calendar" : view === "services" ? "business" : view;
-  const subSections: Section[] = kind === "client" && activeSection === "appointments"
-    ? ["appointments", "finances"]
-    : kind === "provider" && approved && activeSection === "overview"
-      ? ["overview", "earnings"]
-      : kind === "provider" && approved && activeSection === "calendar" && towingRequests
-        ? ["calendar", "towing"]
-        : kind === "provider" && approved && activeSection === "business"
-          ? ["business", "services"]
-          : [];
+  const activeSection = view === "towing" ? "calendar" : view === "services" ? "business" : view;
+  const subSections: Section[] = kind === "provider" && approved && activeSection === "calendar" && towingRequests ? ["calendar", "towing"] : kind === "provider" && approved && activeSection === "business" ? ["business","services"] : [];
 
   useEffect(() => {
     function openAnchor() {
@@ -131,7 +123,7 @@ export default function AccountWorkspace({
 
   return (
     <div id="mecatrex-workspace-top" className="mt-7 scroll-mt-24">
-      <div className="overflow-hidden rounded-[25px] border border-[#E7E5E2] bg-[#F8F8F7] shadow-[0_16px_42px_rgba(16,24,40,0.05)] lg:grid lg:grid-cols-[210px_minmax(0,1fr)]">
+      <div className="overflow-hidden rounded-[20px] border border-[#E7E5E2] bg-[#F7F8FA] lg:grid lg:grid-cols-[218px_minmax(0,1fr)]">
         <aside className="border-b border-[#DCE5EF] bg-white p-3 lg:border-b-0 lg:border-r lg:p-4">
           <div className="hidden lg:block">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#FF5B13]">My workspace</p>
@@ -151,9 +143,9 @@ export default function AccountWorkspace({
                   onClick={() => goTo(section)}
                   aria-current={active ? "page" : undefined}
                   className={
-                    "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-[10px] px-3 py-2.5 text-left text-[12px] font-bold transition lg:w-full " +
+                    "flex shrink-0 items-center gap-2 whitespace-nowrap rounded-[10px] px-3 py-3 text-left text-[13px] font-bold transition lg:w-full " +
                     (active
-                      ? "bg-[#FFF1E8] text-[#D6531B]"
+                      ? "bg-[#FFF1E8] text-[#B33D00]"
                       : "text-[#475467] hover:bg-[#F2F5FA] hover:text-[#101828]")
                   }
                 >
@@ -163,17 +155,9 @@ export default function AccountWorkspace({
               );
             })}
           </nav>
-          <div className="mt-8 hidden rounded-[14px] bg-[#FAF6F2] p-4 lg:block">
-            <p className="text-[12px] font-bold text-[#D6531B]">BandWhip</p>
-            <p className="mt-1 text-[11px] leading-5 text-[#667085]">
-              {kind === "provider"
-                ? "Keep your services and schedule up to date."
-                : "Compare garages and book in just a few clicks."}
-            </p>
-          </div>
         </aside>
 
-        <div className="min-w-0 p-4 sm:p-6 lg:p-8">
+        <div className="min-w-0 p-4 sm:p-6">
           <header className="mb-6 flex items-start justify-between gap-3 border-b border-[#E4EAF1] pb-5">
             <div>
               <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#FF5B13]">

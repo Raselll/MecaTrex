@@ -178,7 +178,7 @@ function BusinessCard({
   return (
     <details
       id={`provider-${provider.id}`}
-      className={`group scroll-mt-8 overflow-hidden rounded-[20px] border bg-white shadow-sm ${
+      className={`group scroll-mt-24 overflow-hidden rounded-[20px] border bg-white shadow-sm ${
         needsReview ? "border-[#FFC9A9]" : "border-[#D6E0ED]"
       }`}
     >
@@ -796,10 +796,10 @@ export default async function AdminPage({
 
   return (
     <main
-      className="portal-theme min-h-screen px-4 py-8 text-[#101828] sm:px-6"
+      className="min-h-screen bg-[#F6F7F9] px-4 py-6 text-[#101828] sm:px-6"
       data-portal-theme={accent}
     >
-      <div className="mx-auto max-w-[1250px]">
+      <div className="mx-auto max-w-[1440px]">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <Link href="/" aria-label="BandWhip homepage">
             <Image
@@ -837,7 +837,7 @@ export default async function AdminPage({
           </p>
 
           <h1 className="mt-2 text-[32px] font-extrabold tracking-tight">
-            Marketplace command center
+            Administration
           </h1>
 
           <p className="mt-2 text-[13px] text-[#667085]">
@@ -907,7 +907,7 @@ export default async function AdminPage({
             </div>
           )}
 
-          <nav className="mt-7 flex flex-wrap gap-2 border-b border-[#E4E7EC] pb-4">
+          <nav className="sticky top-0 z-20 mt-7 flex flex-wrap gap-2 border-b border-[#E4E7EC] bg-white py-4">
             <a href="#applications" className="portal-jump-link">
               Needs review ({pending.length})
             </a>
@@ -921,7 +921,7 @@ export default async function AdminPage({
 
           <section
             id="applications"
-            className="mt-8 scroll-mt-8"
+            className="mt-8 scroll-mt-24"
           >
             <h2 className="text-[23px] font-extrabold">
               Applications needing attention
@@ -957,7 +957,7 @@ export default async function AdminPage({
 
           <section
             id="businesses"
-            className="mt-9 scroll-mt-8"
+            className="mt-9 scroll-mt-24"
           >
             <h2 className="text-[23px] font-extrabold">
               Business applications & providers
@@ -1008,7 +1008,7 @@ export default async function AdminPage({
 
           <section
             id="accounts"
-            className="mt-9 scroll-mt-8"
+            className="mt-9 scroll-mt-24"
           >
             <h2 className="text-[23px] font-extrabold">
               Registered accounts
